@@ -1,6 +1,5 @@
 (ns slam.hound
-  (:use [clojure.java.io :only [reader]])
-  (:import (java.io PushbackReader)))
+  (:use [clojure.java.io :only [reader]]))
 
 (def ns-clauses [:refer-clojure :use :require :import])
 
@@ -20,35 +19,35 @@
              :when (clause-type ns-map)]
          (cons clause-type (clause-type ns-map)))))
 
-(defn missing-var [e]
-  (->> (.getMessage e)
-       (re-seq #"Unable to resolve symbol: (\w+) in this context")
-       (second)
-       (symbol)))
+(defn missing-var [msg]
+  (symbol (second (re-seq #"Unable to resolve symbol: (\w+)" msg))))
 
 (defn check-for-failure [ns-map body]
   (try (eval `(do ~(ns-from-map ns-map) ~@body))
        nil
        (catch Exception e
-         (missing-var e))))
+         (missing-var (.getMessage e)))))
+
+(defn class-name? [x]
+  (Character/isUpperCase (first (name x))))
+
+(defn add-import [failure ns-map])
+(defn add-require [failure ns-map])
+(defn add-use [failure ns-map])
 
 (defn resolve-failure [failure ns-map]
-  ;; tricky bits
-  )
+  (cond (class-name? failure) (add-import failure ns-map)
+        (namespace failure) (add-require failure ns-map)
+        :else (add-use failure ns-map)))
 
 (defn reconstruct-ns-form [ns-map body]
   (if-let [failure (check-for-failure ns-map body)]
     (recur (resolve-failure failure ns-map) body)))
 
-(defn write-new-ns [filename ns-map]
-  ;; very tricky bits
-  )
-
-(defn reconstruct
-  ([filename]
-     (let [rdr (PushbackReader. (reader filename))
-           ns-map (ns-to-map (read rdr))
-           stripped-ns (apply dissoc ns-map (rest ns-clauses))
-           body (take-while #(not= ::done %)
-                            (repeatedly #(read rdr false ::done)))]
-       (write-new-ns filename (reconstruct-ns-form stripped-ns body)))))
+(defn reconstruct [filename]
+  (let [rdr (java.io.PushbackReader. (reader filename))
+        ns-map (ns-to-map (read rdr))
+        stripped-ns (apply dissoc ns-map (rest ns-clauses))
+        body (take-while #(not= ::done %)
+                         (repeatedly #(read rdr false ::done)))]
+    (println (ns-from-map (reconstruct-ns-form stripped-ns body)))))
