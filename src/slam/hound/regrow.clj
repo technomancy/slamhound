@@ -13,9 +13,9 @@
   (Character/isUpperCase (first (name x))))
 
 (defn missing-sym-name [msg]
-  (if-let [[match] (re-seq #"Unable to resolve \w+: (\w+)" msg)]
+  (if-let [[match] (re-seq #"Unable to resolve \w+: ([-\w]+)" msg)]
     (second match)
-    (second (first (re-seq #"No such namespace: (\w+)" msg)))))
+    (second (first (re-seq #"No such namespace: ([-\w]+)" msg)))))
 
 (defn failure-details [msg]
   (let [sym (missing-sym-name msg)]
