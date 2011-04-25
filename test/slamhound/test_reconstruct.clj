@@ -32,6 +32,8 @@
     (deftest test-ns-to-map
       (is (= (ns-from-map {:ns 'slam.hound}))))))
 
+;;; representation transformation
+
 (deftest test-ns-to-map
   (is (= sample-ns-map (asplode/ns-to-map sample-ns-form))))
 
@@ -41,8 +43,16 @@
 (deftest test-roundtrip
   (is (= sample-ns-form (stitch/ns-from-map (asplode/ns-to-map sample-ns-form)))))
 
+;;; regrow
+
 (deftest test-add-import
   (is (= (assoc sample-ns-map
            ;; this is pre-collapse
            :import '(java.io.File java.io.ByteArrayInputStream java.util.UUID))
          (regrow/regrow [(dissoc sample-ns-map :import) sample-body]))))
+
+(deftest test-add-require
+  (is (= sample-ns-map (regrow/regrow [(dissoc sample-ns-map :require) sample-body]))))
+
+#_(deftest test-add-use
+  (is (= sample-ns-map (regrow/regrow [(dissoc sample-ns-map :use) sample-body]))))
