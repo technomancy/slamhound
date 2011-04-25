@@ -45,14 +45,14 @@
 
 ;;; regrow
 
-(deftest test-add-import
+(deftest test-grow-import
   (is (= (assoc sample-ns-map
            ;; this is pre-collapse
            :import '(java.io.File java.io.ByteArrayInputStream java.util.UUID))
          (regrow/regrow [(dissoc sample-ns-map :import) sample-body]))))
 
-(deftest test-add-require
+(deftest test-grow-require
   (is (= sample-ns-map (regrow/regrow [(dissoc sample-ns-map :require) sample-body]))))
 
-#_(deftest test-add-use
+#_(deftest test-grow-use
   (is (= sample-ns-map (regrow/regrow [(dissoc sample-ns-map :use) sample-body]))))

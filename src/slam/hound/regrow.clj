@@ -48,28 +48,29 @@
                :when (= failure (name sym))]
            [(ns-name n) :only [sym]])))
 
-(defn add-import [failure ns-map]
+(defn grow-import [failure ns-map]
   (let [class-name (import-subclause failure)]
+    (debug :grow-import class-name)
     (update-in ns-map [:import] conj class-name)))
 
-(defn add-require [failure ns-map]
+(defn grow-require [failure ns-map]
   (let [required-ns (require-subclause failure)]
-    (debug :add-require required-ns)
+    (debug :grow-require required-ns)
     (update-in ns-map [:require] conj required-ns)))
 
-(defn add-use [failure ns-map]
+(defn grow-use [failure ns-map]
   (let [used-ns (use-subclause failure)]
-    (debug :add-use used-ns)
+    (debug :grow-use used-ns)
     (update-in ns-map [:use] conj used-ns)))
 
 (defn class-name? [x]
   (Character/isUpperCase (first (name x))))
 
 (defn resolve-failure [failure ns-map]
-  (cond (class-name? failure) (add-import failure ns-map)
+  (cond (class-name? failure) (grow-import failure ns-map)
         ;; TODO: need a better way to distinguish between require/use
-        :else #_(namespace (symbol failure)) (add-require failure ns-map)
-        :else (add-use failure ns-map)))
+        :else #_(namespace (symbol failure)) (grow-require failure ns-map)
+        :else (grow-use failure ns-map)))
 
 (defn regrow [[ns-map body last-failure]]
   (if-let [failure (check-for-failure ns-map body)]
