@@ -7,7 +7,8 @@
 (defn reconstruct [filename]
   ;; Reconstructing consists of three distinct phases:
   ;; asploding, regrowing, and stitching.
-  (println (-> (io/reader filename)
-               asplode
-               regrow
-               stitch-up)))
+  (-> (io/reader filename)
+      asplode
+      regrow
+      stitch-up
+      println))
