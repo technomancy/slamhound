@@ -7,13 +7,22 @@
 (def ^{:dynamic true} *debug* false)
 
 (defn debug [& msg]
-  (when *debug*
-    (apply prn msg)))
+  (when *debug* (apply prn msg)))
 
-(defn missing-var [msg]
+(defn class-name? [x]
+  (Character/isUpperCase (first (name x))))
+
+(defn missing-sym-name [msg]
   (if-let [[match] (re-seq #"Unable to resolve \w+: (\w+)" msg)]
     (second match)
     (second (first (re-seq #"No such namespace: (\w+)" msg)))))
+
+(defn failure-details [msg]
+  (let [sym (missing-sym-name msg)]
+    {:missing-sym sym
+     :type (cond (class-name? sym) :import
+                 (re-find #"namespace" msg) :require
+                 :else :use)}))
 
 (defn check-for-failure [ns-map body]
   (let [ns-form (stitch/ns-from-map ns-map)]
@@ -27,54 +36,37 @@
            nil)
          (catch Exception e
            (debug :ex (.getMessage e))
-           (missing-var (.getMessage e))))))
+           (failure-details (.getMessage e))))))
 
-(defn import-subclause [class-name]
-  (some (fn [{full-name :name}]
-          (if (= (last (.split full-name "\\.")) class-name)
-            (symbol full-name)))
-        available-classes))
+(defmulti candidates (fn [type missing-sym] type))
 
-(defn require-subclause [failure]
-  ;; TODO: allow custom disambiguators
-  (first (for [n (all-ns)
-               :let [segments (.split (name (ns-name n)) "\\.")]
-               :when (= failure (last segments))]
-           [(ns-name n) :as (symbol failure)])))
+(defmethod candidates :import [type missing-sym]
+  (for [{full-name :name} available-classes
+        :when (= (last (.split full-name "\\.")) missing-sym)]
+    (symbol full-name)))
 
-(defn use-subclause [failure]
-  (first (for [n (all-ns)
-               [sym var] (ns-publics n)
-               :when (= failure (name sym))]
-           [(ns-name n) :only [sym]])))
+(defmethod candidates :require [type missing-sym]
+  (for [n (all-ns)
+        :let [segments (.split (name (ns-name n)) "\\.")]
+        :when (= missing-sym (last segments))]
+    [(ns-name n) :as (symbol missing-sym)]))
 
-(defn grow-import [failure ns-map]
-  (let [class-name (import-subclause failure)]
-    (debug :grow-import class-name)
-    (update-in ns-map [:import] conj class-name)))
+(defmethod candidates :use [type missing-sym]
+  (for [n (all-ns)
+        [sym var] (ns-publics n)
+        :when (= missing-sym (name sym))]
+    [(ns-name n) :only [sym]]))
 
-(defn grow-require [failure ns-map]
-  (let [required-ns (require-subclause failure)]
-    (debug :grow-require required-ns)
-    (update-in ns-map [:require] conj required-ns)))
+(defn grow [missing-sym type ns-map disambiguate]
+  (update-in ns-map [type] conj (disambiguate (candidates type missing-sym) )))
 
-(defn grow-use [failure ns-map]
-  (let [used-ns (use-subclause failure)]
-    (debug :grow-use used-ns)
-    (update-in ns-map [:use] conj used-ns)))
-
-(defn class-name? [x]
-  (Character/isUpperCase (first (name x))))
-
-(defn resolve-failure [failure ns-map]
-  (cond (class-name? failure) (grow-import failure ns-map)
-        ;; TODO: need a better way to distinguish between require/use
-        :else #_(namespace (symbol failure)) (grow-require failure ns-map)
-        :else (grow-use failure ns-map)))
-
-(defn regrow [[ns-map body last-failure]]
-  (if-let [failure (check-for-failure ns-map body)]
-    (if (= failure last-failure)
-      (throw (Exception. (str "Couldn't resolve " failure)))
-      (recur [(resolve-failure failure ns-map) body failure]))
-    ns-map))
+(defn regrow
+  ([[ns-map body]]
+     (regrow [ns-map body] first nil))
+  ([[ns-map body] disambiguate last-missing-sym]
+     (if-let [{:keys [missing-sym type]} (check-for-failure ns-map body)]
+       (if (= last-missing-sym missing-sym)
+         (throw (Exception. (str "Couldn't resolve " missing-sym)))
+         (recur [(grow missing-sym type ns-map disambiguate) body]
+                disambiguate missing-sym))
+       ns-map)))
