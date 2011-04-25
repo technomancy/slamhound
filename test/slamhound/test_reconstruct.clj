@@ -8,8 +8,9 @@
 (def sample-ns-form '(ns slamhound.sample
                        "Testing some things going on here."
                        (:refer-clojure :exclude [compile test])
-                       (:use [clojure.test :only [deftest is]]
-                             [slam.hound.stitch :only [ns-from-map]])
+                       (:use [slam.hound.stitch :only [ns-from-map]]
+                             [clojure.test :only [is]]
+                             [clojure.test :only [deftest]])
                        (:require [clojure.java.io :as io]
                                  [clojure.set :as set])
                        (:import (java.io File ByteArrayInputStream)
@@ -18,8 +19,9 @@
 (def sample-ns-map
   {:name 'slamhound.sample
    :meta {:doc "Testing some things going on here."}
-   :use '([clojure.test :only [deftest is]] [slam.hound.stitch
-                                             :only [ns-from-map]])
+   :use '[[slam.hound.stitch :only [ns-from-map]]
+          [clojure.test :only [is]]
+          [clojure.test :only [deftest]]]
    :require '([clojure.java.io :as io] [clojure.set :as set])
    :import '((java.io File ByteArrayInputStream) (java.util UUID))
    :refer-clojure '(:exclude [compile test])})
@@ -41,7 +43,8 @@
   (is (= sample-ns-form (stitch/ns-from-map sample-ns-map))))
 
 (deftest test-roundtrip
-  (is (= sample-ns-form (stitch/ns-from-map (asplode/ns-to-map sample-ns-form)))))
+  (is (= sample-ns-form
+         (stitch/ns-from-map (asplode/ns-to-map sample-ns-form)))))
 
 ;;; regrow
 
@@ -52,7 +55,9 @@
          (regrow/regrow [(dissoc sample-ns-map :import) sample-body]))))
 
 (deftest test-grow-require
-  (is (= sample-ns-map (regrow/regrow [(dissoc sample-ns-map :require) sample-body]))))
+  (is (= sample-ns-map (regrow/regrow [(dissoc sample-ns-map :require)
+                                       sample-body]))))
 
-#_(deftest test-grow-use
-  (is (= sample-ns-map (regrow/regrow [(dissoc sample-ns-map :use) sample-body]))))
+(deftest test-grow-use
+  (is (= sample-ns-map (regrow/regrow [(dissoc sample-ns-map :use)
+                                       sample-body]))))
