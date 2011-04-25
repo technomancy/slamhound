@@ -1,7 +1,14 @@
 (ns slam.hound.regrow
   (:use [clojure.pprint :only [pprint]]
+        ;; TODO: stop using swank
         [swank.util.class-browse :only [available-classes]])
   (:require [slam.hound.stitch :as stitch]))
+
+(def ^{:dynamic true} *debug* false)
+
+(defn debug [& msg]
+  (when *debug*
+    (apply prn msg)))
 
 (defn missing-var [msg]
   (if-let [[match] (re-seq #"Unable to resolve \w+: (\w+)" msg)]
@@ -10,14 +17,17 @@
 
 (defn check-for-failure [ns-map body]
   (let [ns-form (stitch/ns-from-map ns-map)]
+    ;; (debug :checking ns-form)
     (try (binding [*ns* (create-ns `foo#)]
            (refer 'clojure.core)
            (eval ns-form)
-           (doseq [form body] (eval form))
+           (doseq [form body]
+             (eval form))
+           (remove-ns (.name *ns*))
            nil)
          (catch Exception e
-             (prn :ex (.getMessage e))
-             (missing-var (.getMessage e))))))
+           (debug :ex (.getMessage e))
+           (missing-var (.getMessage e))))))
 
 (defn class-name? [x]
   (Character/isUpperCase (first (name x))))
