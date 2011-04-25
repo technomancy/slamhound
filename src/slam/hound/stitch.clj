@@ -11,11 +11,32 @@
              :when (clause-type ns-map)]
          (cons clause-type (clause-type ns-map)))))
 
-(defn collapse-clause [ns-map]
+(defmulti collapse-clause (comp second list))
+
+(defn- package-grouper [class-name]
+  (-> class-name resolve .getPackage .getName))
+
+(defmethod collapse-clause :import [ns-map clause]
+  (assoc ns-map :import
+         (for [[package classes] (group-by package-grouper (:import ns-map))]
+           (cons (symbol package)
+                 (for [c classes]
+                   (-> c resolve .getSimpleName symbol))))))
+
+(defmethod collapse-clause :require [ns-map clause]
   ns-map)
 
+(defmethod collapse-clause :use [ns-map clause]
+  ns-map
+  #_(let [subclauses (:use ns-map)]
+    (assoc ns-map :use [])))
+
+(defn collapse-clauses [ns-map]
+  (reduce collapse-clause ns-map ns-clauses))
+
 (defn sort-subclauses [ns-map]
-  (reduce #(update-in %1 [%2] sort)
+  ;; lists aren't comparable? huh?
+  (reduce #(update-in %1 [%2] (partial sort-by str))
           ns-map ns-clauses))
 
 ;; TODO: indentation here is all wrong, but pprint gets line length right.
@@ -26,8 +47,7 @@
 
 (defn stitch-up [ns-map]
   (-> ns-map
-      ns-from-map
       collapse-clauses
       sort-subclauses
-      prettify
-      (.replace "(ns \n +" "(ns ")))
+      ns-from-map
+      prettify))
