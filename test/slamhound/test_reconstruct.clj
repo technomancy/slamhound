@@ -76,11 +76,11 @@
 (deftest test-collapse-import
   (is (= {:import '[(java.io ByteArrayInputStream File)
                     (java.util UUID)]}
-           (stitch/collapse-clause {:import '(java.io.ByteArrayInputStream
-                                              java.io.File java.util.UUID)}
-                                   :import))))
+         (stitch/collapse-clause {:import '(java.io.ByteArrayInputStream
+                                            java.io.File java.util.UUID)}
+                                 :import))))
 
-#_(deftest test-collapse-use
+(deftest test-collapse-use
   (is (= {:use '[[clojure.test :only [deftest is]]
                  [slam.hound.stitch :only [ns-from-map]]]}
          (stitch/collapse-clause {:use '[[clojure.test :only [deftest]]
@@ -94,9 +94,8 @@
   \"Testing some things going on here.\"
   (:refer-clojure :exclude [compile test])
   (:use
-    [clojure.test :only [deftest]]
-    [clojure.test :only [is]]
+    [clojure.test :only [deftest is]]
     [slam.hound.stitch :only [ns-from-map]])
   (:require [clojure.java.io :as io] [clojure.set :as set])
-  (:import (java.io File ByteArrayInputStream) (java.util UUID)))
+  (:import (java.io ByteArrayInputStream File) (java.util UUID)))
 " (stitch/stitch-up sample-ns-map))))

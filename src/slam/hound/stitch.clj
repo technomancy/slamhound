@@ -16,20 +16,25 @@
 (defn- package-grouper [class-name]
   (-> class-name resolve .getPackage .getName))
 
+(defn group-by-package [imports]
+  (for [[package classes] (group-by package-grouper imports)]
+    (cons (symbol package)
+          (sort (for [c classes]
+                  (-> c resolve .getSimpleName symbol))))))
+
 (defmethod collapse-clause :import [ns-map clause]
-  (assoc ns-map :import
-         (for [[package classes] (group-by package-grouper (:import ns-map))]
-           (cons (symbol package)
-                 (for [c classes]
-                   (-> c resolve .getSimpleName symbol))))))
+  (update-in ns-map [:import] group-by-package))
 
 (defmethod collapse-clause :require [ns-map clause]
   ns-map)
 
+(defn group-by-namespace [uses]
+  (for [[namespace subclause] (group-by first uses)]
+    [namespace :only (vec (sort (for [[_ _ [var]] subclause]
+                                  var)))]))
+
 (defmethod collapse-clause :use [ns-map clause]
-  ns-map
-  #_(let [subclauses (:use ns-map)]
-    (assoc ns-map :use [])))
+  (update-in ns-map [:use] group-by-namespace))
 
 (defn collapse-clauses [ns-map]
   (reduce collapse-clause ns-map ns-clauses))
