@@ -68,6 +68,13 @@ Slime session. Then add this defun to your Emacs config:
 
 Then you'll be able to run M-x slamhound to reconstruct your ns form.
 
+## The Rules
+
+Slamhound can only rebuild your namespace if it follows the rules and
+doesn't do anything too fancy. If your code depends upon a
+:require clause, the required namespace must be aliased :as the last
+segment of its name. The only supported option to :use is :only.
+
 ## Future Plans
 
 * Better pretty-printing
