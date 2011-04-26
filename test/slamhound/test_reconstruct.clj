@@ -7,14 +7,14 @@
 
 (def sample-ns-form '(ns slamhound.sample
                        "Testing some things going on here."
-                       (:refer-clojure :exclude [compile test])
                        (:use [slam.hound.stitch :only [ns-from-map]]
                              [clojure.test :only [is]]
                              [clojure.test :only [deftest]])
                        (:require [clojure.java.io :as io]
                                  [clojure.set :as set])
                        (:import java.io.File java.io.ByteArrayInputStream
-                                java.util.UUID)))
+                                java.util.UUID)
+                       (:refer-clojure :exclude [compile test])))
 
 (def sample-ns-map
   {:name 'slamhound.sample
@@ -89,13 +89,12 @@
                                  :use))))
 
 (deftest test-stitch-up
-  (is (= "(ns
-  slamhound.sample
+  (is (= "(ns slamhound.sample
   \"Testing some things going on here.\"
-  (:refer-clojure :exclude [compile test])
   (:use
     [clojure.test :only [deftest is]]
     [slam.hound.stitch :only [ns-from-map]])
   (:require [clojure.java.io :as io] [clojure.set :as set])
-  (:import (java.io ByteArrayInputStream File) (java.util UUID)))
+  (:import (java.io ByteArrayInputStream File) (java.util UUID))
+  (:refer-clojure :exclude [compile test]))
 " (stitch/stitch-up sample-ns-map))))
