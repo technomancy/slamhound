@@ -1,7 +1,6 @@
 (ns slam.hound.regrow
-  (:use [clojure.pprint :only [pprint]]
-        ;; TODO: stop using swank
-        [swank.util.class-browse :only [available-classes]])
+  ;; TODO: stop using swank
+  (:use [swank.util.class-browse :only [available-classes]])
   (:require [slam.hound.stitch :as stitch]))
 
 (def ^{:dynamic true} *debug* false)
@@ -13,9 +12,8 @@
   (Character/isUpperCase (first (name x))))
 
 (defn missing-sym-name [msg]
-  (if-let [[match] (re-seq #"Unable to resolve \w+: ([-\w]+)" msg)]
-    (second match)
-    (second (first (re-seq #"No such namespace: ([-\w]+)" msg)))))
+  (second (or (re-find #"Unable to resolve \w+: ([-\w]+)" msg)
+              (re-find #"No such namespace: ([-\w]+)" msg))))
 
 (defn failure-details [msg]
   (let [sym (missing-sym-name msg)]
@@ -26,29 +24,29 @@
 
 (defn check-for-failure [ns-map body]
   (let [ns-form (stitch/ns-from-map ns-map)]
-    ;; (debug :checking ns-form)
-    (try (binding [*ns* (create-ns `foo#)]
-           (refer 'clojure.core)
-           (eval ns-form)
-           (doseq [form body]
-             (eval form))
-           (remove-ns (.name *ns*))
-           nil)
-         (catch Exception e
-           (debug :ex (.getMessage e))
-           (failure-details (.getMessage e))))))
+    (binding [*ns* (create-ns `foo#)]
+      (try
+        (refer 'clojure.core)
+        (eval ns-form)
+        (doseq [form body]
+          (eval form))
+        nil
+        (catch Exception e
+          (debug :ex (.getMessage e))
+          (failure-details (.getMessage e)))
+        (finally
+         (remove-ns (.name *ns*)))))))
 
 (defmulti candidates (fn [type missing-sym] type))
 
 (defmethod candidates :import [type missing-sym]
   (for [{full-name :name} available-classes
-        :when (= (last (.split full-name "\\.")) missing-sym)]
+        :when (= missing-sym (last (.split full-name "\\.")))]
     (symbol full-name)))
 
 (defmethod candidates :require [type missing-sym]
   (for [n (all-ns)
-        :let [segments (.split (name (ns-name n)) "\\.")]
-        :when (= missing-sym (last segments))]
+        :when (= missing-sym (last (.split (name (ns-name n)) "\\.")))]
     [(ns-name n) :as (symbol missing-sym)]))
 
 (defmethod candidates :use [type missing-sym]
@@ -58,10 +56,11 @@
     [(ns-name n) :only [sym]]))
 
 (defn grow [missing-sym type ns-map disambiguate]
-  (update-in ns-map [type] conj (disambiguate (candidates type missing-sym) )))
+  (update-in ns-map [type] conj (disambiguate (candidates type missing-sym))))
 
 (defn regrow
   ([[ns-map body]]
+     ;; TODO: better way to use custom disambiguator
      (regrow [ns-map body] first nil))
   ([[ns-map body] disambiguate last-missing-sym]
      (if-let [{:keys [missing-sym type]} (check-for-failure ns-map body)]

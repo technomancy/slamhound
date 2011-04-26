@@ -4,7 +4,6 @@
 (def ns-clauses [:use :require :import])
 
 (defn ns-from-map [ns-map]
-  ;; TODO: arbitrary ns-level metadata?
   `(~'ns ~(:name ns-map)
      ~(:doc (:meta ns-map))
      ~@(for [clause-type (cons :refer-clojure ns-clauses)
