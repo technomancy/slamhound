@@ -11,15 +11,15 @@
   (Character/isUpperCase (first (name x))))
 
 (defn missing-sym-name [msg]
-  (second (or (re-find #"Unable to resolve \w+: ([-\w\$\?!]+)" msg)
-              (re-find #"No such namespace: ([-\w\$\?!]+)" msg)
-              (re-find #"No such var: \w+/([-\w\$\?!]+)" msg))))
+  (second (or (re-find #"Unable to resolve \w+: ([-_\w\$\?!\*]+)" msg)
+              (re-find #"No such namespace: ([-_\w\$\?!\*]+)" msg)
+              (re-find #"No such var: \w+/([-_\w\$\?!\*]+)" msg))))
 
 (defn failure-details [msg]
   (when-let [sym (missing-sym-name msg)]
     {:missing-sym sym
      :type (cond (class-name? sym) :import
-                 (re-find #"(namespace|No such var)" msg) :require
+                 (re-find #"No such (var|namespace)" msg) :require
                  :else :use)}))
 
 (defn check-for-failure [ns-map body]
