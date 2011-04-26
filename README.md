@@ -30,7 +30,7 @@ surgeon required.
 For this you will need to add Slamhound in both :dependencies and
 :dev-dependencies:
 
-    [slamhound "1.0.0"]
+    [slamhound "1.1.0"]
 
 Then run from the command line:
 
