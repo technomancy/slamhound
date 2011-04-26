@@ -25,9 +25,44 @@
 Slamhound rips your ns form apart and reconstructs it. No Dutch
 surgeon required.
 
-## Usage
+## Leiningen Usage
+
+For this you will need to add Slamhound in both :dependencies and
+:dev-dependencies:
+
+    [slamhound "1.0.0"]
+
+Then run from the command line:
 
     $ lein slamhound my.namespace
+
+    (ns my.namespace
+      "I have a doc string."
+      (:use [clojure.pprint :only [pprint]])
+      (:require [clojure.java.io :as io])
+      (:import (java.io ByteArrayInputStream)))
+
+## Emacs Usage
+
+For this, it only needs to be in :dependencies. Once it's in, start a
+Slime session. Then add this defun to your Emacs config:
+
+    (defun slamhound ()
+      (interactive)
+      (goto-char (point-min))
+      (kill-sexp)
+      (insert (first (slime-eval `(swank:eval-and-grab-output
+                                   (format "(do (require 'slam.hound)
+                                              (slam.hound/reconstruct \"%s\"))"
+                                           ,buffer-file-name))))))
+
+Then you'll be able to run M-x slamhound to reconstruct your ns form.
+
+## Future Plans
+
+* Better pretty-printing
+* Piggy-backing elisp inside jar
+* Allow for custom disambiguator functions
 
 ## License
 

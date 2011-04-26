@@ -1,4 +1,4 @@
-(defproject slamhound "1.0.0-SNAPSHOT"
+(defproject slamhound "1.0.0"
   :description
   "Rips your ns form apart and reconstructs it. We have the technology."
   ;; TODO: will eliminate this dep down the road
