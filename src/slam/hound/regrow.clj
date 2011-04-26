@@ -73,7 +73,9 @@
 (defn regrow
   ([[ns-map body]]
      (doseq [namespace (search/namespaces)]
-       (require namespace))
+       (try (require namespace)
+            (catch Exception e
+              (println "Trouble requiring" namespace "-" (.getMessage e)))))
      (regrow [ns-map body] default-disambiguator nil))
   ([[ns-map body] disambiguate last-missing-sym]
      (if-let [{:keys [missing-sym type]} (check-for-failure ns-map body)]
