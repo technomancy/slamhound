@@ -62,7 +62,7 @@
   (debug :disambiguating missing-sym :in candidates)
   (or (->> candidates
            (sort-by (comp count str))
-           (remove #(re-find #"swank" (str %)))
+           (remove #(re-find #"swank|lancet" (str %)))
            first)
       (throw (Exception. (str "Couldn't resolve "
                               (or missing-sym "candidates"))))))
