@@ -1,9 +1,8 @@
 (ns slam.hound.regrow
-  ;; TODO: stop using swank
-  (:use [swank.util.class-browse :only [available-classes]])
-  (:require [slam.hound.stitch :as stitch]))
+  (:require [slam.hound.stitch :as stitch]
+            [slam.hound.search :as search]))
 
-(def ^{:dynamic true} *debug* false)
+(def ^{:dynamic true} *debug* (System/getenv "DEBUG"))
 
 (defn debug [& msg]
   (when *debug* (apply prn msg)))
@@ -42,7 +41,7 @@
 (defmulti candidates (fn [type missing-sym] type))
 
 (defmethod candidates :import [type missing-sym]
-  (for [{full-name :name} available-classes
+  (for [{full-name :name} search/available-classes
         :when (= missing-sym (last (.split full-name "\\.")))]
     (symbol full-name)))
 
@@ -67,6 +66,8 @@
 (defn regrow
   ([[ns-map body]]
      ;; TODO: better way to use custom disambiguator
+     (doseq [namespace (search/namespaces)]
+       (require namespace))
      (regrow [ns-map body] default-disambiguator nil))
   ([[ns-map body] disambiguate last-missing-sym]
      (if-let [{:keys [missing-sym type]} (check-for-failure ns-map body)]
