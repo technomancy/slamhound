@@ -19,7 +19,8 @@
   (.endsWith (.getName f) ".clj"))
 
 (defn jar? [f]
-  (.endsWith (.getName f) ".jar"))
+  (let [f (file f)]
+    (and (.isFile f) (.endsWith (.getName f) ".jar"))))
 
 (defn class-file? [f]
   (.endsWith f ".class"))
@@ -32,9 +33,7 @@
 
 (defn read-ns-form [r f]
   (let [form (try (read r false ::done)
-                  (catch Exception e
-                    (println (format "Couldn't parse %s: %s" f (.getMessage e)))
-                    ::done))]
+                  (catch Exception _ ::done))]
     (if (and (list? form) (= 'ns (first form)))
       form
       (when-not (= ::done form)
@@ -67,7 +66,10 @@
         (second ns-form)))))
 
 (defn namespaces []
-  (mapcat namespaces-in-dir (filter (memfn isDirectory) classpath-files)))
+  (let [files (mapcat namespaces-in-dir (filter #(.isDirectory %)
+                                                classpath-files))
+        jars (mapcat namespaces-in-jar (filter jar? classpath-files))]
+    (set (remove nil? (concat files jars)))))
 
 ;;; Java classes
 
