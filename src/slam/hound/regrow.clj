@@ -57,13 +57,17 @@
         :when (= missing-sym (name sym))]
     [(ns-name n) :only [sym]]))
 
+(defn default-disambiguator [candidates]
+  ;; TODO: way more smarts here
+  (first (remove #(re-find #"swank" (str %)) candidates)))
+
 (defn grow [missing-sym type ns-map disambiguate]
   (update-in ns-map [type] conj (disambiguate (candidates type missing-sym))))
 
 (defn regrow
   ([[ns-map body]]
      ;; TODO: better way to use custom disambiguator
-     (regrow [ns-map body] first nil))
+     (regrow [ns-map body] default-disambiguator nil))
   ([[ns-map body] disambiguate last-missing-sym]
      (if-let [{:keys [missing-sym type]} (check-for-failure ns-map body)]
        (if (= last-missing-sym missing-sym)
