@@ -55,4 +55,5 @@
       collapse-clauses
       sort-subclauses
       ns-from-map
-      prettify))
+      prettify
+      (.replace "(ns\n " "(ns")))
