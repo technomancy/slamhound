@@ -59,6 +59,7 @@
   "Pick the shortest matching candidate by default."
   [candidates & [missing-sym]]
   ;; TODO: prefer things in src/classes to jars
+  (debug :disambiguating missing-sym :in candidates)
   (or (->> candidates
            (sort-by (comp count str))
            (remove #(re-find #"swank" (str %)))
@@ -72,10 +73,9 @@
 
 (defn regrow
   ([[ns-map body]]
-     (doseq [namespace (search/namespaces)]
-       (try (require namespace)
-            (catch Exception e
-              (println "Trouble requiring" namespace "-" (.getMessage e)))))
+     (doseq [namespace (search/namespaces)
+             :when (not (re-find #"example|lancet$" (name namespace)))]
+       (try (with-out-str (require namespace)) (catch Exception _)))
      (regrow [ns-map body] default-disambiguator nil))
   ([[ns-map body] disambiguate last-missing-sym]
      (if-let [{:keys [missing-sym type]} (check-for-failure ns-map body)]
