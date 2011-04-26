@@ -22,7 +22,7 @@
   (for [[package classes] (group-by package-grouper imports)]
     (cons (symbol package)
           (sort (for [c classes]
-                  (-> c resolve .getSimpleName symbol))))))
+                  (-> c resolve .getName (.split "\\.") last symbol))))))
 
 (defmethod collapse-clause :import [ns-map clause]
   (update-in ns-map [:import] group-by-package))

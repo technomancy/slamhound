@@ -13,6 +13,7 @@
                        (:require [clojure.java.io :as io]
                                  [clojure.set :as set])
                        (:import java.io.File java.io.ByteArrayInputStream
+                                clojure.lang.Compiler$BodyExpr
                                 java.util.UUID)
                        (:refer-clojure :exclude [compile test])))
 
@@ -23,12 +24,14 @@
           [clojure.test :only [is]]
           [clojure.test :only [deftest]]]
    :require '([clojure.java.io :as io] [clojure.set :as set])
-   :import '(java.io.File java.io.ByteArrayInputStream java.util.UUID)
+   :import '(java.io.File java.io.ByteArrayInputStream
+                          clojure.lang.Compiler$BodyExpr java.util.UUID)
    :refer-clojure '(:exclude [compile test])})
 
 (def sample-body
   '((set/union #{:a} #{:b})
     (UUID/randomUUID)
+    (instance? Compiler$BodyExpr nil)
     (io/copy (ByteArrayInputStream. (.getBytes "remotely human"))
              (doto (File. "/tmp/remotely-human") .deleteOnExit))
     (deftest test-ns-to-map
@@ -69,14 +72,17 @@
                  [clojure.test :only [is]]
                  [slam.hound.stitch :only [ns-from-map]]]
           :require '([clojure.java.io :as io] [clojure.set :as set])
-          :import '(java.io.ByteArrayInputStream java.io.File java.util.UUID)
+          :import '(clojure.lang.Compiler$BodyExpr
+                    java.io.ByteArrayInputStream java.io.File java.util.UUID)
           :refer-clojure '(:exclude [compile test])}
          (stitch/sort-subclauses sample-ns-map))))
 
 (deftest test-collapse-import
-  (is (= {:import '[(java.io ByteArrayInputStream File)
+  (is (= {:import '[(clojure.lang Compiler$BodyExpr)
+                    (java.io ByteArrayInputStream File)
                     (java.util UUID)]}
-         (stitch/collapse-clause {:import '(java.io.ByteArrayInputStream
+         (stitch/collapse-clause {:import '(clojure.lang.Compiler$BodyExpr
+                                            java.io.ByteArrayInputStream
                                             java.io.File java.util.UUID)}
                                  :import))))
 
@@ -95,6 +101,9 @@
     [clojure.test :only [deftest is]]
     [slam.hound.stitch :only [ns-from-map]])
   (:require [clojure.java.io :as io] [clojure.set :as set])
-  (:import (java.io ByteArrayInputStream File) (java.util UUID))
+  (:import
+    (clojure.lang Compiler$BodyExpr)
+    (java.io ByteArrayInputStream File)
+    (java.util UUID))
   (:refer-clojure :exclude [compile test]))
 " (stitch/stitch-up sample-ns-map))))
