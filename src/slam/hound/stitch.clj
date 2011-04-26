@@ -3,11 +3,13 @@
 
 (def ns-clauses [:use :require :import])
 
+(def ns-clauses-to-preserve [:refer-clojure :gen-class :load])
+
 (defn ns-from-map [ns-map]
   `(~'ns ~(:name ns-map)
      ~@(if-let [doco (:doc (:meta ns-map))] ; avoid inserting nil
          [doco])
-     ~@(for [clause-type (cons :refer-clojure ns-clauses)
+     ~@(for [clause-type (concat ns-clauses ns-clauses-to-preserve)
              :when (seq (clause-type ns-map))]
          (cons clause-type (clause-type ns-map)))))
 
