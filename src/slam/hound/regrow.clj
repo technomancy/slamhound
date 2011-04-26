@@ -34,7 +34,8 @@
         (catch Exception e
           (debug :ex (.getMessage e))
           (or (failure-details (.getMessage e))
-              (throw e)))
+              (do (debug :not-found ns-form)
+                  (throw e))))
         (finally
          (remove-ns (.name *ns*)))))))
 
@@ -56,16 +57,17 @@
         :when (= missing-sym (name sym))]
     [(ns-name n) :only [sym]]))
 
-(defn default-disambiguator [candidates]
-  ;; TODO: way more smarts here
-  (first (remove #(re-find #"swank" (str %)) candidates)))
+(defn default-disambiguator
+  "Pick the shortest matching candidate by default."
+  [candidates]
+  ;; TODO: prefer things in src/classes to jars
+  (first (sort-by (comp count str) candidates)))
 
-(defn grow [missing-sym type ns-map disambiguate]
+(defn grow-step [missing-sym type ns-map disambiguate]
   (update-in ns-map [type] conj (disambiguate (candidates type missing-sym))))
 
 (defn regrow
   ([[ns-map body]]
-     ;; TODO: better way to use custom disambiguator
      (doseq [namespace (search/namespaces)]
        (require namespace))
      (regrow [ns-map body] default-disambiguator nil))
@@ -73,6 +75,6 @@
      (if-let [{:keys [missing-sym type]} (check-for-failure ns-map body)]
        (if (= last-missing-sym missing-sym)
          (throw (Exception. (str "Couldn't resolve " missing-sym)))
-         (recur [(grow missing-sym type ns-map disambiguate) body]
+         (recur [(grow-step missing-sym type ns-map disambiguate) body]
                 disambiguate missing-sym))
        ns-map)))
