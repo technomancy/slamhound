@@ -34,7 +34,17 @@ For this you will need to add Slamhound in both :dependencies and
 
 Then run from the command line:
 
-    $ lein slamhound my.namespace
+    $ cat src/my/namespace # before: ns form is missing clauses
+
+    (ns my.namespace
+      "I have a docstring.")
+
+    (defn -main [& args]
+      (pprint args)
+      (io/copy (ByteArrayInputStream. (.getBytes "hello"))
+               (first args))) 
+
+    $ lein slamhound src/my/namespace.clj # after: spits out new form
 
     (ns my.namespace
       "I have a doc string."
