@@ -5,7 +5,8 @@
 
 (defn ns-from-map [ns-map]
   `(~'ns ~(:name ns-map)
-     ~(:doc (:meta ns-map))
+     ~@(if-let [doco (:doc (:meta ns-map))] ; avoid inserting nil
+         [doco])
      ~@(for [clause-type (cons :refer-clojure ns-clauses)
              :when (clause-type ns-map)]
          (cons clause-type (clause-type ns-map)))))
