@@ -16,7 +16,7 @@
               (re-find #"No such namespace: ([-\w]+)" msg))))
 
 (defn failure-details [msg]
-  (let [sym (missing-sym-name msg)]
+  (when-let [sym (missing-sym-name msg)]
     {:missing-sym sym
      :type (cond (class-name? sym) :import
                  (re-find #"namespace" msg) :require
@@ -33,7 +33,8 @@
         nil
         (catch Exception e
           (debug :ex (.getMessage e))
-          (failure-details (.getMessage e)))
+          (or (failure-details (.getMessage e))
+              (throw e)))
         (finally
          (remove-ns (.name *ns*)))))))
 
