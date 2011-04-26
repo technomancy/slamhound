@@ -8,7 +8,7 @@
      ~@(if-let [doco (:doc (:meta ns-map))] ; avoid inserting nil
          [doco])
      ~@(for [clause-type (cons :refer-clojure ns-clauses)
-             :when (clause-type ns-map)]
+             :when (seq (clause-type ns-map))]
          (cons clause-type (clause-type ns-map)))))
 
 (defmulti collapse-clause (comp second list))
