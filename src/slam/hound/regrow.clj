@@ -57,12 +57,18 @@
 
 (defn default-disambiguator
   "Pick the shortest matching candidate by default."
-  [candidates]
+  [candidates & [missing-sym]]
   ;; TODO: prefer things in src/classes to jars
-  (first (sort-by (comp count str) candidates)))
+  (or (->> candidates
+           (sort-by (comp count str))
+           (remove #(re-find #"swank" (str %)))
+           first)
+      (throw (Exception. (str "Couldn't resolve "
+                              (or missing-sym "candidates"))))))
 
 (defn grow-step [missing-sym type ns-map disambiguate]
-  (update-in ns-map [type] conj (disambiguate (candidates type missing-sym))))
+  (update-in ns-map [type] conj (disambiguate (candidates type missing-sym)
+                                              missing-sym)))
 
 (defn regrow
   ([[ns-map body]]
