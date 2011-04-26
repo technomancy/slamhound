@@ -23,16 +23,14 @@
                  :else :use)}))
 
 (defn check-for-failure [ns-map body]
-  (let [ns-form (stitch/ns-from-map ns-map)]
-    (binding [*ns* (create-ns `foo#)]
+  (binding [*ns* (create-ns `slamhound.sandbox#)]
+    (let [ns-form (slam.hound.stitch/ns-from-map
+                   (assoc ns-map :name (.name *ns*)))]
       (try
         (refer 'clojure.core)
-        (eval ns-form)
-        (doseq [form body]
-          (eval form))
+        (eval `(do ~ns-form ~@body))
         nil
         (catch Exception e
-          (debug :ex (.getMessage e))
           (or (failure-details (.getMessage e))
               (do (debug :not-found ns-form)
                   (throw e))))
