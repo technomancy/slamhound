@@ -17,7 +17,7 @@
 
 (defn failure-details [msg]
   (when-let [sym (missing-sym-name msg)]
-    {:missing-sym sym
+    {:missing sym
      :type (cond (class-name? sym) :import
                  (re-find #"No such (var|namespace)" msg) :require
                  :else :use)}))
@@ -37,39 +37,39 @@
         (finally
          (remove-ns (.name *ns*)))))))
 
-(defmulti candidates (fn [type missing-sym] type))
+(defmulti candidates (fn [type missing] type))
 
-(defmethod candidates :import [type missing-sym]
+(defmethod candidates :import [type missing]
   (for [{full-name :name} search/available-classes
-        :when (= missing-sym (last (.split full-name "\\.")))]
+        :when (= missing (last (.split full-name "\\.")))]
     (symbol full-name)))
 
-(defmethod candidates :require [type missing-sym]
+(defmethod candidates :require [type missing]
   (for [n (all-ns)
-        :when (= missing-sym (last (.split (name (ns-name n)) "\\.")))]
-    [(ns-name n) :as (symbol missing-sym)]))
+        :when (= missing (last (.split (name (ns-name n)) "\\.")))]
+    [(ns-name n) :as (symbol missing)]))
 
-(defmethod candidates :use [type missing-sym]
+(defmethod candidates :use [type missing]
   (for [n (all-ns)
         [sym var] (ns-publics n)
-        :when (= missing-sym (name sym))]
+        :when (= missing (name sym))]
     [(ns-name n) :only [sym]]))
 
 (defn default-disambiguator
   "Pick the shortest matching candidate by default."
-  [candidates & [missing-sym]]
+  [candidates & [missing]]
   ;; TODO: prefer things in src/classes to jars
-  (debug :disambiguating missing-sym :in candidates)
+  (debug :disambiguating missing :in candidates)
   (or (->> candidates
            (sort-by (comp count str))
            (remove #(re-find #"swank|lancet" (str %)))
            first)
       (throw (Exception. (str "Couldn't resolve "
-                              (or missing-sym "candidates"))))))
+                              (or missing "candidates"))))))
 
-(defn grow-step [missing-sym type ns-map disambiguate]
-  (update-in ns-map [type] conj (disambiguate (candidates type missing-sym)
-                                              missing-sym)))
+(defn grow-step [missing type ns-map disambiguate]
+  (update-in ns-map [type] conj
+             (disambiguate (candidates type missing) missing)))
 
 (defn regrow
   ([[ns-map body]]
@@ -77,10 +77,10 @@
              :when (not (re-find #"example|lancet$" (name namespace)))]
        (try (with-out-str (require namespace)) (catch Exception _)))
      (regrow [ns-map body] default-disambiguator nil))
-  ([[ns-map body] disambiguate last-missing-sym]
-     (if-let [{:keys [missing-sym type]} (check-for-failure ns-map body)]
-       (if (= last-missing-sym missing-sym)
-         (throw (Exception. (str "Couldn't resolve " missing-sym)))
-         (recur [(grow-step missing-sym type ns-map disambiguate) body]
-                disambiguate missing-sym))
+  ([[ns-map body] disambiguate last-missing]
+     (if-let [{:keys [missing type]} (check-for-failure ns-map body)]
+       (if (= last-missing missing)
+         (throw (Exception. (str "Couldn't resolve " missing)))
+         (recur [(grow-step missing type ns-map disambiguate) body]
+                disambiguate missing))
        ns-map)))
