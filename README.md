@@ -82,14 +82,15 @@ Add this definition to your Emacs config, then start a slime session.
 
     (defun slamhound ()
       (interactive)
-      (let ((result (first (slime-eval `(swank:eval-and-grab-output
-                                          (format "(do (require 'slam.hound)
-                                                     (slam.hound/reconstruct \"%s\"))"
-                                                  ,buffer-file-name))))))
-        (goto-char (point-min))
-        (kill-sexp)
-        (insert result)))
-
+      (save-excursion 
+        (let ((result (first (slime-eval `(swank:eval-and-grab-output
+    				       (format "(do (require 'slam.hound)
+                                                         (slam.hound/reconstruct \"%s\"))"
+    					       ,buffer-file-name))))))
+          (goto-char (point-min))
+          (kill-sexp)
+          (insert result))))
+    
 Then you'll be able to run M-x slamhound to reconstruct your ns
 form. This also avoids the startup penalty.
 
