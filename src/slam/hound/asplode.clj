@@ -8,7 +8,7 @@
         [ns-meta clauses] (if (string? doco)
                             [(assoc ns-meta :doc doco) clauses]
                             [ns-meta (cons doco clauses)])]
-    (into {:meta ns-meta :name ns-name}
+    (into {:meta ns-meta :name ns-name :old ns-form}
           (map (juxt first rest) clauses))))
 
 (defn asplode [rdr]
