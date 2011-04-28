@@ -40,7 +40,7 @@
 ;;; representation transformation
 
 (deftest test-ns-to-map
-  (is (= sample-ns-map (asplode/ns-to-map sample-ns-form))))
+  (is (= sample-ns-map (dissoc (asplode/ns-to-map sample-ns-form) :old))))
 
 (deftest test-ns-from-map
   (is (= sample-ns-form (stitch/ns-from-map sample-ns-map))))
@@ -62,6 +62,14 @@
 (deftest test-grow-use
   (is (= sample-ns-map (regrow/regrow [(dissoc sample-ns-map :use)
                                        sample-body]))))
+
+(deftest test-grow-preserve
+  (let [in-orig? (regrow/in-original-pred :import '((:import (java.util Date))))]
+    (is (in-orig? 'java.util.Date))
+    (is (not (in-orig? 'java.sql.Date))))
+  (is (= '(java.io.File java.util.Date)
+         (:import (regrow/regrow [{:old '((:import '((java.util Date))))}
+                                  '(vector (Date.) (File. "/tmp"))])))))
 
 ;;; stitch
 

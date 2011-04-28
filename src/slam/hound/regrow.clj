@@ -1,8 +1,9 @@
 (ns slam.hound.regrow
-  (:require [slam.hound.stitch :as stitch]
+  (:require [clojure.string :as string]
+            [slam.hound.stitch :as stitch]
             [slam.hound.search :as search]))
 
-(def ^{:dynamic true} *debug* (System/getenv "DEBUG"))
+(defonce ^{:dynamic true} *debug* (System/getenv "DEBUG"))
 
 (defn debug [& msg]
   (when *debug* (apply prn msg)))
@@ -55,21 +56,37 @@
         :when (= missing (name sym))]
     [(ns-name n) :only [sym]]))
 
+(defn butlast-regex [candidate]
+  (if (symbol? candidate)
+    (re-pattern (string/join "." (butlast (.split (name candidate) "\\."))))
+    (re-pattern (name (first candidate)))))
+
+(defn in-original-pred [type old]
+  (let [[old-clause] (filter #(and (seq? %) (= type (first %))) old)]
+    (fn [candidate]
+      (re-find (butlast-regex candidate) (str old-clause)))))
+
+(def disambiguator-blacklist
+  (if-let [v (resolve 'user/slamhound-disambiguator-blacklist)]
+    @v
+    #"swank|lancet"))
+
 (defn default-disambiguator
   "Pick the shortest matching candidate by default."
-  [candidates & [missing]]
+  [candidates missing ns-map type]
   ;; TODO: prefer things in src/classes to jars
   (debug :disambiguating missing :in candidates)
   (or (->> candidates
-           (sort-by (comp count str))
-           (remove #(re-find #"swank|lancet" (str %)))
+           (sort-by (juxt (complement (in-original-pred type (:old ns-map)))
+                          (comp count str)))
+           (remove #(re-find disambiguator-blacklist (str %)))
            first)
       (throw (Exception. (str "Couldn't resolve "
                               (or missing "candidates"))))))
 
 (defn grow-step [missing type ns-map disambiguate]
   (update-in ns-map [type] conj
-             (disambiguate (candidates type missing) missing)))
+             (disambiguate (candidates type missing) missing ns-map type)))
 
 (defn regrow
   ([[ns-map body]]
