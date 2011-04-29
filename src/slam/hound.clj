@@ -10,5 +10,4 @@
   (-> (io/reader filename)
       asplode
       regrow
-      stitch-up
-      println))
+      stitch-up))
