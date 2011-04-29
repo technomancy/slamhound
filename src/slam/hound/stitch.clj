@@ -1,5 +1,5 @@
 (ns slam.hound.stitch
-  (:use [clojure.pprint :only [pprint code-dispatch with-pprint-dispatch]]))
+  (:use [clojure.pprint :only [code-dispatch pprint with-pprint-dispatch]]))
 
 (def ns-clauses [:use :require :import])
 

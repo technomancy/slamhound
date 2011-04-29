@@ -1,6 +1,6 @@
 (ns slamhound.test-reconstruct
   "Testing some things going on here."
-  (:use [clojure.test])
+  (:use [clojure.test :only [deftest is]])
   (:require [slam.hound.asplode :as asplode]
             [slam.hound.regrow :as regrow]
             [slam.hound.stitch :as stitch]))
