@@ -25,9 +25,8 @@
                  :else :use)}))
 
 (defn check-for-failure [ns-map body]
-  (binding [*ns* (create-ns `slamhound.sandbox#)]
-    (let [ns-form (slam.hound.stitch/ns-from-map
-                   (assoc ns-map :name (.name *ns*)))]
+  (let [ns-form (stitch/ns-from-map (assoc ns-map :name (.name *ns*)))]
+    (binding [*ns* (create-ns `slamhound.sandbox#)]
       (try
         (refer 'clojure.core)
         (eval `(do ~ns-form ~@body))
@@ -93,7 +92,9 @@
   ([[ns-map body]]
      (doseq [namespace (search/namespaces)
              :when (not (re-find #"example|lancet$" (name namespace)))]
-       (try (with-out-str (require namespace)) (catch Exception _)))
+       (try (with-out-str (require namespace))
+            (catch Exception _)
+            (catch Error _)))
      (regrow [ns-map body] default-disambiguator nil))
   ([[ns-map body] disambiguate last-missing]
      (if-let [{:keys [missing type]} (check-for-failure ns-map body)]
