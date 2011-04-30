@@ -3,10 +3,15 @@
             [slam.hound.stitch :as stitch]
             [slam.hound.search :as search]))
 
-(defonce ^{:dynamic true} *debug* (System/getenv "DEBUG"))
+(def *debug* false)
+
+;; sometimes we can't rely on stdout (testing slamhound.el)
+(def debug-log (atom []))
 
 (defn debug [& msg]
-  (when *debug* (apply prn msg)))
+  (when *debug*
+    (swap! debug-log conj msg)
+    (apply prn msg)))
 
 (defn class-name? [x]
   (Character/isUpperCase (first (name x))))
