@@ -48,9 +48,9 @@
 (defmulti candidates (fn [type missing] type))
 
 (defmethod candidates :import [type missing]
-  (for [{full-name :name} search/available-classes
-        :when (= missing (last (.split full-name "\\.")))]
-    (symbol full-name)))
+  (for [class-name search/available-classes
+        :when (= missing (last (.split class-name "\\.")))]
+    (symbol class-name)))
 
 (defmethod candidates :require [type missing]
   (for [n (all-ns)

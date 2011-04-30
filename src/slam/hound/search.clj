@@ -116,10 +116,10 @@
   [#^File f #^File loc]
   (let [lp (.getPath loc)]
     (try
-     (map (fn [fp] {:loc lp :file fp :name (class-or-ns-name fp)})
-          (filter class-file?
-                  (map #(.getName #^JarEntry %)
-                       (enumeration-seq (.entries (JarFile. f))))))
+      (map class-or-ns-name
+           (filter class-file?
+                   (map #(.getName #^JarEntry %)
+                        (enumeration-seq (.entries (JarFile. f))))))
      (catch Exception e []))))          ; fail gracefully if jar is unreadable
 
 (defmethod path-class-files :dir
@@ -133,13 +133,12 @@
   ;; Build class info using file path relative to parent classpath entry
   ;; location. Make sure it decends; a class can't be on classpath directly.
   [#^File f #^File loc]
-  (let [fp (.getPath f), lp (.getPath loc)
-        m (re-matcher (re-pattern (Pattern/quote
-                                   (str "^" lp File/separator))) fp)]
-    (if (not (.find m))                 ; must be descendent of loc
-      []
-      (let [fpr (.substring fp (.end m))]
-        [{:loc lp :file fpr :name (class-or-ns-name fpr)}]))))
+  (let [fp (str f), lp (str loc)
+        loc-pattern (re-pattern (str "^" loc))]
+    (if (re-find loc-pattern fp)                 ; must be descendent of loc
+      (let [fpr (.substring fp (inc (count lp)))]
+        [(class-or-ns-name fpr)])
+      [])))
 
 (defn scan-paths
   "Takes one or more classpath strings, scans each classpath entry location, and
@@ -157,7 +156,7 @@
      (reduce #(concat %1 (scan-paths %2)) (scan-paths cp) more)))
 
 (def available-classes
-     (remove #(clojure-fn-file? (:file %))
-             (scan-paths (System/getProperty "sun.boot.class.path")
-                         (System/getProperty "java.ext.dirs")
-                         (System/getProperty "java.class.path"))))
+  (remove clojure-fn-file?
+          (scan-paths (System/getProperty "sun.boot.class.path")
+                      (System/getProperty "java.ext.dirs")
+                      (System/getProperty "java.class.path"))))
