@@ -94,14 +94,20 @@
   (update-in ns-map [type] conj
              (disambiguate (candidates type missing) missing ns-map type)))
 
+(defonce pre-load
+  (delay
+   (doseq [namespace (search/namespaces)
+           :when (not (re-find #"example|lancet$" (name namespace)))]
+     (try (with-out-str (require namespace))
+          (catch Exception _)
+          (catch Error _)))))
+
 (defn regrow
   ([[ns-map body]]
-     (doseq [namespace (search/namespaces)
-             :when (not (re-find #"example|lancet$" (name namespace)))]
-       (try (with-out-str (require namespace))
-            (catch Exception _)
-            (catch Error _)))
-     (regrow [ns-map body] default-disambiguator nil))
+     (force pre-load)
+     (if (:slamhound-skip (:meta ns-map))
+       ns-map
+       (regrow [ns-map body] default-disambiguator nil)))
   ([[ns-map body] disambiguate last-missing]
      (if-let [{:keys [missing type]} (check-for-failure ns-map body)]
        (if (= last-missing missing)
