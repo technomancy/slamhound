@@ -30,8 +30,9 @@
                  :else :use)}))
 
 (defn check-for-failure [ns-map body]
-  (let [ns-form (stitch/ns-from-map (assoc ns-map :name (.name *ns*)))]
-    (binding [*ns* (create-ns `slamhound.sandbox#)]
+  (let [sandbox-ns `slamhound.sandbox#
+        ns-form (stitch/ns-from-map (assoc ns-map :name sandbox-ns))]
+    (binding [*ns* (create-ns sandbox-ns)]
       (try
         (refer 'clojure.core)
         (eval `(do ~ns-form ~@body))
