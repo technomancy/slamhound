@@ -26,6 +26,7 @@
   (when-let [sym (missing-sym-name msg)]
     {:missing sym
      :type (cond (class-name? sym) :import
+                 (re-find #"Unable to resolve var: \w+/" msg) :require
                  (re-find #"No such (var|namespace)" msg) :require
                  :else :use)}))
 
