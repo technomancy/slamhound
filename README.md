@@ -25,14 +25,13 @@
 Slamhound rips your ns form apart and reconstructs it. No Dutch
 surgeon required.
 
+Add it to your :dev-dependencies.
+
+        [slamhound "1.1.1"]
+
 ## Leiningen Usage
 
-For this you will need to add Slamhound in both :dependencies and
-:dev-dependencies:
-
-    [slamhound "1.1.1"]
-
-Then run from the command line:
+Take a namespace with a sparse ns form that won't compile:
 
     $ cat src/my/namespace.clj # before: ns form is missing clauses
 
@@ -44,6 +43,8 @@ Then run from the command line:
       (io/copy (ByteArrayInputStream. (.getBytes "hello"))
                (first args))) 
 
+Then run slamhound on it:
+
     $ lein slamhound src/my/namespace.clj # after: spits out new ns form
 
     (ns my.namespace
@@ -53,23 +54,23 @@ Then run from the command line:
       (:import (java.io ByteArrayInputStream)))
 
 For large projects, it can be slow to re-run from the command-line
-since it has to load every namespace on the classpath for every
-invocation. The interactive task can mitigate this:
+since it has to load every namespace for every invocation. Leiningen's
+interactive task is one way to mitigate this:
 
     $ lein int
     Welcome to Leiningen. Type help for a list of commands.
     lein> slamhound src/my/namespace.clj
     [...]
 
-The first run will be slower, but successive runs will be quick.
+The first run will be slow, but successive runs will be quick.
 
 ## Repl Usage
 
-You can also use any repl:
+You can do it manually from the repl too:
 
     user=> (use 'slam.hound)
     nil
-    user=> (reconstruct "src/my/namespace.clj")
+    user=> (println (reconstruct "src/my/namespace.clj"))
     (ns my.namespace
       "I have a doc string."
       (:use [clojure.pprint :only [pprint]])
@@ -78,20 +79,9 @@ You can also use any repl:
 
 ## Emacs Usage
 
-Add this definition to your Emacs config, then start a slime session.
-
-    (defun slamhound ()
-      (interactive)
-      (let ((result (first (slime-eval `(swank:eval-and-grab-output
-                                          (format "(do (require 'slam.hound)
-                                                     (slam.hound/reconstruct \"%s\"))"
-                                                  ,buffer-file-name))))))
-        (goto-char (point-min))
-        (kill-sexp)
-        (insert result)))
-
-Then you'll be able to run M-x slamhound to reconstruct your ns
-form. This also avoids the startup penalty.
+The included slamhound.el allows for convenient access within Slime
+sessions via M-x slamhound as well as running it over an entire
+project with M-x slamhound-project.
 
 ## The Rules
 
