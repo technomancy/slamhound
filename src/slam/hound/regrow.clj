@@ -68,10 +68,9 @@
     (re-pattern (string/join "." (butlast (.split (name candidate) "\\."))))
     (re-pattern (name (first candidate)))))
 
-(defn in-original-pred [type old]
-  (let [[old-clause] (filter #(and (seq? %) (= type (first %))) old)]
-    (fn [candidate]
-      (re-find (butlast-regex candidate) (str old-clause)))))
+(defn in-original-pred [original]
+  (fn [candidate]
+    (re-find (butlast-regex candidate) (str original))))
 
 (def disambiguator-blacklist
   (if-let [v (resolve 'user/slamhound-disambiguator-blacklist)]
@@ -84,7 +83,7 @@
   ;; TODO: prefer things in src/classes to jars
   (debug :disambiguating missing :in candidates)
   (or (->> candidates
-           (sort-by (juxt (complement (in-original-pred type (:old ns-map)))
+           (sort-by (juxt (complement (in-original-pred (type (:old ns-map))))
                           (comp count str)))
            (remove #(re-find disambiguator-blacklist (str %)))
            first)

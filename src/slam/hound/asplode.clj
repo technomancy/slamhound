@@ -1,20 +1,20 @@
-(ns slam.hound.asplode)
-
-(def ns-clauses-to-reconstruct [:use :require :import])
+(ns slam.hound.asplode
+  (:import (java.io PushbackReader)))
 
 (defn ns-to-map [ns-form]
-  (let [[_ ns-name doco & clauses] ns-form
+  (let [[_ ns-name maybe-doc & clauses] ns-form
         ns-meta (meta ns-name)
-        [ns-meta clauses] (if (string? doco)
-                            [(assoc ns-meta :doc doco) clauses]
-                            [ns-meta (cons doco clauses)])]
-    (into {:meta ns-meta :name ns-name :old ns-form}
+        [ns-meta clauses] (if (string? maybe-doc)
+                            [(assoc ns-meta :doc maybe-doc) clauses]
+                            [ns-meta (cons maybe-doc clauses)])]
+    (into {:meta ns-meta :name ns-name}
           (map (juxt first rest) clauses))))
 
 (defn asplode [rdr]
-  (let [rdr (java.io.PushbackReader. rdr)
+  (let [rdr (PushbackReader. rdr)
         ns-map (ns-to-map (read rdr))
-        stripped-ns (apply dissoc ns-map ns-clauses-to-reconstruct)
+        ns-map (assoc ns-map :old ns-map)
+        stripped-ns (apply dissoc ns-map [:use :require :import])
         body (take-while #(not= ::done %)
                          (repeatedly #(read rdr false ::done)))]
     [stripped-ns body]))
