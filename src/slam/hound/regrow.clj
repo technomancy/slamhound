@@ -35,9 +35,7 @@
         ns-form (stitch/ns-from-map (assoc ns-map :name sandbox-ns))]
     (binding [*ns* (create-ns sandbox-ns)]
       (try
-        (refer 'clojure.core)
-        (eval `(do ~ns-form ~@body))
-        nil
+        (eval `(do ~ns-form ~@body nil))
         (catch Exception e
           (or (failure-details (.getMessage e))
               (do (debug :not-found ns-form)
