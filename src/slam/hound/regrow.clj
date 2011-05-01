@@ -25,10 +25,10 @@
 (defn failure-details [msg]
   (when-let [sym (missing-sym-name msg)]
     {:missing sym
-     :type (cond (class-name? sym) :import
-                 (re-find #"Unable to resolve var: \w+/" msg) :require
-                 (re-find #"No such (var|namespace)" msg) :require
-                 :else :use)}))
+     :types (cond (class-name? sym) [:import :use]
+                 (re-find #"Unable to resolve var: \w+/" msg) [:require :use]
+                 (re-find #"No such (var|namespace)" msg) [:require]
+                 :else [:use :import])}))
 
 (defn check-for-failure [ns-map body]
   (let [sandbox-ns `slamhound.sandbox#
@@ -80,36 +80,41 @@
   [candidates missing ns-map type]
   ;; TODO: prefer things in src/classes to jars
   (debug :disambiguating missing :in candidates)
-  (or (->> candidates
-           (sort-by (juxt (complement (in-original-pred (type (:old ns-map))))
-                          (comp count str)))
-           (remove #(re-find disambiguator-blacklist (str %)))
-           first)
-      (throw (Exception. (str "Couldn't resolve "
-                              (or missing "candidates"))))))
+  (->> candidates
+       (sort-by (juxt (complement (in-original-pred (type (:old ns-map))))
+                      (comp count str)))
+       (remove #(re-find disambiguator-blacklist (str %)))
+       first))
 
 (defn grow-step [missing type ns-map disambiguate]
-  (update-in ns-map [type] conj
-             (disambiguate (candidates type missing) missing ns-map type)))
+  (if-let [addition (disambiguate (candidates type missing)
+                                  missing ns-map type)]
+    (update-in ns-map [type] conj addition)
+    ns-map))
 
 (defonce pre-load
   (delay
    (doseq [namespace (search/namespaces)
            :when (not (re-find #"example|lancet$" (name namespace)))]
      (try (with-out-str (require namespace))
-          (catch Exception _)
-          (catch Error _)))))
+          (catch Throwable _)))))
 
 (defn regrow
   ([[ns-map body]]
      (force pre-load)
      (if (:slamhound-skip (:meta ns-map))
        ns-map
-       (regrow [ns-map body] default-disambiguator nil)))
-  ([[ns-map body] disambiguate last-missing]
-     (if-let [{:keys [missing type]} (check-for-failure ns-map body)]
-       (if (= last-missing missing)
-         (throw (Exception. (str "Couldn't resolve " missing)))
-         (recur [(grow-step missing type ns-map disambiguate) body]
-                disambiguate missing))
-       ns-map)))
+       (regrow [ns-map body] default-disambiguator)))
+  ([[ns-map body] disambiguate]
+     (loop [ns-map ns-map
+            last-missing nil
+            type-to-try 0]
+       (if-let [{:keys [missing types]} (check-for-failure ns-map body)]
+         (let [type-idx (if (= last-missing missing)
+                          (inc type-to-try)
+                          0)]
+           (if-let [type (get types type-idx)]
+             (recur (grow-step missing type ns-map disambiguate)
+                    missing type-idx)
+             (throw (Exception. (str "Couldn't resolve " missing ", got as far as " ns-map)))))
+         ns-map))))
