@@ -75,9 +75,7 @@
     @v
     #"swank|lancet"))
 
-(defn default-disambiguator
-  "Pick the shortest matching candidate by default."
-  [candidates missing ns-map type]
+(defn disambiguate [candidates missing ns-map type]
   ;; TODO: prefer things in src/classes to jars
   (debug :disambiguating missing :in candidates)
   (->> candidates
@@ -86,7 +84,7 @@
        (remove #(re-find disambiguator-blacklist (str %)))
        first))
 
-(defn grow-step [missing type ns-map disambiguate]
+(defn grow-step [missing type ns-map]
   (if-let [addition (disambiguate (candidates type missing)
                                   missing ns-map type)]
     (update-in ns-map [type] conj addition)
@@ -99,22 +97,19 @@
      (try (with-out-str (require namespace))
           (catch Throwable _)))))
 
-(defn regrow
-  ([[ns-map body]]
-     (force pre-load)
-     (if (:slamhound-skip (:meta ns-map))
-       ns-map
-       (regrow [ns-map body] default-disambiguator)))
-  ([[ns-map body] disambiguate]
-     (loop [ns-map ns-map
-            last-missing nil
-            type-to-try 0]
-       (if-let [{:keys [missing types]} (check-for-failure ns-map body)]
-         (let [type-idx (if (= last-missing missing)
-                          (inc type-to-try)
-                          0)]
-           (if-let [type (get types type-idx)]
-             (recur (grow-step missing type ns-map disambiguate)
-                    missing type-idx)
-             (throw (Exception. (str "Couldn't resolve " missing ", got as far as " ns-map)))))
-         ns-map))))
+(defn regrow [[ns-map body]]
+  (force pre-load)
+  (if (:slamhound-skip (:meta ns-map))
+    ns-map
+    (loop [ns-map ns-map
+           last-missing nil
+           type-to-try 0]
+      (if-let [{:keys [missing types]} (check-for-failure ns-map body)]
+        (let [type-idx (if (= last-missing missing)
+                         (inc type-to-try)
+                         0)]
+          (if-let [type (get types type-idx)]
+            (recur (grow-step missing type ns-map) missing type-idx)
+            (throw (Exception. (str "Couldn't resolve " missing
+                                    ", got as far as " ns-map)))))
+        ns-map))))
