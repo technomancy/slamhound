@@ -17,18 +17,18 @@
   (Character/isUpperCase (first (name x))))
 
 (defn missing-sym-name [msg]
-  (second (or (re-find #"Unable to resolve \w+: ([-_\w\$\?!\*]+)" msg)
-              (re-find #"Can't resolve: ([-_\w\$\?!\*]+)" msg)
-              (re-find #"No such namespace: ([-_\w\$\?!\*]+)" msg)
-              (re-find #"No such var: \w+/([-_\w\$\?!\*]+)" msg))))
+  (second (or (re-find #"Unable to resolve \w+: ([-_\w\$\?!\*\>\<]+)" msg)
+              (re-find #"Can't resolve: ([-_\w\$\?!\*\>\<]+)" msg)
+              (re-find #"No such namespace: ([-_\w\$\?!\*\>\<]+)" msg)
+              (re-find #"No such var: \w+/([-_\w\$\?!\*\>\<]+)" msg))))
 
 (defn failure-details [msg]
   (when-let [sym (missing-sym-name msg)]
     {:missing sym
      :types (cond (class-name? sym) [:import :use]
-                 (re-find #"Unable to resolve var: \w+/" msg) [:require :use]
-                 (re-find #"No such (var|namespace)" msg) [:require]
-                 :else [:use :import])}))
+                  (re-find #"Unable to resolve var: \w+/" msg) [:require :use]
+                  (re-find #"No such (var|namespace)" msg) [:require]
+                  :else [:use :import])}))
 
 (defn check-for-failure [ns-map body]
   (let [sandbox-ns `slamhound.sandbox#
