@@ -46,7 +46,6 @@
              :when (seq (clause-type ns-map))]
          (cons clause-type (clause-type ns-map)))))
 
-;; TODO: indentation here is all wrong, but pprint gets line length right.
 (defn prettify [ns-form]
   (.replace (with-out-str
               (with-pprint-dispatch code-dispatch
