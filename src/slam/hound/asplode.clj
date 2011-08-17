@@ -14,7 +14,7 @@
   (let [rdr (PushbackReader. rdr)
         ns-map (ns-to-map (read rdr))
         ns-map (assoc ns-map :old ns-map)
-        stripped-ns (apply dissoc ns-map [:use :require :import])
+        stripped-ns (dissoc ns-map :use :require :import)
         body (take-while #(not= ::done %)
                          (repeatedly #(read rdr false ::done)))]
     [stripped-ns body]))
