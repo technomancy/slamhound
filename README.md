@@ -25,9 +25,9 @@
 Slamhound rips your ns form apart and reconstructs it. No Dutch
 surgeon required.
 
-Add it to your :dev-dependencies.
+Install it as a Leiningen plugin:
 
-        [slamhound "1.1.1"]
+    $ lein plugin install slamhound 1.1.1
 
 ## Leiningen Usage
 
@@ -79,25 +79,29 @@ You can do it manually from the repl too:
 
 ## Emacs Usage
 
-The included slamhound.el allows for convenient access within Slime
-sessions via M-x slamhound as well as running it over an entire
-project with M-x slamhound-project.
+The included `src/swank/payload/slamhound.el` allows for
+convenient access within Slime sessions via `M-x slamhound` as well as
+running it over an entire project with `M-x slamhound-project`.
+
+You can install manually, but if you use `M-x clojure-jack-in` with
+Swank Clojure 1.3.3 or newer to launch your Slime session then it will
+be loaded into Emacs automatically.
 
 ## The Rules
 
 Slamhound can only rebuild your namespace if it follows the rules and
-doesn't do anything too fancy. If your code depends upon a
-:require clause, the required namespace must be aliased :as the last
-segment of its name. The only supported option to :use is :only.
+doesn't do anything too fancy. If your code depends upon a `:require`
+clause, the required namespace must be aliased `:as` the last segment
+of its name. Referring to fully-qualified vars is not supported. The
+only supported option to `:use` is `:only`.
 
 ## Future Plans
 
 * Better pretty-printing
-* Piggy-backing elisp inside jar
 * Allow for custom disambiguator functions
 
 ## License
 
-Copyright (C) 2011 Phil Hagelberg
+Copyright © 2011 Phil Hagelberg
 
 Distributed under the Eclipse Public License, the same as Clojure.
