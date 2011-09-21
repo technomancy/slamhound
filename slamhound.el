@@ -52,31 +52,6 @@
                      (catch Exception e
                             (println :error (.getMessage e)))))))
 
-(defun slamhound-point-at-end-of-sexp (start)
-  (save-excursion (goto-char start) (end-of-sexp) (point)))
-
-(defun slamhound-prettify-subclause ()
-  (backward-char 2)
-  (let ((beginning-of-sexp (point)))
-    (while (search-forward-regexp "[ \n]" (slamhound-point-at-end-of-sexp
-                                           beginning-of-sexp) t)
-      (just-one-space -1))))
-
-(defun slamhound-prettify-clause (clause)
-  (just-one-space -1)
-  (beginning-of-line)
-  (let ((end-of-clause (save-excursion (end-of-sexp) (point))))
-    (while (search-forward-regexp "[(\\[][a-z]" end-of-clause t)
-      (slamhound-prettify-subclause))))
-
-(defun slamhound-prettify ()
-  (interactive)
-  (goto-char (point-min))
-  (let ((end-of-ns (save-excursion (end-of-defun) (point))))
-    (while (search-forward-regexp "(:\\([-a-z]+\\)" end-of-ns t)
-      (slamhound-prettify-clause (match-string 0)))
-    (indent-region (point-min) end-of-ns)))
-
 ;;;###autoload
 (defun slamhound ()
   "Run slamhound on the current buffer. Requires active slime connection."
@@ -86,11 +61,11 @@
     (setq rrr result)
     (if (string-match "^:error \\(.*\\)" result)
         (error (match-string 1 result))
-      (goto-char (point-min))
-      (kill-sexp)
-      ;; TODO: translate \n into newline
-      (insert result)
-      (slamhound-prettify))))
+      (save-excursion
+	(goto-char (point-min))
+	(kill-sexp)
+	;; TODO: translate \n into newline
+	(insert result)))))
 
 ;; Project-wide:
 
