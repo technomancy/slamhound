@@ -27,7 +27,7 @@ surgeon required.
 
 Add it to your :dev-dependencies.
 
-        [slamhound "1.1.1"]
+        [slamhound "1.2.0"]
 
 ## Leiningen Usage
 
