@@ -83,6 +83,8 @@ The included slamhound.el allows for convenient access within Slime
 sessions via M-x slamhound as well as running it over an entire
 project with M-x slamhound-project.
 
+Emacs version 24 or greater is required.
+
 ## The Rules
 
 Slamhound can only rebuild your namespace if it follows the rules and
