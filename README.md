@@ -81,7 +81,9 @@ You can do it manually from the repl too:
 
 The included slamhound.el allows for convenient access within Slime
 sessions via M-x slamhound as well as running it over an entire
-project with M-x slamhound-project.
+project with M-x slamhound-project. 
+
+Emacs version 24 or greater is required.
 
 ## The Rules
 
