@@ -9,7 +9,8 @@
                        "Testing some things going on here."
                        (:use [slam.hound.stitch :only [ns-from-map]]
                              [clojure.test :only [is]]
-                             [clojure.test :only [deftest]])
+                             [clojure.test :only [deftest]]
+                             [clojure.contrib.core :only [-?>]])
                        (:require [clojure.java.io :as io]
                                  [clojure.set :as set])
                        (:import java.io.File java.io.ByteArrayInputStream
@@ -22,7 +23,8 @@
    :meta {:doc "Testing some things going on here."}
    :use '[[slam.hound.stitch :only [ns-from-map]]
           [clojure.test :only [is]]
-          [clojure.test :only [deftest]]]
+          [clojure.test :only [deftest]]
+          [clojure.contrib.core :only [-?>]]]
    :require '([clojure.java.io :as io] [clojure.set :as set])
    :import '(java.io.File java.io.ByteArrayInputStream
                           clojure.lang.Compiler$BodyExpr java.util.UUID)
@@ -31,6 +33,7 @@
 (def sample-body
   '((set/union #{:a} #{:b})
     (UUID/randomUUID)
+    (-?> :hello :world)
     (instance? Compiler$BodyExpr nil)
     (io/copy (ByteArrayInputStream. (.getBytes "remotely human"))
              (doto (File. "/tmp/remotely-human") .deleteOnExit))
@@ -76,7 +79,8 @@
 (deftest test-sort
   (is (= {:name 'slamhound.sample
           :meta {:doc "Testing some things going on here."}
-          :use '[[clojure.test :only [deftest]]
+          :use '[[clojure.contrib.core :only [-?>]]
+                 [clojure.test :only [deftest]]
                  [clojure.test :only [is]]
                  [slam.hound.stitch :only [ns-from-map]]]
           :require '([clojure.java.io :as io] [clojure.set :as set])
@@ -106,6 +110,7 @@
   (is (= "(ns slamhound.sample
   \"Testing some things going on here.\"
   (:use
+    [clojure.contrib.core :only [-?>]]
     [clojure.test :only [deftest is]]
     [slam.hound.stitch :only [ns-from-map]])
   (:require [clojure.java.io :as io] [clojure.set :as set])
