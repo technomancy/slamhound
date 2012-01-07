@@ -4,6 +4,13 @@
                                pprint-logical-block pprint-newline formatter-out
                                write-out]]))
 
+(defn- brackets
+  "Figure out which kind of brackets to use"
+  [form]
+  (if (vector? form)
+    ["[" "]"]
+    ["(" ")"]))
+
 (defn- pprint-ns-reference
   "Pretty print a single reference (import, use, etc.) from a namespace decl"
   [reference]
