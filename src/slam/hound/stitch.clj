@@ -1,5 +1,5 @@
 (ns slam.hound.stitch
-  (:use [clojure.pprint :only [code-dispatch pprint with-pprint-dispatch]]))
+  (:use [slam.hound.prettify :only [prettify]]))
 
 (def ns-clauses [:use :require :import])
 
@@ -45,12 +45,6 @@
      ~@(for [clause-type (concat ns-clauses ns-clauses-to-preserve)
              :when (seq (clause-type ns-map))]
          (cons clause-type (clause-type ns-map)))))
-
-(defn prettify [ns-form]
-  (.replace (with-out-str
-              (with-pprint-dispatch code-dispatch
-                (pprint ns-form)))
-            "(ns\n " "(ns"))
 
 (defn stitch-up [ns-map]
   (-> ns-map
