@@ -25,7 +25,11 @@
 Slamhound rips your ns form apart and reconstructs it. No Dutch
 surgeon required.
 
-Install it as a Leiningen plugin:
+Add `slamhound "1.2.0"` to the `:dependencies` of your `:user`
+profile. To use the Leiningen task, add `lein-slamhound
+"1.3.0-SNAPSHOT"` to the `:plugins` of your `:user` profile.
+
+Or if you use Leiningen 1.x, make it a user-level plugin:
 
     $ lein plugin install slamhound 1.2.0
 
@@ -53,20 +57,9 @@ Then run slamhound on it:
       (:require [clojure.java.io :as io])
       (:import (java.io ByteArrayInputStream)))
 
-For large projects, it can be slow to re-run from the command-line
-since it has to load every namespace for every invocation. Leiningen's
-interactive task is one way to mitigate this:
-
-    $ lein int
-    Welcome to Leiningen. Type help for a list of commands.
-    lein> slamhound src/my/namespace.clj
-    [...]
-
-The first run will be slow, but successive runs will be quick.
-
 ## Repl Usage
 
-You can do it manually from the repl too:
+You can do it manually from the repl too to avoid the slow startup time:
 
     user=> (use 'slam.hound)
     nil
@@ -104,6 +97,6 @@ only supported option to `:use` is `:only`.
 
 ## License
 
-Copyright © 2011 Phil Hagelberg
+Copyright © 2011-2012 Phil Hagelberg
 
 Distributed under the Eclipse Public License, the same as Clojure.
