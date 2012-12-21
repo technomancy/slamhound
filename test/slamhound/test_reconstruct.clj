@@ -3,14 +3,16 @@
   (:use [clojure.test :only [deftest is]])
   (:require [slam.hound.asplode :as asplode]
             [slam.hound.regrow :as regrow]
-            [slam.hound.stitch :as stitch]))
+            [slam.hound.stitch :as stitch]
+            [slam.hound :as hound]
+            [clojure.java.io :as io])
+  (:import java.io.StringReader))
 
 (def sample-ns-form '(ns slamhound.sample
                        "Testing some things going on here."
                        (:use [slam.hound.stitch :only [ns-from-map]]
                              [clojure.test :only [is]]
-                             [clojure.test :only [deftest]]
-                             [clojure.contrib.core :only [-?>]])
+                             [clojure.test :only [deftest]])
                        (:require [clojure.java.io :as io]
                                  [clojure.set :as set])
                        (:import java.io.File java.io.ByteArrayInputStream
@@ -18,13 +20,17 @@
                                 java.util.UUID)
                        (:refer-clojure :exclude [compile test])))
 
+(def sample-ns-form-only-require '(ns slamhound.sample
+                                    "Testing some things going on here."
+                                    (:require [clojure.java.io :as io]
+                                              [clojure.set :as set])))
+
 (def sample-ns-map
   {:name 'slamhound.sample
    :meta {:doc "Testing some things going on here."}
    :use '[[slam.hound.stitch :only [ns-from-map]]
           [clojure.test :only [is]]
-          [clojure.test :only [deftest]]
-          [clojure.contrib.core :only [-?>]]]
+          [clojure.test :only [deftest]]]
    :require '([clojure.java.io :as io] [clojure.set :as set])
    :import '(java.io.File java.io.ByteArrayInputStream
                           clojure.lang.Compiler$BodyExpr java.util.UUID)
@@ -33,7 +39,6 @@
 (def sample-body
   '((set/union #{:a} #{:b})
     (UUID/randomUUID)
-    (-?> :hello :world)
     (instance? Compiler$BodyExpr nil)
     (io/copy (ByteArrayInputStream. (.getBytes "remotely human"))
              (doto (File. "/tmp/remotely-human") .deleteOnExit))
@@ -66,6 +71,11 @@
   (is (= sample-ns-map (regrow/regrow [(dissoc sample-ns-map :use)
                                        sample-body]))))
 
+(deftest foo-test
+  (is (= "" (-> (io/reader (StringReader. (pr-str sample-ns-form-only-require)))
+                asplode/asplode
+                regrow/regrow))))
+
 (deftest test-grow-preserve
   (let [in-orig? (regrow/in-original-pred '((java.util Date UUID)))]
     (is (in-orig? 'java.util.Date))
@@ -79,8 +89,7 @@
 (deftest test-sort
   (is (= {:name 'slamhound.sample
           :meta {:doc "Testing some things going on here."}
-          :use '[[clojure.contrib.core :only [-?>]]
-                 [clojure.test :only [deftest]]
+          :use '[[clojure.test :only [deftest]]
                  [clojure.test :only [is]]
                  [slam.hound.stitch :only [ns-from-map]]]
           :require '([clojure.java.io :as io] [clojure.set :as set])
@@ -109,14 +118,11 @@
 (deftest test-stitch-up
   (is (= "(ns slamhound.sample
   \"Testing some things going on here.\"
-  (:use
-    [clojure.contrib.core :only [-?>]]
-    [clojure.test :only [deftest is]]
-    [slam.hound.stitch :only [ns-from-map]])
+  (:use [clojure.test :only [deftest is]]
+        [slam.hound.stitch :only [ns-from-map]])
   (:require [clojure.java.io :as io] [clojure.set :as set])
-  (:import
-    (clojure.lang Compiler$BodyExpr)
-    (java.io ByteArrayInputStream File)
-    (java.util UUID))
+  (:import (clojure.lang Compiler$BodyExpr)
+           (java.io ByteArrayInputStream File)
+           (java.util UUID))
   (:refer-clojure :exclude [compile test]))
 " (stitch/stitch-up sample-ns-map))))
