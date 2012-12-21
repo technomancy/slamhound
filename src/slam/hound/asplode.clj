@@ -1,5 +1,5 @@
 (ns slam.hound.asplode
-  (:import (java.io PushbackReader)))
+  (:import java.io.PushbackReader))
 
 (defn ns-to-map [ns-form]
   (let [[_ ns-name maybe-doc & clauses] ns-form
@@ -8,13 +8,15 @@
                             [(assoc ns-meta :doc maybe-doc) clauses]
                             [ns-meta (cons maybe-doc clauses)])]
     (into {:meta ns-meta :name ns-name}
-          (map (juxt first rest) clauses))))
+          (for [[use-import-or-require & body] clauses]
+            [use-import-or-require body]))))
 
 (defn asplode [rdr]
   (let [rdr (PushbackReader. rdr)
         ns-map (ns-to-map (read rdr))
-        ns-map (assoc ns-map :old ns-map)
-        stripped-ns (dissoc ns-map :use :require :import)
+        stripped-ns (-> ns-map 
+                        (assoc :old ns-map)
+                        (dissoc :use :require :import))
         body (take-while #(not= ::done %)
                          (repeatedly #(read rdr false ::done)))]
     [stripped-ns body]))
