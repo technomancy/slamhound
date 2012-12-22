@@ -25,11 +25,11 @@
                           clojure.lang.Compiler$BodyExpr java.util.UUID)
    :refer-clojure '(:exclude [compile test])})
 
-(deftest test-ns-from-map
+(deftest ^:unit test-ns-from-map
   (is (= sample-ns-form (ns-from-map sample-ns-map))))
 
-;; TODO Doc 21st - is this test neccecary? It *should* be covered by tests for stitch-up
-(deftest test-sort
+;; TODO Dec 21st - is this test neccecary? It *should* be covered by tests for stitch-up
+(deftest ^:unit test-sort
   (is (= {:name 'slamhound.sample
           :meta {:doc "Testing some things going on here."}
           :use '[[clojure.test :only [deftest]]
@@ -41,7 +41,7 @@
           :refer-clojure '(:exclude [compile test])}
          (sort-subclauses sample-ns-map))))
 
-(deftest test-collapse-import
+(deftest ^:unit test-collapse-import
   (is (= {:import '[(clojure.lang Compiler$BodyExpr)
                     (java.io ByteArrayInputStream File)
                     (java.util UUID)]}
@@ -50,7 +50,7 @@
                                             java.io.File java.util.UUID)}
                                  :import))))
 
-(deftest test-collapse-use
+(deftest ^:unit test-collapse-use
   (is (= {:use '[[clojure.test :only [deftest is]]
                  [slam.hound.stitch :only [ns-from-map]]]}
          (collapse-clause {:use '[[clojure.test :only [deftest]]
@@ -58,7 +58,7 @@
                                          [clojure.test :only [is]]]}
                                  :use))))
 
-(deftest test-stitch-up
+(deftest ^:unit test-stitch-up
   (is (= "(ns slamhound.sample
   \"Testing some things going on here.\"
   (:use [clojure.test :only [deftest is]]

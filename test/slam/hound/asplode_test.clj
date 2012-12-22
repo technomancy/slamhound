@@ -27,5 +27,5 @@
                                 java.util.UUID)
                        (:refer-clojure :exclude [compile test])))
 
-(deftest test-ns-to-map
+(deftest ^:unit test-ns-to-map
   (is (= sample-ns-map (dissoc (ns-to-map sample-ns-form) :old))))

@@ -20,23 +20,23 @@
     (instance? Compiler$BodyExpr nil)
     (io/copy (ByteArrayInputStream. (.getBytes "remotely human"))
              (doto (File. "/tmp/remotely-human") .deleteOnExit))
-    (deftest test-ns-to-map
+    (deftest ^:unit test-ns-to-map
       (is (= (ns-from-map {:ns 'slam.hound}))))))
 
-(deftest test-grow-import
+(deftest ^:unit test-grow-import
   (is (= sample-ns-map (regrow [(dissoc sample-ns-map :import)
                                 sample-body]))))
 
-(deftest test-grow-require
+(deftest ^:unit test-grow-require
   (is (= sample-ns-map (regrow [(dissoc sample-ns-map :require)
                                 sample-body]))))
 
-(deftest test-grow-use
+(deftest ^:unit test-grow-use
   (is (= sample-ns-map (regrow [(dissoc sample-ns-map :use)
                                 sample-body]))))
 
 
-(deftest test-grow-preserve
+(deftest ^:unit test-grow-preserve
   (let [in-orig? (in-original-pred '((java.util date uuid)))]
     (is (in-orig? 'java.util.date))
     (is (not (in-orig? 'java.sql.date))))
