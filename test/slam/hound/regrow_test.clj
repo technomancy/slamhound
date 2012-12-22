@@ -37,9 +37,9 @@
 
 
 (deftest ^:unit test-grow-preserve
-  (let [in-orig? (in-original-pred '((java.util date uuid)))]
-    (is (in-orig? 'java.util.date))
-    (is (not (in-orig? 'java.sql.date))))
-  (is (= '(java.io.file java.util.date)
-         (:import (regrow [{:old {:import '((java.util date))}}
-                           '(vector (date.) (file. "/tmp"))])))))
+  (let [in-orig? (in-original-pred '((java.util Date UUID)))]
+    (is (in-orig? 'java.util.Date))
+    (is (not (in-orig? 'java.sql.Date))))
+  (is (= '(java.io.File java.util.Date)
+         (:import (regrow [{:old {:import '((java.util Date))}}
+                           '(vector (Date.) (File. "/tmp"))])))))
