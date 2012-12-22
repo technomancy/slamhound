@@ -1,9 +1,9 @@
 (ns slam.hound.stitch
   (:use [slam.hound.prettify :only [prettify]]))
 
-(def ns-clauses [:use :require :import])
+(def ^:private ns-clauses [:use :require :import])
 
-(def ns-clauses-to-preserve [:refer-clojure :gen-class :load])
+(def ^:private ns-clauses-to-preserve [:refer-clojure :gen-class :load])
 
 (defn- get-package [class-name]
   (-> class-name resolve .getPackage .getName))
@@ -30,7 +30,7 @@
 (defmethod collapse-clause :use [ns-map clause]
   (update-in ns-map [:use] group-by-namespace))
 
-(defn collapse-clauses [ns-map]
+(defn- collapse-clauses [ns-map]
   (reduce collapse-clause ns-map ns-clauses))
 
 (defn sort-subclauses [ns-map]
