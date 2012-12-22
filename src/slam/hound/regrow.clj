@@ -3,26 +3,26 @@
             [slam.hound.stitch :as stitch]
             [slam.hound.search :as search]))
 
-(def *debug* false)
+(def ^:dynamic *debug* false)
 
 ;; sometimes we can't rely on stdout (testing slamhound.el)
 (def debug-log (atom []))
 
-(defn debug [& msg]
+(defn- debug [& msg]
   (when *debug*
     (swap! debug-log conj msg)
     (apply prn msg)))
 
-(defn class-name? [x]
+(defn- class-name? [x]
   (Character/isUpperCase (first (name x))))
 
-(defn missing-sym-name [msg]
+(defn- missing-sym-name [msg]
   (second (or (re-find #"Unable to resolve \w+: ([-_\w\$\?!\*\>\<]+)" msg)
               (re-find #"Can't resolve: ([-_\w\$\?!\*\>\<]+)" msg)
               (re-find #"No such namespace: ([-_\w\$\?!\*\>\<]+)" msg)
               (re-find #"No such var: \w+/([-_\w\$\?!\*\>\<]+)" msg))))
 
-(defn failure-details [msg]
+(defn- failure-details [msg]
   (when-let [sym (missing-sym-name msg)]
     {:missing sym
      :types (cond (class-name? sym) [:import :use]
@@ -30,7 +30,7 @@
                   (re-find #"No such (var|namespace)" msg) [:require]
                   :else [:use :import])}))
 
-(defn check-for-failure [ns-map body]
+(defn- check-for-failure [ns-map body]
   (let [sandbox-ns `slamhound.sandbox#
         ns-form (stitch/ns-from-map (assoc ns-map :name sandbox-ns))]
     (binding [*ns* (create-ns sandbox-ns)]
@@ -61,7 +61,7 @@
         :when (= missing (name sym))]
     [(ns-name n) :only [sym]]))
 
-(defn butlast-regex [candidate]
+(defn- butlast-regex [candidate]
   (if (symbol? candidate)
     (re-pattern (string/join "." (butlast (.split (name candidate) "\\."))))
     (re-pattern (name (first candidate)))))
@@ -75,7 +75,7 @@
     @v
     #"swank|lancet"))
 
-(defn disambiguate [candidates missing ns-map type]
+(defn- disambiguate [candidates missing ns-map type]
   ;; TODO: prefer things in src/classes to jars
   (debug :disambiguating missing :in candidates)
   (->> candidates
@@ -84,7 +84,7 @@
        (remove #(re-find disambiguator-blacklist (str %)))
        first))
 
-(defn grow-step [missing type ns-map]
+(defn- grow-step [missing type ns-map]
   (if-let [addition (disambiguate (candidates type missing)
                                   missing ns-map type)]
     (update-in ns-map [type] conj addition)
@@ -109,3 +109,4 @@
             (throw (Exception. (str "Couldn't resolve " missing
                                     ", got as far as " ns-map)))))
         ns-map))))
+
