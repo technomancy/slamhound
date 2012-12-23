@@ -70,7 +70,7 @@
   (fn [candidate]
     (re-find (butlast-regex candidate) (str original))))
 
-(def disambiguator-blacklist
+(def ^:private disambiguator-blacklist
   (if-let [v (resolve 'user/slamhound-disambiguator-blacklist)]
     @v
     #"swank|lancet"))
@@ -90,11 +90,14 @@
     (update-in ns-map [type] conj addition)
     ns-map))
 
-(defn regrow [[ns-map body]]
+(defn- pre-load-namespaces []
   (doseq [namespace (search/namespaces)
           :when (not (re-find #"example|lancet$" (name namespace)))]
     (try (with-out-str (require namespace))
-         (catch Throwable _)))
+      (catch Throwable _))))
+
+(defn regrow [[ns-map body]]
+  (pre-load-namespaces)
   (if (:slamhound-skip (:meta ns-map))
     ns-map
     (loop [ns-map ns-map
