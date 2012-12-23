@@ -43,23 +43,18 @@
         (finally
          (remove-ns (.name *ns*)))))))
 
-(defmulti candidates (fn [type missing] type))
-
-(defmethod candidates :import [type missing]
-  (for [class-name search/available-classes
-        :when (= missing (last (.split class-name "\\.")))]
-    (symbol class-name)))
-
-(defmethod candidates :require [type missing]
-  (for [n (all-ns)
-        :when (= missing (last (.split (name (ns-name n)) "\\.")))]
-    [(ns-name n) :as (symbol missing)]))
-
-(defmethod candidates :use [type missing]
-  (for [n (all-ns)
-        [sym var] (ns-publics n)
-        :when (= missing (name sym))]
-    [(ns-name n) :only [sym]]))
+(defn candidates [type missing]
+  (case type
+    :import (for [class-name search/available-classes
+                  :when (= missing (last (.split class-name "\\.")))]
+              (symbol class-name))
+    :require (for [n (all-ns)
+                   :when (= missing (last (.split (name (ns-name n)) "\\.")))]
+               [(ns-name n) :as (symbol missing)])
+    :use (for [n (all-ns)
+               [sym var] (ns-publics n)
+               :when (= missing (name sym))]
+           [(ns-name n) :only [sym]])))
 
 (defn- butlast-regex [candidate]
   (if (symbol? candidate)

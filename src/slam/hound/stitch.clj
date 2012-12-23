@@ -19,16 +19,11 @@
     [namespace :only (vec (sort (for [[_ _ [var]] subclause]
                                   var)))]))
 
-(defmulti collapse-clause (comp second list))
-
-(defmethod collapse-clause :import [ns-map clause]
-  (update-in ns-map [:import] group-by-package))
-
-(defmethod collapse-clause :require [ns-map clause]
-  ns-map)
-
-(defmethod collapse-clause :use [ns-map clause]
-  (update-in ns-map [:use] group-by-namespace))
+(defn collapse-clause [ns-map clause]
+  (case clause
+    :use    (update-in ns-map [:use]    group-by-namespace)
+    :import (update-in ns-map [:import] group-by-package)
+    ns-map))
 
 (defn- collapse-clauses [ns-map]
   (reduce collapse-clause ns-map ns-clauses))
@@ -36,7 +31,8 @@
 (defn sort-subclauses [ns-map]
   ;; lists aren't comparable? huh?
   (reduce #(update-in %1 [%2] (partial sort-by str))
-          ns-map ns-clauses))
+          ns-map
+          ns-clauses))
 
 (defn ns-from-map [ns-map]
   `(~'ns ~(:name ns-map)
