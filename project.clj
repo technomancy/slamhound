@@ -5,6 +5,6 @@
   :dev-dependencies [[org.clojure/tools.trace "0.7.3"]
                      [org.clojars.runa/clj-schema "0.7.0"]]
   :test-selectors {:default (constantly true)
-                   :integration :intgration
+                   :integration :integration
                    :unit :unit})
 

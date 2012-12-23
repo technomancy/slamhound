@@ -4,11 +4,11 @@
 
 (def sample-ns-form '(ns slamhound.sample
                        "Testing some things going on here."
-                       (:use [slam.hound.stitch :only [ns-from-map]]
-                             [clojure.test :only [is]]
-                             [clojure.test :only [deftest]])
                        (:require [clojure.java.io :as io]
-                                 [clojure.set :as set])
+                                 [clojure.set :as set]
+                                 [slam.hound.stitch :refer [ns-from-map]]
+                                 [clojure.test :refer [is]]
+                                 [clojure.test :refer [deftest]])
                        (:import java.io.File java.io.ByteArrayInputStream
                                 clojure.lang.Compiler$BodyExpr
                                 java.util.UUID)
@@ -17,10 +17,10 @@
 (def sample-ns-map
   {:name 'slamhound.sample
    :meta {:doc "Testing some things going on here."}
-   :use '[[slam.hound.stitch :only [ns-from-map]]
-          [clojure.test :only [is]]
-          [clojure.test :only [deftest]]]
-   :require '([clojure.java.io :as io] [clojure.set :as set])
+   :require-refer '[[slam.hound.stitch :refer [ns-from-map]]
+                    [clojure.test :refer [is]]
+                    [clojure.test :refer [deftest]]]
+   :require-as '([clojure.java.io :as io] [clojure.set :as set])
    :import '(java.io.File java.io.ByteArrayInputStream
                           clojure.lang.Compiler$BodyExpr java.util.UUID)
    :refer-clojure '(:exclude [compile test])})
@@ -32,10 +32,10 @@
 (deftest ^:unit test-sort
   (is (= {:name 'slamhound.sample
           :meta {:doc "Testing some things going on here."}
-          :use '[[clojure.test :only [deftest]]
-                 [clojure.test :only [is]]
-                 [slam.hound.stitch :only [ns-from-map]]]
-          :require '([clojure.java.io :as io] [clojure.set :as set])
+          :require-refer '[[clojure.test :refer [deftest]]
+                           [clojure.test :refer [is]]
+                           [slam.hound.stitch :refer [ns-from-map]]]
+          :require-as '([clojure.java.io :as io] [clojure.set :as set])
           :import '(clojure.lang.Compiler$BodyExpr
                     java.io.ByteArrayInputStream java.io.File java.util.UUID)
           :refer-clojure '(:exclude [compile test])}
@@ -46,24 +46,25 @@
                     (java.io ByteArrayInputStream File)
                     (java.util UUID)]}
          (collapse-clause {:import '(clojure.lang.Compiler$BodyExpr
-                                            java.io.ByteArrayInputStream
-                                            java.io.File java.util.UUID)}
-                                 :import))))
+                                     java.io.ByteArrayInputStream
+                                     java.io.File java.util.UUID)}
+                          :import))))
 
 (deftest ^:unit test-collapse-use
-  (is (= {:use '[[clojure.test :only [deftest is]]
-                 [slam.hound.stitch :only [ns-from-map]]]}
-         (collapse-clause {:use '[[clojure.test :only [deftest]]
-                                  [slam.hound.stitch :only [ns-from-map]]
-                                  [clojure.test :only [is]]]}
-                          :use))))
+  (is (= {:require-refer '[[clojure.test :refer [deftest is]]
+                           [slam.hound.stitch :refer [ns-from-map]]]}
+         (collapse-clause {:require-refer '[[clojure.test :refer [deftest]]
+                                            [slam.hound.stitch :refer [ns-from-map]]
+                                            [clojure.test :refer [is]]]}
+                          :require-refer))))
 
 (deftest ^:unit test-stitch-up
   (is (= "(ns slamhound.sample
   \"Testing some things going on here.\"
-  (:use [clojure.test :only [deftest is]]
-        [slam.hound.stitch :only [ns-from-map]])
-  (:require [clojure.java.io :as io] [clojure.set :as set])
+  (:require [clojure.java.io :as io]
+            [clojure.set :as set]
+            [clojure.test :refer [deftest is]]
+            [slam.hound.stitch :refer [ns-from-map]])
   (:import (clojure.lang Compiler$BodyExpr)
            (java.io ByteArrayInputStream File)
            (java.util UUID))

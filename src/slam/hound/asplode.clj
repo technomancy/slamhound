@@ -1,7 +1,7 @@
 (ns slam.hound.asplode
   (:import java.io.PushbackReader))
 
-(defn ns-to-map [ns-form]
+(defn- ns-to-map [ns-form]
   (let [[_ ns-name maybe-doc & clauses] ns-form
         ns-meta (meta ns-name)
         [ns-meta clauses] (if (string? maybe-doc)

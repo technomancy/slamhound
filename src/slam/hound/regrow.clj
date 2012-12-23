@@ -25,10 +25,10 @@
 (defn- failure-details [msg]
   (when-let [sym (missing-sym-name msg)]
     {:missing sym
-     :possible-types (cond (class-name? sym) [:import :use]
-                           (re-find #"Unable to resolve var: \w+/" msg) [:require :use]
-                           (re-find #"No such (var|namespace)" msg) [:require]
-                           :else [:use :import])}))
+     :possible-types (cond (class-name? sym) [:import :require-refer]
+                           (re-find #"Unable to resolve var: \w+/" msg) [:require-as :require-refer]
+                           (re-find #"No such (var|namespace)" msg) [:require-as]
+                           :else [:require-refer :import])}))
 
 (defn- check-for-failure [ns-map body]
   (let [sandbox-ns `slamhound.sandbox#
@@ -44,18 +44,17 @@
          (remove-ns (.name *ns*)))))))
 
 (defn candidates [type missing]
-  (println "ALL NS::" (all-ns))
   (case type
     :import (for [class-name search/available-classes
                   :when (= missing (last (.split class-name "\\.")))]
               (symbol class-name))
-    :require (for [n (all-ns)
-                   :when (= missing (last (.split (name (ns-name n)) "\\.")))]
-               [(ns-name n) :as (symbol missing)])
-    :use (for [n (all-ns)
-               [sym var] (ns-publics n)
-               :when (= missing (name sym))]
-           [(ns-name n) :only [sym]])))
+    :require-as (for [n (all-ns)
+                      :when (= missing (last (.split (name (ns-name n)) "\\.")))]
+                  [(ns-name n) :as (symbol missing)])
+    :require-refer (for [n (all-ns)
+                         [sym var] (ns-publics n)
+                         :when (= missing (name sym))]
+                     [(ns-name n) :refer [sym]])))
 
 (defn- butlast-regex [candidate]
   (if (symbol? candidate)
@@ -71,11 +70,17 @@
     @v
     #"swank|lancet"))
 
+(defn- new-type-to-old-type [new-type]
+  (case new-type
+    :require-as :require
+    :require-refer :use
+    new-type))
+
 (defn- disambiguate [candidates missing ns-map type]
   ;; TODO: prefer things in src/classes to jars
   (debug :disambiguating missing :in candidates)
   (->> candidates
-       (sort-by (juxt (complement (in-original-pred (type (:old ns-map))))
+       (sort-by (juxt (complement (in-original-pred ((new-type-to-old-type type) (:old ns-map))))
                       (comp count str)))
        (remove #(re-find disambiguator-blacklist (str %)))
        first))
@@ -102,7 +107,6 @@
         (let [type-idx (if (= last-missing missing)
                          (inc type-to-try)
                          0)]
-          (println "ARGS::" [missing possible-types type-idx])
           (if-let [type (get possible-types type-idx)]
             (recur (grow-step missing type ns-map) missing type-idx)
             (throw (Exception. (str "Couldn't resolve " missing
