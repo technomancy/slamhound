@@ -90,14 +90,15 @@
     (update-in ns-map [type] conj addition)
     ns-map))
 
-(defn- pre-load-namespaces []
-  (doseq [namespace (search/namespaces)
-          :when (not (re-find #"example|lancet$" (name namespace)))]
-    (try (with-out-str (require namespace))
-      (catch Throwable _))))
+(defonce pre-load-namespaces
+  (delay
+   (doseq [namespace (search/namespaces)
+           :when (not (re-find #"example|lancet$" (name namespace)))]
+     (try (with-out-str (require namespace))
+          (catch Throwable _)))))
 
 (defn regrow [[ns-map body]]
-  (pre-load-namespaces)
+  (force pre-load-namespaces)
   (if (:slamhound-skip (:meta ns-map))
     ns-map
     (loop [ns-map ns-map
