@@ -43,3 +43,4 @@
   (is (= '(java.io.File java.util.Date)
          (:import (regrow [{:old {:import '((java.util Date))}}
                            '(vector (Date.) (File. "/tmp"))])))))
+

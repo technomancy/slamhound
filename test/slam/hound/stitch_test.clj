@@ -54,9 +54,9 @@
   (is (= {:use '[[clojure.test :only [deftest is]]
                  [slam.hound.stitch :only [ns-from-map]]]}
          (collapse-clause {:use '[[clojure.test :only [deftest]]
-                                         [slam.hound.stitch :only [ns-from-map]]
-                                         [clojure.test :only [is]]]}
-                                 :use))))
+                                  [slam.hound.stitch :only [ns-from-map]]
+                                  [clojure.test :only [is]]]}
+                          :use))))
 
 (deftest ^:unit test-stitch-up
   (is (= "(ns slamhound.sample

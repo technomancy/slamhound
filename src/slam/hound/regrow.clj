@@ -25,10 +25,10 @@
 (defn- failure-details [msg]
   (when-let [sym (missing-sym-name msg)]
     {:missing sym
-     :types (cond (class-name? sym) [:import :use]
-                  (re-find #"Unable to resolve var: \w+/" msg) [:require :use]
-                  (re-find #"No such (var|namespace)" msg) [:require]
-                  :else [:use :import])}))
+     :possible-types (cond (class-name? sym) [:import :use]
+                           (re-find #"Unable to resolve var: \w+/" msg) [:require :use]
+                           (re-find #"No such (var|namespace)" msg) [:require]
+                           :else [:use :import])}))
 
 (defn- check-for-failure [ns-map body]
   (let [sandbox-ns `slamhound.sandbox#
@@ -44,6 +44,7 @@
          (remove-ns (.name *ns*)))))))
 
 (defn candidates [type missing]
+  (println "ALL NS::" (all-ns))
   (case type
     :import (for [class-name search/available-classes
                   :when (= missing (last (.split class-name "\\.")))]
@@ -80,8 +81,7 @@
        first))
 
 (defn- grow-step [missing type ns-map]
-  (if-let [addition (disambiguate (candidates type missing)
-                                  missing ns-map type)]
+  (if-let [addition (disambiguate (candidates type missing) missing ns-map type)]
     (update-in ns-map [type] conj addition)
     ns-map))
 
@@ -98,11 +98,12 @@
     (loop [ns-map ns-map
            last-missing nil
            type-to-try 0]
-      (if-let [{:keys [missing types]} (check-for-failure ns-map body)]
+      (if-let [{:keys [missing possible-types]} (check-for-failure ns-map body)]
         (let [type-idx (if (= last-missing missing)
                          (inc type-to-try)
                          0)]
-          (if-let [type (get types type-idx)]
+          (println "ARGS::" [missing possible-types type-idx])
+          (if-let [type (get possible-types type-idx)]
             (recur (grow-step missing type ns-map) missing type-idx)
             (throw (Exception. (str "Couldn't resolve " missing
                                     ", got as far as " ns-map)))))

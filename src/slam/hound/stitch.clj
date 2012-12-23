@@ -1,5 +1,6 @@
 (ns slam.hound.stitch
-  (:use [slam.hound.prettify :only [prettify]]))
+  (:use [slam.hound.prettify :only [prettify]]
+        clojure.tools.trace))
 
 (def ^:private ns-clauses [:use :require :import])
 
@@ -48,3 +49,5 @@
       sort-subclauses
       ns-from-map
       prettify))
+
+;; (trace-ns 'slam.hound.stitch)
