@@ -4,7 +4,7 @@
             [slam.hound.stitch :as stitch]
             [slam.hound.search :as search]))
 
-(def *debug* false)
+(def ^:dynamic *debug* false)
 
 ;; sometimes we can't rely on stdout (testing slamhound.el)
 (def debug-log (atom []))
