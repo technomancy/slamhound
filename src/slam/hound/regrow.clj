@@ -44,19 +44,15 @@
         (finally
          (remove-ns (.name *ns*)))))))
 
-(defn- uber-flatten
-  "Like flatten but will flatten into anything that is a coll?,
-   which means we can flatten namespace bodies that contain sets and maps."
-  [x]
-  (filter (complement coll?)
-          (rest (tree-seq coll? seq x))))
+(defn- symbols-in-body [body]
+  (filter symbol? (remove coll? (rest (tree-seq coll? seq body)))))
 
 (def ^:private ns-qualifed-syms
   (memoize (fn [body]
              (apply merge-with set/union {}
-                   (for [value (uber-flatten body)
-                         :when (symbol? value)
-                         :let [[_ alias var-name] (re-matches #"(.+)/(.+)" (str value))]
+                   (for [value (symbols-in-body body)
+                         :let [[_ alias var-name] (re-matches #"(.+)/(.+)"
+                                                              (str value))]
                          :when alias]
                      {alias #{(symbol var-name)}})))))
 
