@@ -1,6 +1,5 @@
 (ns slam.hound.stitch-test
-  (:require [clojure.test :refer [deftest is testing]]
-            [slam.hound.config :refer [*config*]]
+  (:require [clojure.test :refer [deftest is]]
             [slam.hound.stitch :refer [ns-from-map stitch-up sort-subclauses collapse-clause]]))
 
 (def sample-ns-form '(ns slamhound.sample
@@ -43,25 +42,13 @@
          (sort-subclauses sample-ns-map))))
 
 (deftest ^:unit test-collapse-import
-  (testing "defaults to grouping imports by package"
-    (is (= {:import '[(clojure.lang Compiler$BodyExpr)
-                      (java.io ByteArrayInputStream File)
-                      (java.util UUID)]}
-           (collapse-clause {:import '(clojure.lang.Compiler$BodyExpr
-                                       java.io.ByteArrayInputStream
-                                       java.io.File java.util.UUID)}
-                            :import))))
-
-  (testing "you can turn off grouping by package"
-    (is (= {:import '[clojure.lang.Compiler$BodyExpr
-                      java.io.ByteArrayInputStream
-                      java.io.File
-                      java.util.UUID]}
-           (binding [*config* (assoc *config* :group-imports-by-package false)]
-             (collapse-clause {:import '(clojure.lang.Compiler$BodyExpr
-                                         java.io.ByteArrayInputStream
-                                         java.io.File java.util.UUID)}
-                              :import))))))
+  (is (= {:import '[(clojure.lang Compiler$BodyExpr)
+                    (java.io ByteArrayInputStream File)
+                    (java.util UUID)]}
+         (collapse-clause {:import '(clojure.lang.Compiler$BodyExpr
+                                     java.io.ByteArrayInputStream
+                                     java.io.File java.util.UUID)}
+                          :import))))
 
 (deftest ^:unit test-collapse-use
   (is (= {:require-refer '[[clojure.test :refer [deftest is]]

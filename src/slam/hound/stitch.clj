@@ -1,7 +1,5 @@
 (ns slam.hound.stitch
-  (:require [slam.hound.config :refer [*config*]]
-            [slam.hound.prettify :refer [prettify]]))
-
+  (:use [slam.hound.prettify :only [prettify]]))
 
 (def ^:private ns-map-clauses [:require-as :require-refer :import])
 
@@ -24,9 +22,7 @@
 (defn collapse-clause [ns-map clause]
   (case clause
     :require-refer (update-in ns-map [:require-refer] group-by-namespace)
-    :import (if (:group-imports-by-package *config*)
-              (update-in ns-map [:import] group-by-package)
-              ns-map)
+    :import (update-in ns-map [:import] group-by-package)
     :require-as ns-map))
 
 (defn- collapse-clauses [ns-map]
