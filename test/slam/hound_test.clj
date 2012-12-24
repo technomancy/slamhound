@@ -38,8 +38,6 @@
 "
          (reconstruct (StringReader. basic-ns)))))
 
-
-
 (deftest ^:integration test-regression
   (is (= "(ns foo.bar
   (:require [clj-schema.validation :as val]))
@@ -47,4 +45,12 @@
          (reconstruct (StringReader. (str '(ns foo.bar
                                              (:require [clj-schema.validation :as val]))
                                           '(val/validation-errors [[:name] String] {:name "Bob"})))))))
+
+(deftest ^:integration test-finds-alias-vars-in-nested-maps-and-sets
+  (is (= "(ns foo.bar
+  (:require [clj-schema.validation :as val]))
+"
+         (reconstruct (StringReader. (str '(ns foo.bar
+                                             (:require [clj-schema.validation :as val]))
+                                          '#{:x {:a (val/validation-errors [[:name] String] {:name "Bob"})}}))))))
 

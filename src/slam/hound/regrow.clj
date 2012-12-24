@@ -1,5 +1,6 @@
 (ns slam.hound.regrow
-  (:require [clojure.string :as string]
+  (:require [clojure.set :as set]
+            [clojure.string :as string]
             [slam.hound.stitch :as stitch]
             [slam.hound.search :as search]))
 
@@ -43,14 +44,21 @@
         (finally
          (remove-ns (.name *ns*)))))))
 
+(defn- uber-flatten
+  "Like flatten but will flatten into anything that is a coll?,
+   which means we can flatten namespace bodies that contain sets and maps."
+  [x]
+  (filter (complement coll?)
+          (rest (tree-seq coll? seq x))))
+
 (def ^:private attempted-vars-in-body
   (memoize (fn [body]
-             (apply merge-with concat
-                   (for [value (flatten body)
+             (apply merge-with set/union {}
+                   (for [value (uber-flatten body)
                          :when (symbol? value)
                          :let [[_ alias var-name] (re-matches #"(.+)/(.+)" (str value))]
                          :when alias]
-                     {alias [(symbol var-name)]})))))
+                     {alias #{(symbol var-name)}})))))
 
 (defn candidates [type missing body]
   (case type
@@ -59,6 +67,7 @@
               (symbol class-name))
     :require-as (for [n (all-ns)
                       :let [vars-with-alias (get (attempted-vars-in-body body) missing)]
+                      :when (seq vars-with-alias)
                       :when (every? (set (keys (ns-publics n))) vars-with-alias)]
                   [(ns-name n) :as (symbol missing)])
     :require-refer (for [n (all-ns)
