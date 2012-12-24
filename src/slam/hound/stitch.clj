@@ -35,7 +35,8 @@
           ns-map-clauses))
 
 (defn ns-from-map [ns-map]
-  (let [ns-map (assoc ns-map :require (concat (:require-as ns-map) (:require-refer ns-map)))]
+  (let [ns-map (assoc ns-map :require (concat (:require-as ns-map)
+                                              (:require-refer ns-map)))]
     `(~'ns ~(:name ns-map)
        ~@(if-let [doco (:doc (:meta ns-map))] ; avoid inserting nil
            [doco])

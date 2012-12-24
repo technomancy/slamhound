@@ -4,7 +4,7 @@
             [slam.hound.stitch :as stitch]
             [slam.hound.search :as search]))
 
-(def *debug* false)
+(def ^:dynamic *debug* false)
 
 ;; sometimes we can't rely on stdout (testing slamhound.el)
 (def debug-log (atom []))
@@ -27,8 +27,10 @@
   (when-let [sym (missing-sym-name msg)]
     {:missing sym
      :possible-types (cond (class-name? sym) [:import :require-refer]
-                           (re-find #"Unable to resolve var: \w+/" msg) [:require-as :require-refer]
-                           (re-find #"No such (var|namespace)" msg) [:require-as]
+                           (re-find #"Unable to resolve var: \w+/" msg)
+                           [:require-as :require-refer]
+                           (re-find #"No such (var|namespace)" msg)
+                           [:require-as]
                            :else [:require-refer :import])}))
 
 (defn- check-for-failure [ns-map body]
@@ -44,19 +46,15 @@
         (finally
          (remove-ns (.name *ns*)))))))
 
-(defn- uber-flatten
-  "Like flatten but will flatten into anything that is a coll?,
-   which means we can flatten namespace bodies that contain sets and maps."
-  [x]
-  (filter (complement coll?)
-          (rest (tree-seq coll? seq x))))
+(defn- symbols-in-body [body]
+  (filter symbol? (remove coll? (rest (tree-seq coll? seq body)))))
 
 (def ^:private ns-qualifed-syms
   (memoize (fn [body]
              (apply merge-with set/union {}
-                   (for [value (uber-flatten body)
-                         :when (symbol? value)
-                         :let [[_ alias var-name] (re-matches #"(.+)/(.+)" (str value))]
+                   (for [value (symbols-in-body body)
+                         :let [[_ alias var-name] (re-matches #"(.+)/(.+)"
+                                                              (str value))]
                          :when alias]
                      {alias #{(symbol var-name)}})))))
 
@@ -66,10 +64,11 @@
                   :when (= missing (last (.split class-name "\\.")))]
               (symbol class-name))
     :require-as (for [n (all-ns)
-                      :let [syms-with-alias (get (ns-qualifed-syms body) missing)]
-                      :when (seq syms-with-alias)
-                      :when (every? (set (keys (ns-publics n)))
-                                    syms-with-alias)]
+                      :let [syms-with-alias (get (ns-qualifed-syms body)
+                                                 missing)]
+                      :when (and (seq syms-with-alias)
+                                 (every? (set (keys (ns-publics n)))
+                                         syms-with-alias))]
                   [(ns-name n) :as (symbol missing)])
     :require-refer (for [n (all-ns)
                          [sym var] (ns-publics n)
@@ -93,21 +92,23 @@
 (defn- new-type-to-old-types [new-type]
   (case new-type
     :require-as [:require]
-    :require-refer [:require :use] ;; could've been require/refer or use/only
+    :require-refer [:require :use] ; could've been require/refer or use/only
     [new-type]))
 
 (defn- disambiguate [candidates missing ns-map type]
   ;; TODO: prefer things in src/classes to jars
   (debug :disambiguating missing :in candidates)
   (->> candidates
-       (sort-by (juxt (complement (in-originals-pred (map #(get (:old ns-map) %)
-                                                          (new-type-to-old-types type))))
+       (sort-by (juxt (complement (in-originals-pred
+                                   (map #(get (:old ns-map) %)
+                                        (new-type-to-old-types type))))
                       (comp count str)))
        (remove #(re-find disambiguator-blacklist (str %)))
        first))
 
 (defn- grow-step [missing type ns-map body]
-  (if-let [addition (disambiguate (candidates type missing body) missing ns-map type)]
+  (if-let [addition (disambiguate (candidates type missing body)
+                                  missing ns-map type)]
     (update-in ns-map [type] conj addition)
     ns-map))
 
