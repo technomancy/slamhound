@@ -51,7 +51,7 @@
   (filter (complement coll?)
           (rest (tree-seq coll? seq x))))
 
-(def ^:private attempted-vars-in-body
+(def ^:private ns-qualifed-syms
   (memoize (fn [body]
              (apply merge-with set/union {}
                    (for [value (uber-flatten body)
@@ -66,9 +66,10 @@
                   :when (= missing (last (.split class-name "\\.")))]
               (symbol class-name))
     :require-as (for [n (all-ns)
-                      :let [vars-with-alias (get (attempted-vars-in-body body) missing)]
-                      :when (seq vars-with-alias)
-                      :when (every? (set (keys (ns-publics n))) vars-with-alias)]
+                      :let [syms-with-alias (get (ns-qualifed-syms body) missing)]
+                      :when (seq syms-with-alias)
+                      :when (every? (set (keys (ns-publics n)))
+                                    syms-with-alias)]
                   [(ns-name n) :as (symbol missing)])
     :require-refer (for [n (all-ns)
                          [sym var] (ns-publics n)
