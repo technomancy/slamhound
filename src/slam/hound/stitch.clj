@@ -40,7 +40,9 @@
        ~@(if-let [doco (:doc (:meta ns-map))] ; avoid inserting nil
            [doco])
        ~@(for [clause-type (concat [:require :import] ns-clauses-to-preserve)
-               :when (seq (clause-type ns-map))]
+               :when (and (contains? ns-map clause-type)
+                          (or (= clause-type :gen-class)
+                              (seq (clause-type ns-map))))]
            (cons clause-type (clause-type ns-map))))))
 
 (defn stitch-up [ns-map]

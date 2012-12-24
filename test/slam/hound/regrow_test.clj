@@ -17,6 +17,7 @@
     (is (= {:name 'slamhound.sample
             :meta {:doc "Testing some things going on here."}
             :refer-clojure '(:exclude [compile test])
+            :gen-class nil
             :require-as '([clojure.java.io :as io] [clojure.set :as set])
             :require-refer '([slam.hound.stitch :refer [ns-from-map]] [clojure.test :refer [is]] [clojure.test :refer [deftest]])
             :import '(java.io.File java.io.ByteArrayInputStream clojure.lang.Compiler$BodyExpr java.util.UUID)
@@ -25,11 +26,13 @@
                   :use '[[slam.hound.stitch :only [ns-from-map]] [clojure.test :only [is]] [clojure.test :only [deftest]]]
                   :require '([clojure.java.io :as io] [clojure.set :as set])
                   :import '(java.io.File java.io.ByteArrayInputStream clojure.lang.Compiler$BodyExpr java.util.UUID)
-                  :refer-clojure '(:exclude [compile test])}}
+                  :refer-clojure '(:exclude [compile test])
+                  :gen-class nil}}
            
            (regrow [{:name 'slamhound.sample
                      :meta {:doc "Testing some things going on here."}
                      :refer-clojure '(:exclude [compile test])
+                     :gen-class nil
                      :old {:name 'slamhound.sample
                            :meta {:doc "Testing some things going on here."}
                            :use '[[slam.hound.stitch :only [ns-from-map]]
@@ -38,7 +41,8 @@
                            :require '([clojure.java.io :as io] [clojure.set :as set])
                            :import '(java.io.File java.io.ByteArrayInputStream
                                                   clojure.lang.Compiler$BodyExpr java.util.UUID)
-                           :refer-clojure '(:exclude [compile test])}}
+                           :refer-clojure '(:exclude [compile test])
+                           :gen-class nil}}
                     sample-body])))))
 
 

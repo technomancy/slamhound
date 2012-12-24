@@ -14,7 +14,8 @@
                       (:import java.io.File java.io.ByteArrayInputStream
                                clojure.lang.Compiler$BodyExpr
                                java.util.UUID)
-                      (:refer-clojure :exclude [compile test]))
+                      (:refer-clojure :exclude [compile test])
+                      (:gen-class))
 
                    '(set/union #{:a} #{:b})
                    '(UUID/randomUUID)
@@ -34,7 +35,8 @@
   (:import (clojure.lang Compiler$BodyExpr)
            (java.io ByteArrayInputStream File)
            (java.util UUID))
-  (:refer-clojure :exclude [compile test]))
+  (:refer-clojure :exclude [compile test])
+  (:gen-class))
 "
          (reconstruct (StringReader. basic-ns)))))
 

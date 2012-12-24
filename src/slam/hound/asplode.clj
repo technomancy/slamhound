@@ -8,8 +8,8 @@
                             [(assoc ns-meta :doc maybe-doc) clauses]
                             [ns-meta (cons maybe-doc clauses)])]
     (into {:meta ns-meta :name ns-name}
-          (for [[use-import-or-require & body] clauses]
-            [use-import-or-require body]))))
+          (for [[clause & body] clauses]
+            [clause body]))))
 
 (defn asplode [rdr]
   (let [rdr (PushbackReader. rdr)
