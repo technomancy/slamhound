@@ -81,26 +81,27 @@
     (re-pattern (string/join "." (butlast (.split (name candidate) "\\."))))
     (re-pattern (name (first candidate)))))
 
-(defn in-original-pred [original]
+(defn in-originals-pred [originals]
   (fn [candidate]
-    (re-find (butlast-regex candidate) (str original))))
+    (some #(re-find (butlast-regex candidate) (str %)) originals)))
 
 (def ^:private disambiguator-blacklist
   (if-let [v (resolve 'user/slamhound-disambiguator-blacklist)]
     @v
     #"swank|lancet"))
 
-(defn- new-type-to-old-type [new-type]
+(defn- new-type-to-old-types [new-type]
   (case new-type
-    :require-as :require
-    :require-refer :use
-    new-type))
+    :require-as [:require]
+    :require-refer [:require :use] ;; could've been require/refer or use/only
+    [new-type]))
 
 (defn- disambiguate [candidates missing ns-map type]
   ;; TODO: prefer things in src/classes to jars
   (debug :disambiguating missing :in candidates)
   (->> candidates
-       (sort-by (juxt (complement (in-original-pred ((new-type-to-old-type type) (:old ns-map))))
+       (sort-by (juxt (complement (in-originals-pred (map #(get (:old ns-map) %)
+                                                          (new-type-to-old-types type))))
                       (comp count str)))
        (remove #(re-find disambiguator-blacklist (str %)))
        first))

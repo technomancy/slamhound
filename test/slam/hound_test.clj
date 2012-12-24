@@ -1,5 +1,5 @@
 (ns slam.hound-test
-   (:require [clojure.test :refer [deftest is]]
+   (:require [clojure.test :refer [deftest is testing]]
              [slam.hound :refer [reconstruct]])
    (:import java.io.StringReader))
 
@@ -55,4 +55,25 @@
          (reconstruct (StringReader. (str '(ns foo.bar
                                              (:require [clj-schema.validation :as val]))
                                           '#{:x {:a (val/validation-errors [[:name] String] {:name "Bob"})}}))))))
+
+(deftest ^:integration test-prefers-requires-as-clauses-from-orig-ns
+  ;; korma.core is on the :dev-dependencies, and was getting erroneously picked for
+  ;; these 2 namespaces
+  (testing "original ns has a require/refer"
+    (is (= "(ns foo.bar
+  (:require [clojure.string :refer [join]]))
+"
+           (reconstruct (StringReader. (str '(ns foo.bar
+                                               (:require [clojure.string :refer [join]]))
+                                            '(defn do-it! []
+                                               (join "," ["a" "b" "c"]))))))))
+
+  (testing "original ns has a use/only"
+    (is (= "(ns foo.bar
+  (:require [clojure.string :refer [join]]))
+"
+           (reconstruct (StringReader. (str '(ns foo.bar
+                                               (:use [clojure.string :only [join]]))
+                                            '(defn do-it! []
+                                               (join "," ["a" "b" "c"])))))))))
 

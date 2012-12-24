@@ -1,6 +1,6 @@
 (ns slam.hound.regrow-test
   (:require [clojure.test :refer [deftest is testing]]
-            [slam.hound.regrow :refer [regrow in-original-pred]]))
+            [slam.hound.regrow :refer [regrow in-originals-pred]]))
 
 
 (def sample-body
@@ -49,7 +49,7 @@
 
 
 (deftest ^:unit test-grow-preserve
-  (let [in-orig? (in-original-pred '((java.util Date UUID)))]
+  (let [in-orig? (in-originals-pred ['((java.util Date UUID))])]
     (is (in-orig? 'java.util.Date))
     (is (not (in-orig? 'java.sql.Date))))
   (is (= '(java.io.File java.util.Date)
