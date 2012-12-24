@@ -43,13 +43,23 @@
         (finally
          (remove-ns (.name *ns*)))))))
 
-(defn candidates [type missing]
+(def ^:private attempted-vars-in-body
+  (memoize (fn [body]
+             (apply merge-with concat
+                   (for [value (flatten body)
+                         :when (symbol? value)
+                         :let [[_ alias var-name] (re-matches #"(.+)/(.+)" (str value))]
+                         :when alias]
+                     {alias [(symbol var-name)]})))))
+
+(defn candidates [type missing body]
   (case type
     :import (for [class-name search/available-classes
                   :when (= missing (last (.split class-name "\\.")))]
               (symbol class-name))
     :require-as (for [n (all-ns)
-                      :when (= missing (last (.split (name (ns-name n)) "\\.")))]
+                      :let [vars-with-alias (get (attempted-vars-in-body body) missing)]
+                      :when (every? (set (keys (ns-publics n))) vars-with-alias)]
                   [(ns-name n) :as (symbol missing)])
     :require-refer (for [n (all-ns)
                          [sym var] (ns-publics n)
@@ -85,8 +95,8 @@
        (remove #(re-find disambiguator-blacklist (str %)))
        first))
 
-(defn- grow-step [missing type ns-map]
-  (if-let [addition (disambiguate (candidates type missing) missing ns-map type)]
+(defn- grow-step [missing type ns-map body]
+  (if-let [addition (disambiguate (candidates type missing body) missing ns-map type)]
     (update-in ns-map [type] conj addition)
     ns-map))
 
@@ -109,7 +119,7 @@
                          (inc type-to-try)
                          0)]
           (if-let [type (get possible-types type-idx)]
-            (recur (grow-step missing type ns-map) missing type-idx)
+            (recur (grow-step missing type ns-map body) missing type-idx)
             (throw (Exception. (str "Couldn't resolve " missing
                                     ", got as far as " ns-map)))))
         ns-map))))

@@ -40,11 +40,11 @@
 
 
 
-(def problematic-ns (str '(ns foo.bar
-                            (:require [clj-schema.validation :as val]))
-                         '(val/validation-errors [[:name] String] {:name "Bob"})))
-
 (deftest ^:integration test-regression
-  (is (= problematic-ns
-         (reconstruct (StringReader. problematic-ns)))))
+  (is (= "(ns foo.bar
+  (:require [clj-schema.validation :as val]))
+"
+         (reconstruct (StringReader. (str '(ns foo.bar
+                                             (:require [clj-schema.validation :as val]))
+                                          '(val/validation-errors [[:name] String] {:name "Bob"})))))))
 
