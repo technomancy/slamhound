@@ -1,8 +1,8 @@
 (ns slam.hound.prettify
   "Format a namespace declaration using pretty print with custom dispatch."
-  (:use [clojure.pprint :only [code-dispatch pprint with-pprint-dispatch cl-format
-                               pprint-logical-block pprint-newline formatter-out
-                               write-out]]))
+  (:use [clojure.pprint :only [code-dispatch pprint with-pprint-dispatch
+                               cl-format pprint-logical-block pprint-newline
+                               formatter-out write-out]]))
 
 (defn- brackets
   "Figure out which kind of brackets to use"
@@ -48,7 +48,7 @@
 (defn- pprint-ns
   "The pretty print dispatch chunk for the ns macro"
   [alis]
-  (if (next alis) 
+  (if (next alis)
     (let [[ns-sym ns-name & stuff] alis
           [doc-str stuff] (if (string? (first stuff))
                             [(first stuff) (next stuff)]
@@ -84,4 +84,3 @@
   (with-out-str
     (with-pprint-dispatch augmented-dispatch
       (pprint ns-form))))
-
