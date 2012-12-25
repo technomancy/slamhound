@@ -1,11 +1,9 @@
 (ns slam.hound
-  (:use [slam.hound.asplode :only [asplode]]
-        [slam.hound.regrow :only [regrow]]
-        [slam.hound.stitch :only [stitch-up]])
   (:require [clojure.java.io :as io]
-            [fs.core :as fs])
-  (:import (java.io FileReader
-                    PushbackReader)))
+            [slam.hound.asplode :refer [asplode]]
+            [slam.hound.regrow :refer [regrow]]
+            [slam.hound.stitch :refer [stitch-up]])
+  (:import (java.io File FileReader PushbackReader)))
 
 (defn reconstruct [filename]
   ;; Reconstructing consists of three distinct phases:
@@ -36,26 +34,24 @@
                        :else
                        (recur non-white-so-far (rest file-contents-remaining)))))))
 
-(defn- swap-in-reconstructed-ns-form [file-name]
-  (let [new-ns (.trim (reconstruct file-name))
-        old-ns-form (read (PushbackReader. (FileReader. file-name)))
-        body (body-from-file file-name old-ns-form)]
-    (spit file-name (str new-ns body))))
+(defn- swap-in-reconstructed-ns-form [file]
+  (let [new-ns (.trim (reconstruct file))
+        old-ns-form (read (PushbackReader. (FileReader. file)))
+        body (body-from-file file old-ns-form)]
+    (spit file (str new-ns body))))
 
-(defn- reconstruct-dir* [root _dirs_ files]
-  (doseq [f files
-          :when (and (.endsWith f ".clj")
-                     (not (.startsWith f "."))
-                     (not= f "project.clj"))
-          :let [file-path (fs/file root f)]]
+(defn reconstruct-in-place
+  "Takes a file or directory and rewrites the files
+   with reconstructed ns forms."
+  [file-or-dir]
+  (doseq [^File f (file-seq (File. file-or-dir))
+          :let [^String filename (.getName f)
+                ^String file-path (.getAbsolutePath f)]
+          :when (and (.endsWith filename ".clj")
+                     (not (.startsWith filename "."))
+                     (not= filename "project.clj"))]
     (try
       (swap-in-reconstructed-ns-form file-path)
       (catch Exception ex
-        (print (str "Failed to reconstruct: " (.getName file-path)
-                    "\nException: " (stacktrace-to-str ex)))))))
-
-(defn reconstruct-dir
-  "Reconstructs every file ending in .clj, except project.clj, and writes
- them back into the original files."
-  [dir]
-  (fs/walk reconstruct-dir* dir))
+        (println (str "Failed to reconstruct: " file-path
+                      "\nException: " (stacktrace-to-str ex)))))))
