@@ -1,6 +1,7 @@
 (ns slam.hound.stitch-test
   (:require [clojure.test :refer [deftest is]]
-            [slam.hound.stitch :refer [ns-from-map stitch-up sort-subclauses collapse-clause]]))
+            [slam.hound.stitch :refer [ns-from-map stitch-up
+                                       sort-subclauses collapse-clause]]))
 
 (def sample-ns-form '(ns slamhound.sample
                        "Testing some things going on here."
@@ -28,7 +29,8 @@
 (deftest ^:unit test-ns-from-map
   (is (= sample-ns-form (ns-from-map sample-ns-map))))
 
-;; TODO Dec 21st - is this test neccecary? It *should* be covered by tests for stitch-up
+;; TODO Dec 21st - is this test necessary?
+;; It *should* be covered by tests for stitch-up
 (deftest ^:unit test-sort
   (is (= {:name 'slamhound.sample
           :meta {:doc "Testing some things going on here."}
@@ -54,7 +56,8 @@
   (is (= {:require-refer '[[clojure.test :refer [deftest is]]
                            [slam.hound.stitch :refer [ns-from-map]]]}
          (collapse-clause {:require-refer '[[clojure.test :refer [deftest]]
-                                            [slam.hound.stitch :refer [ns-from-map]]
+                                            [slam.hound.stitch :refer
+                                             [ns-from-map]]
                                             [clojure.test :refer [is]]]}
                           :require-refer))))
 
@@ -70,4 +73,3 @@
            (java.util UUID))
   (:refer-clojure :exclude [compile test]))
 " (stitch-up sample-ns-map))))
-
