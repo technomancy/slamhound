@@ -62,4 +62,10 @@
     (is (not (in-orig? 'java.sql.Date))))
   (is (= '(java.io.File java.util.Date)
          (:import (regrow [{:old {:import '((java.util Date))}}
-                           '(vector (Date.) (File. "/tmp"))])))))
+                           '[(Date.) (File. "/tmp")]])))))
+
+(def +i-must-be-a-cl-user+ true)
+
+(deftest ^:unit test-plus
+  (is (= '[[slam.hound.regrow-test :refer [+i-must-be-a-cl-user+]]]
+         (:require-refer (regrow [{} '[+i-must-be-a-cl-user+]])))))

@@ -18,7 +18,7 @@
   (Character/isUpperCase (first (name x))))
 
 (defn- missing-sym-name [msg]
-  (second (or (re-find #"Unable to resolve \w+: ([-_\w\$\?!\*\>\<]+)" msg)
+  (second (or (re-find #"Unable to resolve \w+: ([-\+_\w\$\?!\*\>\<]+)" msg)
               (re-find #"Can't resolve: ([-_\w\$\?!\*\>\<]+)" msg)
               (re-find #"No such namespace: ([-_\w\$\?!\*\>\<]+)" msg)
               (re-find #"No such var: \w+/([-_\w\$\?!\*\>\<]+)" msg))))
