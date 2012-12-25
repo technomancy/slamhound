@@ -25,15 +25,15 @@
 Slamhound rips your ns form apart and reconstructs it. No Dutch
 surgeon required.
 
-Add `slamhound "1.2.0"` to the `:dependencies` of your `:user`
-profile. To use the Leiningen task, add `lein-slamhound
-"1.3.0-SNAPSHOT"` to the `:plugins` of your `:user` profile.
-
-Or if you use Leiningen 1.x, make it a user-level plugin:
-
-    $ lein plugin install slamhound 1.2.0
+Add `[slamhound "1.3.0-SNAPSHOT"]` to the `:dependencies` of your `:user` profile.
 
 ## Leiningen Usage
+
+Make an alias for `run -m slam.hound/reconstruct` in your `:user` profile:
+
+```clj
+  :aliases {"slamhound" ["run" "-m" "slam.hound/reconstruct"]}
+```
 
 Take a namespace with a sparse ns form that won't compile:
 
@@ -53,8 +53,8 @@ Then run slamhound on it:
 
     (ns my.namespace
       "I have a doc string."
-      (:use [clojure.pprint :only [pprint]])
-      (:require [clojure.java.io :as io])
+      (:require [clojure.java.io :as io]
+                [clojure.pprint :refer [pprint]])
       (:import (java.io ByteArrayInputStream)))
 
 ## Repl Usage
@@ -82,21 +82,37 @@ be loaded into Emacs automatically.
 
 Emacs version 24 or greater is required.
 
-## The Rules
+TODO: port to nrepl.el
 
-Slamhound can only rebuild your namespace if it follows the rules and
-doesn't do anything too fancy. If your code depends upon a `:require`
-clause, the required namespace must be aliased `:as` the last segment
-of its name. Referring to fully-qualified vars is not supported. The
-only supported option to `:use` is `:only`.
+## Shortcomings
 
-## Future Plans
+Slamhound will only find references to vars in a namespace that are
+consumed within the namespace itself. For example, if you have a macro
+that refers to a var inside syntax-quote (backtick), but the macro is
+only called from other namespaces, then Slamhound won't detect the
+reference and will instead report the failure in the namespace in
+which the macro is called.
 
-* Better pretty-printing
-* Allow for custom disambiguator functions
+You can work around this problem by attaching dummy metadata to the
+`defmacro` form to prevent it from compiling without the necessary
+vars being present:
+
+```clj
+(defmacro ^{:requires [a/b c/d]} let-qp [q p & body]
+  `(let [~'q a/b
+         ~'p c/d]
+     ~@body))
+```
+
+## Leiningen 1.x
+
+If you are still using Leiningen 1.x you can use an older version
+of Slamhound:
+
+    $ lein plugin install slamhound 1.2.0
 
 ## License
 
-Copyright © 2011-2012 Phil Hagelberg
+Copyright © 2011-2012 Phil Hagelberg and contributors
 
 Distributed under the Eclipse Public License, the same as Clojure.
