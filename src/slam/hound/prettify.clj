@@ -61,14 +61,16 @@
         (when (or doc-str attr-map (seq references))
           ((formatter-out "~@:_")))
         (when doc-str
-          (cl-format true "\"~a\"~:[~;~:@_~]" doc-str (or attr-map (seq references))))
+          (cl-format true "\"~a\"~:[~;~:@_~]" doc-str
+                     (or attr-map (seq references))))
         (when attr-map
           ((formatter-out "~w~:[~;~:@_~]") attr-map (seq references)))
-        (loop [references references]
-          (pprint-ns-reference (first references))
-          (when-let [references (next references)]
-            (pprint-newline :linear)
-            (recur references)))))
+        (when references
+          (loop [references references]
+            (pprint-ns-reference (first references))
+            (when-let [references (next references)]
+              (pprint-newline :linear)
+              (recur references))))))
     (write-out alis)))
 
 (defn augmented-dispatch
