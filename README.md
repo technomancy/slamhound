@@ -60,6 +60,8 @@ Then run slamhound on it:
 
 Like magic.
 
+Running on a directory will perform the same operation on every .clj file inside.
+
 ## Repl Usage
 
 You can do it manually from the repl too to avoid the slow startup time:
