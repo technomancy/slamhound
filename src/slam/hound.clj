@@ -5,7 +5,6 @@
             [slam.hound.stitch :refer [stitch-up]])
   (:import (java.io File FileReader PushbackReader)))
 
-
 (defn reconstruct [filename]
   ;; Reconstructing consists of three distinct phases:
   ;; asploding, regrowing, and stitching.
@@ -14,38 +13,30 @@
       regrow
       stitch-up))
 
-(defn- stacktrace-to-str [^Exception e]
-  (cons (.getMessage e)
-        (map #(str % "\n") (.getStackTrace e))))
-
-(defn- swap-in-reconstructed-ns-form [filename]
-  (let [new-ns (.trim (reconstruct filename))
-        rdr (PushbackReader. (FileReader. filename))]
-    ;; scan past the namespace form
+(defn- swap-in-reconstructed-ns-form [file]
+  (let [new-ns (.trim (reconstruct file))
+        rdr (PushbackReader. (io/reader file))]
+    ;; move the reader past the namespace form; discard value
     (read rdr)
     ;; copy in the reconstructed ns form
-    (io/copy new-ns (File. filename))
+    (io/copy new-ns file)
     ;; append the body
-    (with-open [writer (io/writer filename :append true)]
+    (with-open [writer (io/writer file :append true)]
       (io/copy rdr writer))))
 
 (defn reconstruct-in-place
   "Takes a file or directory and rewrites the files
    with reconstructed ns forms."
   [file-or-dir]
-  (doseq [^File f (file-seq (if (string? file-or-dir)
-                              (File. file-or-dir)
-                              file-or-dir))
-          :let [^String filename (.getName f)
-                ^String file-path (.getAbsolutePath f)]
-          :when (and (.endsWith filename ".clj")
-                     (not (.startsWith filename "."))
-                     (not= filename "project.clj"))]
+  (doseq [file (file-seq (io/file file-or-dir))
+          :when (re-find #"/[^\./]+\.clj" (str file))]
     (try
-      (swap-in-reconstructed-ns-form file-path)
-      (catch Exception ex
-        (println (str "Failed to reconstruct: " file-path
-                      "\nException: " (stacktrace-to-str ex)))))))
+      (swap-in-reconstructed-ns-form file)
+      (catch Exception e
+        (println "Failed to reconstruct:" file)
+        (if (System/getenv "DEBUG")
+          (.printStackTrace e)
+          (println (.getMessage e)))))))
 
 (defn -main [file-or-dir]
   (reconstruct-in-place file-or-dir))
