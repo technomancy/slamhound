@@ -43,9 +43,15 @@
                      (not= filename "project.clj"))]
     (try
       (swap-in-reconstructed-ns-form file-path)
+      {:status :success
+       :file file-path}
       (catch Exception ex
-        (println (str "Failed to reconstruct: " file-path
-                      "\nException: " (stacktrace-to-str ex)))))))
+        {:status :failure
+         :file file-path
+         :exception ex}))))
 
 (defn -main [file-or-dir]
-  (reconstruct-in-place file-or-dir))
+  (doseq [result (reconstruct-in-place file-or-dir)
+          :when (= :failure (:status result))]
+    (println (str "Failed to reconstruct: " (:file result)
+                  "\nException: " (stacktrace-to-str (:exception result))))))
