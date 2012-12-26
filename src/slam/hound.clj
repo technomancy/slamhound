@@ -3,7 +3,8 @@
             [slam.hound.asplode :refer [asplode]]
             [slam.hound.regrow :refer [regrow]]
             [slam.hound.stitch :refer [stitch-up]])
-  (:import (java.io File FileReader PushbackReader)))
+  (:import (java.io File FileReader PushbackReader))))
+
 
 (defn reconstruct [filename]
   ;; Reconstructing consists of three distinct phases:
@@ -22,17 +23,13 @@
 
 (defn- body-from-file [file-name old-ns-form]
   (let [file-contents (slurp file-name)
-        num-non-white-chars-in-old-ns-form (count (filter non-whitespace-char? (str old-ns-form)))]
-    (apply str (loop [non-white-so-far 0
-                      file-contents-remaining file-contents]
-                 (cond (>= non-white-so-far num-non-white-chars-in-old-ns-form)
-                       file-contents-remaining
-
-                       (non-whitespace-char? (first file-contents-remaining))
-                       (recur (inc non-white-so-far) (rest file-contents-remaining))
-                            
-                       :else
-                       (recur non-white-so-far (rest file-contents-remaining)))))))
+        num-non-white-chars-in-old-ns-form (count (filter non-whitespace-char? (str old-ns-form)))
+        non-white-so-far (atom 0)]
+    (apply str (drop-while (fn [ch]
+                             (when (non-whitespace-char? ch)
+                               (swap! non-white-so-far inc))
+                             (< @non-white-so-far num-non-white-chars-in-old-ns-form))
+                           file-contents))))
 
 (defn- swap-in-reconstructed-ns-form [file]
   (let [new-ns (.trim (reconstruct file))
