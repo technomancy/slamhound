@@ -52,3 +52,6 @@
       (catch Exception ex
         (println (str "Failed to reconstruct: " file-path
                       "\nException: " (stacktrace-to-str ex)))))))
+
+(defn -main [file-or-dir]
+  (reconstruct-in-place file-or-dir))
