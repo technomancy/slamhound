@@ -3,7 +3,7 @@
             [slam.hound.asplode :refer [asplode]]
             [slam.hound.regrow :refer [regrow]]
             [slam.hound.stitch :refer [stitch-up]])
-  (:import (java.io File FileReader PushbackReader))))
+  (:import (java.io File FileReader PushbackReader)))
 
 
 (defn reconstruct [filename]
@@ -18,30 +18,24 @@
   (cons (.getMessage e)
         (map #(str % "\n") (.getStackTrace e))))
 
-(defn- non-whitespace-char? [ch]
-  (re-matches #"\S" (str ch)))
-
-(defn- body-from-file [file-name old-ns-form]
-  (let [file-contents (slurp file-name)
-        num-non-white-chars-in-old-ns-form (count (filter non-whitespace-char? (str old-ns-form)))
-        non-white-so-far (atom 0)]
-    (apply str (drop-while (fn [ch]
-                             (when (non-whitespace-char? ch)
-                               (swap! non-white-so-far inc))
-                             (< @non-white-so-far num-non-white-chars-in-old-ns-form))
-                           file-contents))))
-
-(defn- swap-in-reconstructed-ns-form [file]
-  (let [new-ns (.trim (reconstruct file))
-        old-ns-form (read (PushbackReader. (FileReader. file)))
-        body (body-from-file file old-ns-form)]
-    (spit file (str new-ns body))))
+(defn- swap-in-reconstructed-ns-form [filename]
+  (let [new-ns (.trim (reconstruct filename))
+        rdr (PushbackReader. (FileReader. filename))]
+    ;; scan past the namespace form
+    (read rdr)
+    ;; copy in the reconstructed ns form
+    (io/copy new-ns (File. filename))
+    ;; append the body
+    (with-open [writer (io/writer filename :append true)]
+      (io/copy rdr writer))))
 
 (defn reconstruct-in-place
   "Takes a file or directory and rewrites the files
    with reconstructed ns forms."
   [file-or-dir]
-  (doseq [^File f (file-seq (File. file-or-dir))
+  (doseq [^File f (file-seq (if (string? file-or-dir)
+                              (File. file-or-dir)
+                              file-or-dir))
           :let [^String filename (.getName f)
                 ^String file-path (.getAbsolutePath f)]
           :when (and (.endsWith filename ".clj")
