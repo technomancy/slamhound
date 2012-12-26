@@ -13,7 +13,9 @@
       regrow
       stitch-up))
 
-(defn- swap-in-reconstructed-ns-form [file]
+(defn swap-in-reconstructed-ns-form
+  "Reconstruct file's ns form and rewrite the file on disk with the new form."
+  [file]
   (let [new-ns (.trim (reconstruct file))
         rdr (PushbackReader. (io/reader file))]
     ;; move the reader past the namespace form; discard value
@@ -24,9 +26,8 @@
     (with-open [writer (io/writer file :append true)]
       (io/copy rdr writer))))
 
-(defn reconstruct-in-place
-  "Takes a file or directory and rewrites the files
-   with reconstructed ns forms."
+(defn -main
+  "Takes a file or dir and rewrites the .clj files with reconstructed ns forms."
   [file-or-dir]
   (doseq [file (file-seq (io/file file-or-dir))
           :when (re-find #"/[^\./]+\.clj" (str file))]
@@ -37,6 +38,3 @@
         (if (System/getenv "DEBUG")
           (.printStackTrace e)
           (println (.getMessage e)))))))
-
-(defn -main [file-or-dir]
-  (reconstruct-in-place file-or-dir))
