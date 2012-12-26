@@ -33,22 +33,23 @@
   "Takes a file or directory and rewrites the files
    with reconstructed ns forms."
   [file-or-dir]
-  (doseq [^File f (file-seq (if (string? file-or-dir)
-                              (File. file-or-dir)
-                              file-or-dir))
-          :let [^String filename (.getName f)
-                ^String file-path (.getAbsolutePath f)]
-          :when (and (.endsWith filename ".clj")
-                     (not (.startsWith filename "."))
-                     (not= filename "project.clj"))]
-    (try
-      (swap-in-reconstructed-ns-form file-path)
-      {:status :success
-       :file file-path}
-      (catch Exception ex
-        {:status :failure
-         :file file-path
-         :exception ex}))))
+  (doall
+   (for [^File f (file-seq (if (string? file-or-dir)
+                             (File. file-or-dir)
+                             file-or-dir))
+         :let [^String filename (.getName f)
+               ^String file-path (.getAbsolutePath f)]
+         :when (and (.endsWith filename ".clj")
+                    (not (.startsWith filename "."))
+                    (not= filename "project.clj"))]
+        (try
+          (swap-in-reconstructed-ns-form file-path)
+          {:status :success
+           :file file-path}
+          (catch Exception ex
+            {:status :failure
+             :file file-path
+             :exception ex})))))
 
 (defn -main [file-or-dir]
   (doseq [result (reconstruct-in-place file-or-dir)

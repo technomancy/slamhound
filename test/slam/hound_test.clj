@@ -82,7 +82,10 @@
   (let [tmp (doto (File/createTempFile "test_namespace_copy" ".clj")
               .deleteOnExit)]
     (io/copy (io/reader (io/resource "test_namespace.clj")) tmp)
-    (reconstruct-in-place tmp)
+    (let [results (reconstruct-in-place tmp)]
+      (is (= 1 (count results)))
+      (is (= :success (:status (first results))))
+      (is (= (.getAbsolutePath tmp) (:file (first results)))))
 
     (is (= (slurp (io/resource "reconstructed_namespace.clj"))
            (slurp tmp)))))
