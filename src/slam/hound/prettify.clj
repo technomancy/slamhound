@@ -1,8 +1,8 @@
 (ns slam.hound.prettify
   "Format a namespace declaration using pretty print with custom dispatch."
-  (:use [clojure.pprint :only [code-dispatch pprint with-pprint-dispatch
-                               cl-format pprint-logical-block pprint-newline
-                               formatter-out write-out]]))
+  (:require [clojure.pprint :refer [code-dispatch pprint with-pprint-dispatch
+                                    cl-format pprint-logical-block
+                                    pprint-newline formatter-out write-out]]))
 
 (defn- brackets
   "Figure out which kind of brackets to use"

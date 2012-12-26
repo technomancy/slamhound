@@ -1,6 +1,6 @@
 (ns slam.hound.search
   "Search the classpath for vars and classes."
-  (:use [clojure.java.io :only [file reader]])
+  (:require [clojure.java.io :refer [file reader]])
   (:import (java.io BufferedReader File FilenameFilter
                     InputStreamReader PushbackReader)
            (java.util StringTokenizer)

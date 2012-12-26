@@ -1,5 +1,5 @@
 (ns slam.hound.stitch
-  (:use [slam.hound.prettify :only [prettify]]))
+  (:require [slam.hound.prettify :refer [prettify]]))
 
 (def ^:private ns-map-clauses [:require-as :require-refer :import])
 
