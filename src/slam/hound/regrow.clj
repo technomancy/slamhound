@@ -24,7 +24,7 @@
               (re-find #"No such var: \w+/([-_\w\$\?!\*\>\<]+)" msg))))
 
 (defn- failure-details [msg]
-  (when-let [sym (missing-sym-name msg)]
+  (if-let [sym (missing-sym-name msg)]
     {:missing sym
      :possible-types (cond (class-name? sym) [:import :require-refer]
                            (re-find #"Unable to resolve var: \w+/" msg)

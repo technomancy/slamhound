@@ -9,6 +9,8 @@
 
 ;;; Mostly taken from leiningen.util.ns and swank.util.class-browse.
 
+;; TODO: replace with bultitude? but that doesn't do classes
+
 ;;; Clojure namespaces
 
 (def classpath-files

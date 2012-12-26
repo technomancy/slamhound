@@ -49,13 +49,16 @@ Take a namespace with a sparse ns form that won't compile:
 
 Then run slamhound on it:
 
-    $ lein slamhound src/my/namespace.clj # after: spits out new ns form
+    $ lein slamhound src/my/namespace.clj # [... thinking ...]
 
+    $ cat src/my/namespace.clj  # after: spits out new ns form
     (ns my.namespace
       "I have a doc string."
       (:require [clojure.java.io :as io]
                 [clojure.pprint :refer [pprint]])
       (:import (java.io ByteArrayInputStream)))
+
+Like magic.
 
 ## Repl Usage
 
@@ -109,7 +112,11 @@ vars being present:
 If you are still using Leiningen 1.x you can use an older version
 of Slamhound:
 
-    $ lein plugin install slamhound 1.2.0
+    $ lein plugin install lein-slamhound 1.2.0
+
+The `lein-slamhound` plugin is deprecated, and the `:aliases` approach
+above is recommended for users of Leiningen 2. However, the plugin
+still works for people still stuck on an old Leiningen version.
 
 ## License
 
