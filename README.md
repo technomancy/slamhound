@@ -29,10 +29,10 @@ Add `[slamhound "1.3.0-SNAPSHOT"]` to the `:dependencies` of your `:user` profil
 
 ## Leiningen Usage
 
-Make an alias for `run -m slam.hound/reconstruct` in your `:user` profile:
+Make an alias for `run -m slam.hound` in your `:user` profile:
 
 ```clj
-  :aliases {"slamhound" ["run" "-m" "slam.hound/reconstruct"]}
+  :aliases {"slamhound" ["run" "-m" "slam.hound"]}
 ```
 
 Take a namespace with a sparse ns form that won't compile:
