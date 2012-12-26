@@ -1,7 +1,7 @@
 (ns slam.hound-test
   (:require [clojure.java.io :as io]
             [clojure.test :refer [deftest is testing]]
-            [slam.hound :refer [reconstruct reconstruct-in-place]])
+            [slam.hound :refer [reconstruct -main]])
   (:import (java.io File StringReader)))
 
 (def basic-ns (str '(ns slamhound.sample
@@ -85,11 +85,10 @@
                               '(defn do-it! []
                                  (join "," ["a" "b" "c"])))))))))
 
-(deftest ^:integration test-reconstruct-in-place
+(deftest ^:integration test-main
   (let [tmp (doto (File/createTempFile "test_namespace_copy" ".clj")
               .deleteOnExit)]
     (io/copy (io/reader (io/resource "test_namespace.clj")) tmp)
-    (reconstruct-in-place tmp)
-
+    (-main tmp)
     (is (= (slurp (io/resource "reconstructed_namespace.clj"))
            (slurp tmp)))))
