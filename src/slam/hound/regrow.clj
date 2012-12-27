@@ -26,12 +26,14 @@
 (defn- failure-details [msg]
   (if-let [sym (missing-sym-name msg)]
     {:missing sym
-     :possible-types (cond (class-name? sym) [:import :require-refer]
+     :possible-types (cond (class-name? sym)
+                           [:import :require-refer]
                            (re-find #"Unable to resolve var: \w+/" msg)
                            [:require-as :require-refer]
                            (re-find #"No such (var|namespace)" msg)
                            [:require-as]
-                           :else [:require-refer :import])}))
+                           :else
+                           [:require-refer :import])}))
 
 (defn- check-for-failure [ns-map body]
   (let [sandbox-ns `slamhound.sandbox#
@@ -102,6 +104,7 @@
        (sort-by (juxt (complement (in-originals-pred
                                    (map #(get (:old ns-map) %)
                                         (new-type-to-old-types type))))
+                      ;; TODO: prefer candidates where last segment matches
                       (comp count str)))
        (remove #(re-find disambiguator-blacklist (str %)))
        first))
