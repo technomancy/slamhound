@@ -1,10 +1,10 @@
 ;;; slamhound.el --- Rip Clojure namespaces apart and rebuild them.
 
-;; Copyright (C) 2011 Phil Hagelberg
+;; Copyright © 2011-2012 Phil Hagelberg
 ;;
 ;; Author: Phil Hagelberg <technomancy@gmail.com>
-;; URL: http://github.com/technomancy/slamhound
-;; Version: 1.0.0
+;; URL: https://github.com/technomancy/slamhound
+;; Version: 2.0.0
 ;; Keywords: tools, lisp
 
 ;; This file is not part of GNU Emacs.
@@ -12,12 +12,10 @@
 ;;; Commentary:
 
 ;; Destroys the ns form of a clojure-mode buffer and attempts to
-;; rebuild it by searching the classpath. Requires an active slime
-;; connection.
+;; rebuild it by searching the classpath. Requires an active
+;; connection to either slime or nrepl.
 
-;; M-x slamhound operates on the current buffer
-
-;; M-x slamhound-project operates on the current source tree
+;; M-x slamhound
 
 ;; If the namespace cannot be reconstructed for whatever reason, the
 ;; file will remain untouched and the reason will be shown.
@@ -41,10 +39,6 @@
 
 ;;; Code:
 
-(require 'slime)
-
-;; Single-file:
-
 (defun slamhound-clj-string (filename)
   (format "%s" `(do (require 'slam.hound)
                     (try (print (.trim (slam.hound/reconstruct
@@ -54,45 +48,20 @@
 
 ;;;###autoload
 (defun slamhound ()
-  "Run slamhound on the current buffer. Requires active slime connection."
+  "Run slamhound on the current buffer.
+
+  Requires active nrepl or slime connection."
   (interactive)
   (let* ((code (slamhound-clj-string buffer-file-name))
-         (result (first (slime-eval `(swank:eval-and-grab-output ,code)))))
+         (result (if (and (boundp 'nrepl-connection-buffer)
+                          (get-buffer-process nrepl-connection-buffer))
+                     (plist-get (nrepl-send-string-sync code) :stdout)
+                   (first (slime-eval `(swank:eval-and-grab-output ,code))))))
     (if (string-match "^:error \\(.*\\)" result)
         (error (match-string 1 result))
       (goto-char (point-min))
       (kill-sexp)
-      ;; TODO: translate \n into newline
       (insert result))))
-
-;; Project-wide:
-
-(defun slamhound-project-files (project-root)
-  (split-string (shell-command-to-string
-                 (format "find %s -name \"*.clj\"" project-root))))
-
-(defun slamhound-track-failures (failures file)
-  (condition-case failure
-      (save-excursion
-        (find-file file)
-        (slamhound)
-        failures)
-    (error (cons (cons file (cadr failure)) failures))))
-
-;;;###autoload
-(defun slamhound-project ()
-  "Run slamhound on an entire project. Experimental."
-  (interactive)
-  (save-some-buffers)
-  (save-excursion
-    (let* ((root (locate-dominating-file default-directory "src"))
-           (files (slamhound-project-files (format "%s/src" root)))
-           (errors (reduce 'slamhound-track-failures files :initial-value nil)))
-      (setq eee errors)
-      (if errors
-          (message "Couldn't slam %s." errors)
-          (message "All namespaces successfully slammed.")))))
 
 (provide 'slamhound)
 ;;; slamhound.el ends here
-

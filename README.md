@@ -77,17 +77,9 @@ You can do it manually from the repl too to avoid the slow startup time:
 
 ## Emacs Usage
 
-The included `src/swank/payload/slamhound.el` allows for
-convenient access within Slime sessions via `M-x slamhound` as well as
-running it over an entire project with `M-x slamhound-project`.
-
-You can install manually, but if you use `M-x clojure-jack-in` with
-Swank Clojure 1.3.3 or newer to launch your Slime session then it will
-be loaded into Emacs automatically.
-
-Emacs version 24 or greater is required.
-
-TODO: port to nrepl.el
+The included `slamhound.el` allows for convenient access within nREPL
+or SLIME sessions via `M-x slamhound`. Install manually or via
+[Marmalade](http://marmalade-repo.org).
 
 ## Shortcomings
 
