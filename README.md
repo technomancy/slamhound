@@ -111,14 +111,15 @@ vars being present:
 
 ## Leiningen 1.x
 
-If you are still using Leiningen 1.x you can use an older version
-of Slamhound:
-
-    $ lein plugin install lein-slamhound 1.2.0
-
 The `lein-slamhound` plugin is deprecated, and the `:aliases` approach
-above is recommended for users of Leiningen 2. However, the plugin
-still works for people still stuck on an old Leiningen version.
+above is recommended for users of Leiningen 2. However, if you are
+still using Leiningen 1.x you can use the `run` task:
+
+    $ lein run -m slam.hound src/foo
+
+Since Leiningen 1.x doesn't support partially-applied aliases, you
+would have to make a shell alias if you don't want to type the full
+invocation out every time.
 
 ## License
 
