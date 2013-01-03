@@ -25,7 +25,7 @@
 Slamhound rips your ns form apart and reconstructs it. No Dutch
 surgeon required.
 
-Add `[slamhound "1.3.0"]` to the `:dependencies` of your `:user` profile.
+Add `[slamhound "1.3.1"]` to the `:dependencies` of your `:user` profile.
 
 ## Leiningen Usage
 
