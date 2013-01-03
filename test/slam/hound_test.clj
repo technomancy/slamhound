@@ -62,6 +62,24 @@
                                        [[:name] String]
                                        {:name "Bob"})}}))))))
 
+(deftest ^:integration test-chooses-referred-vars-preferring-those-referred-to-in-old-ns
+  (testing "since both clojure.string and clojure.set are present in the original namespace
+            we must disambiguate further by preferring namespaces that also referred the var
+            in the old version of the ns form"
+    (is (= "(ns foo.bar
+  (:require [clojure.set :refer [union]]
+            [clojure.string :refer [join]]))
+"
+           (reconstruct (StringReader.
+                         (str '(ns foo.bar
+                                 (:require [clojure.string :only [join]]
+                                           [clojure.set :refer [union]]))
+                              '(do
+                                 (defn f [xs]
+                                   (join "," xs))
+                                 (defn g [a b]
+                                   (union a b))))))))))
+
 (deftest ^:integration test-prefers-requires-as-clauses-from-orig-ns
   ;; korma.core is on the :dev-dependencies, and was getting erroneously picked
   ;; for these 2 namespaces
