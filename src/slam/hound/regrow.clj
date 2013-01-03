@@ -97,17 +97,27 @@
     :require-refer [:require :use] ; could've been require/refer or use/only
     [new-type]))
 
+(defn- referred-to-in-originals-pred [type originals]
+  (if-not (= type :require-refer)
+    (constantly false)
+    (fn [[ns1 _ [alias1]]]
+      (some (fn [[[ns2 _ [alias2]]]]
+              (and (= alias1 alias2) (= ns1 ns2)))
+            originals))))
+
 (defn- disambiguate [candidates missing ns-map type]
   ;; TODO: prefer things in src/classes to jars
   (debug :disambiguating missing :in candidates)
-  (->> candidates
-       (sort-by (juxt (complement (in-originals-pred
-                                   (map #(get (:old ns-map) %)
-                                        (new-type-to-old-types type))))
-                      ;; TODO: prefer candidates where last segment matches
-                      (comp count str)))
-       (remove #(re-find disambiguator-blacklist (str %)))
-       first))
+  (let [orig-clauses (map #(get (:old ns-map) %)
+                          (new-type-to-old-types type))]
+    (->> candidates
+         (sort-by (juxt (complement (in-originals-pred orig-clauses))
+                        (complement (referred-to-in-originals-pred
+                                     type orig-clauses))
+                        ;; TODO: prefer candidates where last segment matches
+                        (comp count str)))
+         (remove #(re-find disambiguator-blacklist (str %)))
+         first)))
 
 (defn- grow-step [missing type ns-map body]
   (if-let [addition (disambiguate (candidates type missing body)
