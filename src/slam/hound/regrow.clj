@@ -101,7 +101,7 @@
   (if-not (= type :require-refer)
     (constantly false)
     (fn [[ns1 _ [alias1]]]
-      (some (fn [[[ns2 _ [alias2] :as arg]]]
+      (some (fn [[[ns2 _ [alias2]]]]
               (and (= alias1 alias2) (= ns1 ns2)))
             originals))))
 
