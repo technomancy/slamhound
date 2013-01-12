@@ -28,8 +28,9 @@
 
 (defn -main
   "Takes a file or dir and rewrites the .clj files with reconstructed ns forms."
-  [file-or-dir]
-  (doseq [file (file-seq (io/file file-or-dir))
+  [& file-or-dirs]
+  (doseq [file-or-dir file-or-dirs
+          file (file-seq (io/file file-or-dir))
           :when (re-find #"/[^\./]+\.clj" (str file))]
     (try
       (swap-in-reconstructed-ns-form file)
