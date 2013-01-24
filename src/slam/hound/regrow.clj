@@ -75,7 +75,9 @@
     :require-refer (for [n (all-ns)
                          [sym var] (ns-publics n)
                          :when (= missing (name sym))]
-                     [(ns-name n) :refer [sym]])))
+                     (if (= (ns-name n) 'clojure.test)
+                       ['clojure.test :refer :all]
+                       [(ns-name n) :refer [sym]]))))
 
 (defn- butlast-regex [candidate]
   (if (symbol? candidate)
