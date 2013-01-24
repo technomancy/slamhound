@@ -16,7 +16,7 @@
 
 (defn- group-by-namespace [uses]
   (for [[namespace subclause] (group-by first uses)
-        :let [referred (nth (first subclause) 2)]]
+        :let [[[_require_ _refer_ referred]] subclause]]
     (if (= :all referred)
       [namespace :refer :all]
       [namespace :refer (vec (sort (for [[_ _ [var]] subclause]
