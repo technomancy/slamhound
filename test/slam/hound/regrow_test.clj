@@ -19,8 +19,7 @@
             :gen-class nil
             :require-as '[[clojure.java.io :as io] [clojure.set :as set]]
             :require-refer '[[slam.hound.stitch :refer [ns-from-map]]
-                             [clojure.test :refer [is]]
-                             [clojure.test :refer [deftest]]]
+                             [clojure.test :refer :all]]
             :import '(java.io.File java.io.ByteArrayInputStream
                                    clojure.lang.Compiler$BodyExpr
                                    java.util.UUID)

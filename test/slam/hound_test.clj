@@ -31,7 +31,7 @@
   \"Testing some things going on here.\"
   (:require [clojure.java.io :as io]
             [clojure.set :as set]
-            [clojure.test :refer [deftest is]]
+            [clojure.test :refer :all]
             [slam.hound.stitch :refer [ns-from-map]])
   (:import (clojure.lang Compiler$BodyExpr)
            (java.io ByteArrayInputStream File)
