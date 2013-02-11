@@ -16,8 +16,11 @@
 (defn swap-in-reconstructed-ns-form
   "Reconstruct file's ns form and rewrite the file on disk with the new form."
   [file]
-  (let [new-ns (.trim (reconstruct file))
-        rdr (PushbackReader. (io/reader file))]
+  (let [tmp-file (doto (File/createTempFile "slamhound_tmp" ".clj")
+                   .deleteOnExit)
+        _ (io/copy file tmp-file)
+        new-ns (.trim (reconstruct tmp-file))
+        rdr (PushbackReader. (io/reader tmp-file))]
     ;; move the reader past the namespace form; discard value
     (read rdr)
     ;; copy in the reconstructed ns form
