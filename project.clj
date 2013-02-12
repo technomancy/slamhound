@@ -1,4 +1,4 @@
-(defproject slamhound "1.3.1"
+(defproject slamhound "1.3.2"
   :description "Rips your ns apart and reconstructs it. We have the technology."
   :url "https://github.com/technomancy/slamhound"
   :license {:name "Eclipse Public License"
