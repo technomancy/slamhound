@@ -11,11 +11,5 @@
                                   [korma "0.3.0-beta11"]]}}
   :test-selectors {:default (constantly true)
                    :integration :integration
-                   :unit :unit}
-  ;; retain compatibility with lein1 for now
-  :dev-dependencies [[org.clojure/tools.trace "0.7.3"]
-                     [org.clojars.runa/clj-schema "0.7.0"]
-                     [gui-diff "0.3.9"]
-                     [korma "0.3.0-beta11"]]
-  :dev-resource-paths "dev-resources")
+                   :unit :unit})
 
