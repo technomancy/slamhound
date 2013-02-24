@@ -72,8 +72,11 @@
 "
            (reconstruct (StringReader.
                          (str '(ns foo.bar
-                                 (:require [clojure.string :only [join]]
-                                           [clojure.set :refer [union]]))
+                                 (:use [clojure.string]
+                                       clojure.string)
+                                 (:require [clojure.string :as str]
+                                           [clojure.string :only [join lowercase]]
+                                           [clojure.set :refer [union difference]]))
                               '(do
                                  (defn f [xs]
                                    (join "," xs))
