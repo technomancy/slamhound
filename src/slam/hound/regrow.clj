@@ -102,16 +102,18 @@
 (defn- referred-to-in-originals-pred [type originals]
   (if-not (= type :require-refer)
     (constantly false)
-    (fn [[ns1 _ [alias1]]]
-      (some (fn [[[ns2 _ [alias2]]]]
-              (and (= alias1 alias2) (= ns1 ns2)))
-            originals))))
+    (fn [[ns1 _ [alias1] :as x]]
+      (->> originals
+           (filter sequential?)
+           (filter #(contains? #{:only :refer} (second %)))
+           (some (fn [[ns2 _ [alias2]]]
+                   (and (= alias1 alias2) (= ns1 ns2))))))))
 
 (defn- disambiguate [candidates missing ns-map type]
   ;; TODO: prefer things in src/classes to jars
   (debug :disambiguating missing :in candidates)
-  (let [orig-clauses (map #(get (:old ns-map) %)
-                          (new-type-to-old-types type))]
+  (let [orig-clauses (mapcat #(get (:old ns-map) %)
+                             (new-type-to-old-types type))]
     (->> candidates
          (sort-by (juxt (complement (in-originals-pred orig-clauses))
                         (complement (referred-to-in-originals-pred
