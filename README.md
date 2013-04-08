@@ -25,7 +25,7 @@
 Slamhound rips your ns form apart and reconstructs it. No Dutch
 surgeon required.
 
-Add `[slamhound "1.3.1"]` to the `:dependencies` of your `:user` profile.
+Add `[slamhound "1.3.3"]` to the `:dependencies` of your `:user` profile.
 
 ## Leiningen Usage
 
@@ -64,7 +64,7 @@ Running on a directory will perform the same operation on every .clj file inside
 
 ## Repl Usage
 
-You can do it manually from the repl too to avoid the slow startup time:
+You can do it manually from the repl to avoid the slow startup time:
 
     user=> (use 'slam.hound)
     nil
