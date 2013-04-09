@@ -19,15 +19,15 @@
   (let [tmp-file (doto (File/createTempFile "slamhound_tmp" ".clj")
                    .deleteOnExit)
         _ (io/copy file tmp-file)
-        new-ns (.trim (reconstruct tmp-file))
-        rdr (PushbackReader. (io/reader tmp-file))]
-    ;; move the reader past the namespace form; discard value
-    (read rdr)
-    ;; copy in the reconstructed ns form
-    (io/copy new-ns file)
-    ;; append the body
-    (with-open [writer (io/writer file :append true)]
-      (io/copy rdr writer))))
+        new-ns (.trim (reconstruct tmp-file))]
+    (with-open [rdr (PushbackReader. (io/reader tmp-file))]
+      ;; move the reader past the namespace form; discard value
+      (read rdr)
+      ;; copy in the reconstructed ns form
+      (io/copy new-ns file)
+      ;; append the body
+      (with-open [writer (io/writer file :append true)]
+        (io/copy rdr writer)))))
 
 (defn -main
   "Takes a file or dir and rewrites the .clj files with reconstructed ns forms."
