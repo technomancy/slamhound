@@ -101,6 +101,10 @@ vars being present:
      ~@body))
 ```
 
+Slamhound will also not find references to fully-qualified vars or
+vars resolved at runtime since it relies on detecting compilation
+failures to determine when it's done.
+
 ## Leiningen 1.x
 
 The `lein-slamhound` plugin is deprecated, and the `:aliases` approach
