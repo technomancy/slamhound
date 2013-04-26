@@ -34,7 +34,7 @@
   [& file-or-dirs]
   (doseq [file-or-dir file-or-dirs
           file (file-seq (io/file file-or-dir))
-          :when (re-find #"/[^\./]+\.clj" (str file))]
+          :when (re-find #"/[^\./]+\.clj$" (str file))]
     (try
       (swap-in-reconstructed-ns-form file)
       (catch Exception e
