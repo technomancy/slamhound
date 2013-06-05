@@ -33,6 +33,7 @@
 
 (def sample-body
   '((set/union #{:a} #{:b})
+    (string/join ["a" "b"]) ; Try to conflict with set/join
     (UUID/randomUUID)
     (instance? Compiler$BodyExpr nil)
     (io/copy (ByteArrayInputStream. (.getBytes "remotely human"))
@@ -46,7 +47,9 @@
             :meta {:doc "Testing some things going on here."}
             :refer-clojure '(:exclude [compile test])
             :gen-class nil
-            :require-as '[[clojure.java.io :as io] [clojure.set :as set]]
+            :require-as '[[clojure.java.io :as io]
+                          [clojure.string :as string]
+                          [clojure.set :as set]]
             :require-refer '[[slam.hound.stitch :refer [ns-from-map]]
                              [clojure.test :refer :all]]
             :import '(java.io.File java.io.ByteArrayInputStream
@@ -58,6 +61,7 @@
                          [clojure.test :only [is]]
                          [clojure.test :only [deftest]]]
                   :require '[[clojure.java.io :as io]
+                             [clojure.string :as string]
                              [clojure.set :as set]]
                   :import '[java.io.File java.io.ByteArrayInputStream
                             clojure.lang.Compiler$BodyExpr
@@ -75,6 +79,7 @@
                                   [clojure.test :only [is]]
                                   [clojure.test :only [deftest]]]
                            :require '[[clojure.java.io :as io]
+                                      [clojure.string :as string]
                                       [clojure.set :as set]]
                            :import '[java.io.File
                                      java.io.ByteArrayInputStream

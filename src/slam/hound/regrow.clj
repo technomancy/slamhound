@@ -101,14 +101,10 @@
         (conj s lib)))
     #{} coll))
 
-(defn- butlast-regex [candidate]
-  (if (symbol? candidate)
-    (re-pattern (string/join "." (butlast (.split (name candidate) "\\."))))
-    (re-pattern (name (first candidate)))))
-
 (defn in-originals-pred [originals]
-  (fn [candidate]
-    (some #(re-find (butlast-regex candidate) (str %)) originals)))
+  (let [libs (expand-libs originals)]
+    (fn [candidate]
+      (contains? libs candidate))))
 
 (def ^:private disambiguator-blacklist
   (if-let [v (resolve 'user/slamhound-disambiguator-blacklist)]
