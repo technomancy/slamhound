@@ -1,6 +1,35 @@
 (ns slam.hound.regrow-test
   (:require [clojure.test :refer [deftest is testing]]
-            [slam.hound.regrow :refer [regrow in-originals-pred]]))
+            [slam.hound.regrow :refer [expand-libs regrow in-originals-pred]]))
+
+(deftest ^:unit test-expand-libs
+  (testing "expands prefix lists into a flat list of symbols"
+    (is (= (expand-libs '((java.util Date Random UUID)))
+           '#{java.util.Date java.util.Random java.util.UUID})))
+  (testing "expands incomplete libspecs as symbols"
+    (is (= (expand-libs '[[clojure [set] [string]]])
+           '#{clojure.set clojure.string})))
+  (testing "returns regular libspecs as-is"
+    (is (= (expand-libs '[[clojure.set :as set] [clojure.string :as string]])
+           '#{[clojure.set :as set] [clojure.string :as string]})))
+  (testing "expands nested libspecs"
+    (is (= (expand-libs '[[clojure.java [io :as i] [shell :as s]]])
+           '#{[clojure.java.io :as i] [clojure.java.shell :as s]})))
+  (testing "everything at once"
+    (is (= (expand-libs '[java.util.regex.Pattern
+                          [java.util Date Random UUID]
+                          [clojure.pprint :as pp]
+                          [clojure [set] [string :as string]]
+                          [clojure.java [io :as io] [shell :refer [sh]]]])
+           '#{java.util.regex.Pattern
+              java.util.Date
+              java.util.Random
+              java.util.UUID
+              [clojure.pprint :as pp]
+              clojure.set
+              [clojure.string :as string]
+              [clojure.java.io :as io]
+              [clojure.java.shell :refer [sh]]}))))
 
 (def sample-body
   '((set/union #{:a} #{:b})

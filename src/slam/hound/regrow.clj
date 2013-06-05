@@ -79,6 +79,28 @@
                        ['clojure.test :refer :all]
                        [(ns-name n) :refer [sym]]))))
 
+(defn- expand-prefix-list [[prefix & more]]
+  (map (fn [expr]
+         (if (coll? expr)
+           (let [[x & xs] expr
+                 sym (symbol (str prefix \. x))]
+             (if (seq xs)
+               (into [sym] xs)
+               sym))
+           (symbol (str prefix \. expr))))
+       more))
+
+(defn expand-libs
+  "Reduce collection of symbols, libspecs, and prefix lists into a regular set
+  of symbols and libspecs"
+  [coll]
+  (reduce
+    (fn [s lib]
+      (if (and (coll? lib) (not (keyword? (second lib))))
+        (into s (expand-prefix-list lib))
+        (conj s lib)))
+    #{} coll))
+
 (defn- butlast-regex [candidate]
   (if (symbol? candidate)
     (re-pattern (string/join "." (butlast (.split (name candidate) "\\."))))
