@@ -85,7 +85,7 @@
                     sample-body])))))
 
 (deftest ^:unit test-grow-preserve
-  (let [in-orig? (in-originals-pred ['((java.util Date UUID))])]
+  (let [in-orig? (in-originals-pred '((java.util Date UUID)))]
     (is (in-orig? 'java.util.Date))
     (is (not (in-orig? 'java.sql.Date))))
   (is (= '(java.io.File java.util.Date)
