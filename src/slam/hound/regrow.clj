@@ -79,14 +79,32 @@
                        ['clojure.test :refer :all]
                        [(ns-name n) :refer [sym]]))))
 
-(defn- butlast-regex [candidate]
-  (if (symbol? candidate)
-    (re-pattern (string/join "." (butlast (.split (name candidate) "\\."))))
-    (re-pattern (name (first candidate)))))
+(defn- expand-prefix-list [[prefix & more]]
+  (map (fn [expr]
+         (if (coll? expr)
+           (let [[x & xs] expr
+                 sym (symbol (str prefix \. x))]
+             (if (seq xs)
+               (into [sym] xs)
+               sym))
+           (symbol (str prefix \. expr))))
+       more))
+
+(defn expand-libs
+  "Reduce collection of symbols, libspecs, and prefix lists into a regular set
+  of symbols and libspecs"
+  [coll]
+  (reduce
+    (fn [s lib]
+      (if (and (coll? lib) (not (keyword? (second lib))))
+        (into s (expand-prefix-list lib))
+        (conj s lib)))
+    #{} coll))
 
 (defn in-originals-pred [originals]
-  (fn [candidate]
-    (some #(re-find (butlast-regex candidate) (str %)) originals)))
+  (let [libs (expand-libs originals)]
+    (fn [candidate]
+      (contains? libs candidate))))
 
 (def ^:private disambiguator-blacklist
   (if-let [v (resolve 'user/slamhound-disambiguator-blacklist)]
@@ -109,6 +127,11 @@
            (some (fn [[ns2 _ [alias2]]]
                    (and (= alias1 alias2) (= ns1 ns2))))))))
 
+(defn- last-segment-matches? [expr]
+  (when (and (coll? expr) (= (second expr) :as))
+    (let [[x _ y] expr]
+      (= (peek (string/split (name x) #"\.")) (name y)))))
+
 (defn- disambiguate [candidates missing ns-map type]
   ;; TODO: prefer things in src/classes to jars
   (debug :disambiguating missing :in candidates)
@@ -118,7 +141,7 @@
          (sort-by (juxt (complement (in-originals-pred orig-clauses))
                         (complement (referred-to-in-originals-pred
                                      type orig-clauses))
-                        ;; TODO: prefer candidates where last segment matches
+                        (complement last-segment-matches?)
                         (comp count str)))
          (remove #(re-find disambiguator-blacklist (str %)))
          first)))
