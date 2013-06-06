@@ -35,18 +35,22 @@
                            :else
                            [:require-refer :import])}))
 
-(defn- check-for-failure [ns-map body]
+(defn- with-ns-sandbox [ns-map body f]
   (let [sandbox-ns `slamhound.sandbox#
         ns-form (stitch/ns-from-map (assoc ns-map :name sandbox-ns))]
     (binding [*ns* (create-ns sandbox-ns)]
       (try
-        (eval `(do ~ns-form ~@body nil))
+        (eval `(do ~ns-form ~@body))
+        (f *ns*)
         (catch Exception e
           (or (failure-details (.getMessage e))
               (do (debug :not-found ns-form)
                   (throw e))))
         (finally
-         (remove-ns (.name *ns*)))))))
+          (remove-ns (.name *ns*)))))))
+
+(defn- check-for-failure [ns-map body]
+  (with-ns-sandbox ns-map body (constantly nil)))
 
 (defn- symbols-in-body [body]
   (filter symbol? (remove coll? (rest (tree-seq coll? seq body)))))
@@ -136,20 +140,37 @@
      (try (with-out-str (require namespace))
           (catch Throwable _)))))
 
+(defn- wrap-macros [ns-map body]
+  (with-ns-sandbox ns-map body
+    (fn [nspace]
+      (let [ms (filter :macro (map meta (vals (ns-publics nspace))))
+            exprs (reduce
+                    (fn [v {:keys [name arglists]}]
+                      (reduce
+                        (fn [v args]
+                          (conj v `(defn ~(gensym name) []
+                                     (~name ~@(map (fn [a] `'~a) args)))))
+                        v arglists))
+                    [] ms)]
+        (concat body exprs)))))
+
+(defn- regrow* [[ns-map body]]
+  (loop [ns-map ns-map
+         last-missing nil
+         type-to-try 0]
+    (if-let [{:keys [missing possible-types]} (check-for-failure ns-map body)]
+      (let [type-idx (if (= last-missing missing)
+                       (inc type-to-try)
+                       0)]
+        (if-let [type (get possible-types type-idx)]
+          (recur (grow-step missing type ns-map body) missing type-idx)
+          (throw (Exception. (str "Couldn't resolve " missing
+                                  ", got as far as " ns-map)))))
+      ns-map)))
+
 (defn regrow [[ns-map body]]
   (force pre-load-namespaces)
   (if (:slamhound-skip (:meta ns-map))
     ns-map
-    (loop [ns-map ns-map
-           last-missing nil
-           type-to-try 0]
-      (if-let [{:keys [missing possible-types]} (check-for-failure ns-map body)]
-        (let [type-idx (if (= last-missing missing)
-                         (inc type-to-try)
-                         0)]
-          (if-let [type (get possible-types type-idx)]
-            (recur (grow-step missing type ns-map body) missing type-idx)
-            (throw (Exception. (str "Couldn't resolve " missing
-                                    ", got as far as " ns-map)))))
-        ns-map))))
-
+    (let [ns-map (regrow* [ns-map body])]
+      (regrow* [ns-map (wrap-macros ns-map body)]))))
