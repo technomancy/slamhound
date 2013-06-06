@@ -11,6 +11,17 @@
     (deftest ^:unit test-ns-to-map
       (is (= (ns-from-map {:ns 'slam.hound}))))))
 
+(def sample-body-with-macros
+  '((defmacro no-args []
+      `(BitSet.))
+    (defmacro more-args [x & xs]
+      `(io/file ~x ~@xs))
+    (defmacro multiple-arity
+      ([a] `(set ~a))
+      ([a b] `(set/union (set ~a) (set ~b))))
+    (defmacro destructuring-args [[_] & {:keys [a b c] :or [a "" b #"." ":)"]}]
+      `(string/replace-first ~a ~b ~c))))
+
 (deftest ^:unit test-regrow
   (testing "regrows the :require-as, :require-refer, and :imports onto ns-map"
     (is (= {:name 'slamhound.sample
@@ -53,7 +64,14 @@
                                      java.util.UUID]
                            :refer-clojure '(:exclude [compile test])
                            :gen-class nil}}
-                    sample-body])))))
+                    sample-body]))))
+  (testing "regrows references inside of macro vars"
+    (is (= '{:import (java.util.BitSet)
+             :require-as ([clojure.string :as string]
+                          [clojure.set :as set]
+                          [clojure.java.io :as io])}
+           (select-keys (regrow [{} sample-body-with-macros])
+                        [:import :require-as])))))
 
 (deftest ^:unit test-grow-preserve
   (let [in-orig? (in-originals-pred ['((java.util Date UUID))])]
