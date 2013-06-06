@@ -87,7 +87,12 @@
                                      java.util.UUID]
                            :refer-clojure '(:exclude [compile test])
                            :gen-class nil}}
-                    sample-body])))))
+                    sample-body])))
+    (is (= (set (:require-as (regrow [{} sample-body])))
+           '#{[clojure.java.io :as io]
+              [clojure.string :as string]
+              [clojure.set :as set]})
+        "Should prefer candidate '[clojure.string :as string]")))
 
 (deftest ^:unit test-grow-preserve
   (let [in-orig? (in-originals-pred '((java.util Date UUID)))]

@@ -127,6 +127,11 @@
            (some (fn [[ns2 _ [alias2]]]
                    (and (= alias1 alias2) (= ns1 ns2))))))))
 
+(defn- last-segment-matches? [expr]
+  (when (and (coll? expr) (= (second expr) :as))
+    (let [[x _ y] expr]
+      (= (peek (string/split (name x) #"\.")) (name y)))))
+
 (defn- disambiguate [candidates missing ns-map type]
   ;; TODO: prefer things in src/classes to jars
   (debug :disambiguating missing :in candidates)
@@ -136,7 +141,7 @@
          (sort-by (juxt (complement (in-originals-pred orig-clauses))
                         (complement (referred-to-in-originals-pred
                                      type orig-clauses))
-                        ;; TODO: prefer candidates where last segment matches
+                        (complement last-segment-matches?)
                         (comp count str)))
          (remove #(re-find disambiguator-blacklist (str %)))
          first)))
