@@ -53,10 +53,7 @@
   Requires active nrepl or slime connection."
   (interactive)
   (let* ((code (slamhound-clj-string buffer-file-name))
-         (result (if (and (boundp 'nrepl-connection-buffer)
-                          (get-buffer-process nrepl-connection-buffer))
-                     (plist-get (nrepl-send-string-sync code) :stdout)
-                   (first (slime-eval `(swank:eval-and-grab-output ,code))))))
+         (result (plist-get (nrepl-send-string-sync code) :stdout)))
     (if (string-match "^:error \\(.*\\)" result)
         (error (match-string 1 result))
       (goto-char (point-min))
