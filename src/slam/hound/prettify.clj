@@ -35,7 +35,7 @@
                                             "~<(~;~@{~w~^ ~:_~}~;)~:>"))
                            lis)
                           (write-out lis)))
-                      (apply (formatter-out "~w ~:i~@{~w~^ ~:_~}") arg)))
+                      (apply (formatter-out "~w~^ ~:i~@{~w~^ ~:_~}") arg)))
                   (when (next args)
                     ((formatter-out "~:@_"))))
                 (do
