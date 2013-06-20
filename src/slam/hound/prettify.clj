@@ -61,7 +61,7 @@
         (when (or doc-str attr-map (seq references))
           ((formatter-out "~@:_")))
         (when doc-str
-          (cl-format true "\"~a\"~:[~;~:@_~]" doc-str
+          (cl-format true "~s~:[~;~:@_~]" doc-str
                      (or attr-map (seq references))))
         (when attr-map
           ((formatter-out "~w~:[~;~:@_~]") attr-map (seq references)))
