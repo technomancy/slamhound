@@ -37,7 +37,7 @@
                           (write-out lis)))
                       (apply (formatter-out "~w ~:i~@{~w~^ ~:_~}") arg)))
                   (when (next args)
-                    ((formatter-out "~_"))))
+                    ((formatter-out "~:@_"))))
                 (do
                   (write-out arg)
                   (when (next args)
