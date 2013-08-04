@@ -1,8 +1,23 @@
 (ns slam.hound-test
   (:require [clojure.java.io :as io]
             [clojure.test :refer [deftest is testing]]
-            [slam.hound :refer [reconstruct -main]])
-  (:import (java.io File StringReader)))
+            [slam.hound :refer [read-comment-header reconstruct -main]])
+  (:import (java.io File PushbackReader StringReader)))
+
+(deftest ^:unit test-read-comment-header
+  (testing "preserves comments at top of file"
+    (is (= ";;\n;; Copyright © Phil Hagelberg\n;;\n\n"
+           (read-comment-header
+             (PushbackReader.
+               (StringReader.
+                 ";;\n;; Copyright © Phil Hagelberg\n;;\n\n(ns test)"))))))
+  (testing "returns headers faithfully"
+    (is (= "\n\r\n\t;; COPYRIGHT  \n\r\n\t;; LICENSE  \n\r\n"
+           (read-comment-header
+             (PushbackReader.
+               (StringReader.
+                 (str "\n\r\n\t;; COPYRIGHT  \n\r\n"
+                      "\t;; LICENSE  \n\r\n(ns test)"))))))))
 
 (def basic-ns (str '(ns slamhound.sample
                       "Testing some things going on here."
