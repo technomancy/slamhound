@@ -51,7 +51,8 @@
                           [clojure.string :as string]
                           [clojure.set :as set]]
             :require-refer '[[slam.hound.stitch :refer [ns-from-map]]
-                             [clojure.test :refer :all]]
+                             [clojure.test :refer [is]]
+                             [clojure.test :refer [deftest]]]
             :import '(java.io.File java.io.ByteArrayInputStream
                                    clojure.lang.Compiler$BodyExpr
                                    java.util.UUID)

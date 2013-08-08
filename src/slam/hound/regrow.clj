@@ -75,9 +75,7 @@
     :require-refer (for [n (all-ns)
                          [sym var] (ns-publics n)
                          :when (= missing (name sym))]
-                     (if (= (ns-name n) 'clojure.test)
-                       ['clojure.test :refer :all]
-                       [(ns-name n) :refer [sym]]))))
+                     [(ns-name n) :refer [sym]])))
 
 (defn- expand-prefix-list [[prefix & more]]
   (map (fn [expr]
