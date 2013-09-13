@@ -60,6 +60,17 @@
                          :when alias]
                      {alias #{(symbol var-name)}})))))
 
+(defn- mass-refer-namespaces
+  "Extract the set of namespace symbols that match [_ :refer :all] from a
+  collection of libspecs."
+  [coll]
+  (reduce
+    (fn [s spec]
+      (if (and (coll? spec) (= (rest spec) [:refer :all]))
+        (conj s (first spec))
+        s))
+    #{} coll))
+
 (defn candidates [type missing body]
   (case type
     :import (for [class-name search/available-classes
@@ -118,12 +129,15 @@
 (defn- referred-to-in-originals-pred [type originals]
   (if-not (= type :require-refer)
     (constantly false)
-    (fn [[ns1 _ [alias1] :as x]]
+    (fn [[ns1 _ aliases1]]
       (->> originals
            (filter sequential?)
            (filter #(contains? #{:only :refer} (second %)))
-           (some (fn [[ns2 _ [alias2]]]
-                   (and (= alias1 alias2) (= ns1 ns2))))))))
+           (some (fn [[ns2 _ aliases2]]
+                   (and (sequential? aliases1)
+                        (sequential? aliases2)
+                        (= (first aliases1) (first aliases2))
+                        (= ns1 ns2))))))))
 
 (defn- last-segment-matches? [expr]
   (when (and (coll? expr) (= (second expr) :as))
@@ -145,10 +159,20 @@
          first)))
 
 (defn- grow-step [missing type ns-map body]
-  (if-let [addition (disambiguate (candidates type missing body)
-                                  missing ns-map type)]
-    (update-in ns-map [type] conj addition)
-    ns-map))
+  (let [mass-refers (mass-refer-namespaces (get-in ns-map [:old :require]))
+        libspecs (candidates type missing body)
+        ;; Prefer original [_ :refer :all] specs
+        libspecs (reduce (fn [specs mref]
+                           (map (fn [spec]
+                                  (if (and (coll? spec)
+                                           (= (take 2 spec) [mref :refer]))
+                                    [mref :refer :all]
+                                    spec))
+                                specs))
+                         libspecs mass-refers)]
+    (if-let [addition (disambiguate libspecs missing ns-map type)]
+      (update-in ns-map [type] conj addition)
+      ns-map)))
 
 (defonce pre-load-namespaces
   (delay

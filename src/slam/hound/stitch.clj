@@ -15,9 +15,11 @@
                   (-> c resolve .getName (.split "\\.") last symbol))))))
 
 (defn- group-by-namespace [uses]
-  (for [[namespace subclause] (group-by first uses)]
-    [namespace :refer (vec (sort (for [[_ _ [var]] subclause]
-                                   var)))]))
+  (for [[namespace subclause] (group-by first uses)
+        :let [sc (for [[_ _ vars] subclause]
+                   (if (coll? vars) (first vars) vars))
+              vars (if (= [:all] sc) :all (vec (sort sc)))]]
+    [namespace :refer vars]))
 
 (defn collapse-clause [ns-map clause]
   (case clause
