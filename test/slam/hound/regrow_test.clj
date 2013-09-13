@@ -51,7 +51,8 @@
                           [clojure.string :as string]
                           [clojure.set :as set]]
             :require-refer '[[slam.hound.stitch :refer [ns-from-map]]
-                             [clojure.test :refer :all]]
+                             [clojure.test :refer [is]]
+                             [clojure.test :refer [deftest]]]
             :import '(java.io.File java.io.ByteArrayInputStream
                                    clojure.lang.Compiler$BodyExpr
                                    java.util.UUID)
@@ -87,12 +88,18 @@
                                      java.util.UUID]
                            :refer-clojure '(:exclude [compile test])
                            :gen-class nil}}
-                    sample-body])))
+                    sample-body]))))
+  (testing "prefers candidate where last segment matches"
     (is (= (set (:require-as (regrow [{} sample-body])))
            '#{[clojure.java.io :as io]
               [clojure.string :as string]
-              [clojure.set :as set]})
-        "Should prefer candidate '[clojure.string :as string]")))
+              [clojure.set :as set]})))
+  (testing "honors :refer :all in old ns"
+    (is (= (set (:require-refer
+                  (regrow [{:old {:require '[[clojure.test :refer :all]]}}
+                           sample-body])))
+           '#{[clojure.test :refer :all]
+              [slam.hound.stitch :refer [ns-from-map]]}))))
 
 (deftest ^:unit test-grow-preserve
   (let [in-orig? (in-originals-pred '((java.util Date UUID)))]

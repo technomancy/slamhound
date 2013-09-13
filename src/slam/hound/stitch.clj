@@ -16,11 +16,10 @@
 
 (defn- group-by-namespace [uses]
   (for [[namespace subclause] (group-by first uses)
-        :let [[[_require_ _refer_ referred]] subclause]]
-    (if (= :all referred)
-      [namespace :refer :all]
-      [namespace :refer (vec (sort (for [[_ _ [var]] subclause]
-                                     var)))])))
+        :let [sc (for [[_ _ vars] subclause]
+                   (if (coll? vars) (first vars) vars))
+              vars (if (= [:all] sc) :all (vec (sort sc)))]]
+    [namespace :refer vars]))
 
 (defn collapse-clause [ns-map clause]
   (case clause
