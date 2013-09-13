@@ -4,7 +4,8 @@
                                        sort-subclauses collapse-clause]]))
 
 (def sample-ns-form '(ns slamhound.sample
-                       "Testing some \"things\" going on here."
+                       "Testing some \"things\"
+going on here."
                        (:require [clojure.java.io :as io]
                                  [clojure.set :as set]
                                  [slam.hound.stitch :refer [ns-from-map]]
@@ -17,7 +18,7 @@
 
 (def sample-ns-map
   {:name 'slamhound.sample
-   :meta {:doc "Testing some \"things\" going on here."}
+   :meta {:doc "Testing some \"things\"\ngoing on here."}
    :require-refer '[[slam.hound.stitch :refer [ns-from-map]]
                     [clojure.test :refer [is]]
                     [clojure.test :refer [deftest]]]
@@ -33,7 +34,7 @@
 ;; It *should* be covered by tests for stitch-up
 (deftest ^:unit test-sort
   (is (= {:name 'slamhound.sample
-          :meta {:doc "Testing some \"things\" going on here."}
+          :meta {:doc "Testing some \"things\"\ngoing on here."}
           :require-refer '[[clojure.test :refer [deftest]]
                            [clojure.test :refer [is]]
                            [slam.hound.stitch :refer [ns-from-map]]]
@@ -63,7 +64,7 @@
 
 (deftest ^:unit test-stitch-up
   (is (= "(ns slamhound.sample
-  \"Testing some \\\"things\\\" going on here.\"
+  \"Testing some \\\"things\\\"\ngoing on here.\"
   (:require [clojure.java.io :as io]
             [clojure.set :as set]
             [clojure.test :refer [deftest is]]
