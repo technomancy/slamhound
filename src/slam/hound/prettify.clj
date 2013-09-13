@@ -1,8 +1,9 @@
 (ns slam.hound.prettify
   "Format a namespace declaration using pretty print with custom dispatch."
-  (:require [clojure.pprint :refer [code-dispatch pprint with-pprint-dispatch
-                                    cl-format pprint-logical-block
-                                    pprint-newline formatter-out write-out]]))
+  (:require [clojure.pprint :refer [cl-format code-dispatch formatter-out
+                                    pprint pprint-logical-block pprint-newline
+                                    with-pprint-dispatch write-out]]
+            [clojure.string :refer [escape]]))
 
 (defn- brackets
   "Figure out which kind of brackets to use"
@@ -61,8 +62,9 @@
         (when (or doc-str attr-map (seq references))
           ((formatter-out "~@:_")))
         (when doc-str
-          (cl-format true "~s~:[~;~:@_~]" doc-str
-                     (or attr-map (seq references))))
+          (let [doc-str (escape doc-str {\\ "\\\\" \" "\\\""})]
+            (cl-format true "\"~a\"~:[~;~:@_~]" doc-str
+                       (or attr-map (seq references)))))
         (when attr-map
           ((formatter-out "~w~:[~;~:@_~]") attr-map (seq references)))
         (when references
