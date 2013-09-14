@@ -1,11 +1,10 @@
 (ns slam.hound.search
   "Search the classpath for vars and classes."
   (:require [clojure.java.io :refer [file reader]])
-  (:import (java.io BufferedReader File FilenameFilter
-                    InputStreamReader PushbackReader)
+  (:import (java.io BufferedReader File FilenameFilter InputStreamReader
+                    PushbackReader)
            (java.util StringTokenizer)
-           (java.util.jar JarEntry JarFile)
-           (java.util.regex Pattern)))
+           (java.util.jar JarEntry JarFile)))
 
 ;;; Mostly taken from leiningen.util.ns and swank.util.class-browse.
 

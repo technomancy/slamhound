@@ -1,7 +1,7 @@
 (ns slam.hound-test
   (:require [clojure.java.io :as io]
             [clojure.test :refer [deftest is testing]]
-            [slam.hound :refer [read-comment-header reconstruct -main]])
+            [slam.hound :refer [-main read-comment-header reconstruct]])
   (:import (java.io File PushbackReader StringReader)))
 
 (deftest ^:unit test-read-comment-header

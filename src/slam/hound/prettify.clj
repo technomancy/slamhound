@@ -1,7 +1,7 @@
 (ns slam.hound.prettify
   "Format a namespace declaration using pretty print with custom dispatch."
-  (:require [clojure.pprint :refer [cl-format code-dispatch formatter-out
-                                    pprint pprint-logical-block pprint-newline
+  (:require [clojure.pprint :refer [cl-format code-dispatch formatter-out pprint
+                                    pprint-logical-block pprint-newline
                                     with-pprint-dispatch write-out]]
             [clojure.string :refer [escape]]))
 

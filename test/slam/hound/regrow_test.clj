@@ -1,6 +1,6 @@
 (ns slam.hound.regrow-test
   (:require [clojure.test :refer [deftest is testing]]
-            [slam.hound.regrow :refer [expand-libs regrow in-originals-pred]]))
+            [slam.hound.regrow :refer [expand-libs in-originals-pred regrow]]))
 
 (deftest ^:unit test-expand-libs
   (testing "expands prefix lists into a flat list of symbols"

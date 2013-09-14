@@ -1,8 +1,8 @@
 (ns slam.hound.regrow
   (:require [clojure.set :as set]
             [clojure.string :as string]
-            [slam.hound.stitch :as stitch]
-            [slam.hound.search :as search]))
+            [slam.hound.search :as search]
+            [slam.hound.stitch :as stitch]))
 
 (def ^:dynamic *debug* false)
 

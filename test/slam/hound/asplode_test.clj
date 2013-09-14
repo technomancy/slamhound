@@ -3,7 +3,6 @@
             [slam.hound.asplode :refer [asplode]])
   (:import (java.io StringReader)))
 
-
 (deftest ^:unit test-asplode
   (is (= [{:name 'slamhound.sample
            :meta {:doc "Testing some things going on here."}

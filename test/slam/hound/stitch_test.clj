@@ -1,7 +1,7 @@
 (ns slam.hound.stitch-test
   (:require [clojure.test :refer [deftest is]]
-            [slam.hound.stitch :refer [ns-from-map stitch-up
-                                       sort-subclauses collapse-clause]]))
+            [slam.hound.stitch :refer [collapse-clause ns-from-map
+                                       sort-subclauses stitch-up]]))
 
 (def sample-ns-form '(ns slamhound.sample
                        "Testing some \"things\"

@@ -1,6 +1,6 @@
 (ns slam.hound.prettify-test
-  (:require [slam.hound.prettify :refer [prettify]]
-            [clojure.test :as test :refer [deftest is testing]]))
+  (:require [clojure.test :refer [deftest is testing]]
+            [slam.hound.prettify :refer [prettify]]))
 
 (deftest ^:unit test-prettify
   (testing "always inserts newlines inside short requires"
