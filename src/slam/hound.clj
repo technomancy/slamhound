@@ -42,23 +42,25 @@
 (defn swap-in-reconstructed-ns-form
   "Reconstruct file's ns form and rewrite the file on disk with the new form."
   [file]
-  (let [tmp-file (doto (File/createTempFile "slamhound_tmp" ".clj")
-                   .deleteOnExit)
-        _ (io/copy file tmp-file)
-        new-ns (.trim (reconstruct tmp-file))]
-    (with-open [rdr (PushbackReader. (io/reader tmp-file))
-                writer (io/writer file :append true)]
-      (io/copy "" file)
-      ;; Preserve comment header
-      (let [header (read-comment-header rdr)]
-        (when-not (string/blank? header)
-          (io/copy (tidy-comment-header header) writer)))
-      ;; move the reader past the namespace form; discard value
-      (read rdr)
-      ;; append the reconstructed ns form
-      (io/copy new-ns writer)
-      ;; append the body
-      (io/copy rdr writer))))
+  (let [tmp-file (File/createTempFile "slamhound_tmp" ".clj")]
+    (try
+      (io/copy file tmp-file)
+      (let [new-ns (.trim (reconstruct tmp-file))]
+        (with-open [rdr (PushbackReader. (io/reader tmp-file))
+                    writer (io/writer file :append true)]
+          (io/copy "" file)
+          ;; Preserve comment header
+          (let [header (read-comment-header rdr)]
+            (when-not (string/blank? header)
+              (io/copy (tidy-comment-header header) writer)))
+          ;; move the reader past the namespace form; discard value
+          (read rdr)
+          ;; append the reconstructed ns form
+          (io/copy new-ns writer)
+          ;; append the body
+          (io/copy rdr writer)))
+      (finally
+        (.delete tmp-file)))))
 
 (defn -main
   "Takes a file or dir and rewrites the .clj files with reconstructed ns forms."

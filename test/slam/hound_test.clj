@@ -134,9 +134,11 @@
                                  (join "," ["a" "b" "c"])))))))))
 
 (deftest ^:integration test-main
-  (let [tmp (doto (File/createTempFile "test_namespace_copy" ".clj")
-              .deleteOnExit)]
-    (io/copy (io/reader (io/resource "test_namespace.clj")) tmp)
-    (-main tmp)
-    (is (= (slurp (io/resource "reconstructed_namespace.clj"))
-           (slurp tmp)))))
+  (let [tmp (File/createTempFile "test_namespace_copy" ".clj")]
+    (try
+      (io/copy (io/reader (io/resource "test_namespace.clj")) tmp)
+      (-main tmp)
+      (is (= (slurp (io/resource "reconstructed_namespace.clj"))
+             (slurp tmp)))
+      (finally
+        (.delete tmp)))))
