@@ -44,11 +44,11 @@
   [file]
   (let [tmp-file (doto (File/createTempFile "slamhound_tmp" ".clj")
                    .deleteOnExit)
-        _ (do (io/copy file tmp-file)
-              (io/copy "" file))
+        _ (io/copy file tmp-file)
         new-ns (.trim (reconstruct tmp-file))]
     (with-open [rdr (PushbackReader. (io/reader tmp-file))
                 writer (io/writer file :append true)]
+      (io/copy "" file)
       ;; Preserve comment header
       (let [header (read-comment-header rdr)]
         (when-not (string/blank? header)

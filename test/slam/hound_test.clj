@@ -1,7 +1,8 @@
 (ns slam.hound-test
   (:require [clojure.java.io :as io]
             [clojure.test :refer [deftest is testing]]
-            [slam.hound :refer [-main read-comment-header reconstruct]])
+            [slam.hound :refer [-main read-comment-header reconstruct
+                                swap-in-reconstructed-ns-form]])
   (:import (java.io File PushbackReader StringReader)))
 
 (deftest ^:unit test-read-comment-header
@@ -18,6 +19,17 @@
                (StringReader.
                  (str "\n\r\n\t;; COPYRIGHT  \n\r\n"
                       "\t;; LICENSE  \n\r\n(ns test)"))))))))
+
+(deftest ^:unit test-swap-in-reconstructed-ns-form
+  (testing "original file is preserved on exceptions"
+    (let [tmp (File/createTempFile "slamhound_test" ".clj")
+          buf "(ns foo)\n(FOO/bar)"]
+      (try
+        (spit tmp buf)
+        (is (thrown? Throwable (swap-in-reconstructed-ns-form tmp)))
+        (is (= buf (slurp tmp)))
+        (finally
+          (.delete tmp))))))
 
 (def basic-ns (str '(ns slamhound.sample
                       "Testing some things going on here."
