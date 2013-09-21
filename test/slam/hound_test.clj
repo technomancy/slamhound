@@ -31,6 +31,8 @@
         (finally
           (.delete tmp))))))
 
+(defrecord ExampleRecord [])
+
 (def basic-ns (str '(ns slamhound.sample
                       "Testing some things going on here."
                       (:use [slam.hound.stitch :only [ns-from-map]]
@@ -48,6 +50,7 @@
                    '(set/union #{:a} #{:b})
                    '(UUID/randomUUID)
                    '(instance? Compiler$BodyExpr nil)
+                   '(instance? ExampleRecord nil)
                    '(io/copy (ByteArrayInputStream. (.getBytes "remotely"))
                              (doto (File. "/tmp/remotely-human") .deleteOnExit))
                    '(deftest ^:unit test-ns-to-map
@@ -62,7 +65,8 @@
             [slam.hound.stitch :refer [ns-from-map]])
   (:import (clojure.lang Compiler$BodyExpr)
            (java.io ByteArrayInputStream File)
-           (java.util UUID))
+           (java.util UUID)
+           (slam.hound_test ExampleRecord))
   (:refer-clojure :exclude [compile test])
   (:gen-class))
 "

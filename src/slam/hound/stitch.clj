@@ -6,7 +6,11 @@
 (def ^:private ns-clauses-to-preserve [:refer-clojure :gen-class :load])
 
 (defn- get-package [class-name]
-  (-> class-name resolve .getPackage .getName))
+  (let [cls ^Class (resolve class-name)]
+    (if-let [pkg (.getPackage cls)]
+      (.getName pkg)
+      ;; Fall back to string matching for dynamically generated classes
+      (second (re-find #"(.*)\." (.getCanonicalName cls))))))
 
 (defn- group-by-package [imports]
   (for [[package classes] (group-by get-package imports)]

@@ -71,11 +71,23 @@
         s))
     #{} coll))
 
+(defn- ns-import-candidates
+  "Search (all-ns) for imports that match missing-sym, returning a set of
+  class symbols."
+  [missing-sym]
+  (reduce (fn [s nspace]
+            (if-let [cls ^Class ((ns-imports nspace) missing-sym)]
+              (conj s (symbol (.getCanonicalName cls)))
+              s))
+          #{} (all-ns)))
+
 (defn candidates [type missing body]
   (case type
-    :import (for [class-name search/available-classes
-                  :when (= missing (last (.split class-name "\\.")))]
-              (symbol class-name))
+    :import (concat
+              (ns-import-candidates (symbol missing))
+              (for [class-name search/available-classes
+                    :when (= missing (last (.split class-name "\\.")))]
+                (symbol class-name)))
     :require-as (for [n (all-ns)
                       :let [syms-with-alias (get (ns-qualifed-syms body)
                                                  missing)]
