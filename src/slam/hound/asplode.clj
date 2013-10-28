@@ -22,7 +22,7 @@
   #{:refer-clojure :use :require :import :load :gen-class})
 
 ;; TODO: Remove when upgrading to Clojure 1.5+
-(defmacro cond->*
+(defmacro ^:private cond->*
   "Takes an expression and a set of test/form pairs. Threads expr (via ->)
   through each form for which the corresponding test
   expression is true. Note that, unlike cond branching, cond-> threading does
