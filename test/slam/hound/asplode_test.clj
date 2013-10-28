@@ -4,7 +4,8 @@
                                         expand-imports
                                         expand-libspecs
                                         parse-refers
-                                        parse-requires]])
+                                        parse-requires
+                                        parse-uses]])
   (:import (java.io StringReader)))
 
 (deftest ^:unit test-expand-imports
@@ -52,6 +53,18 @@
            :refer {my.ns.bar #{bar}}
            :verbose true
            :reload :all})))
+
+(deftest ^:unit test-parse-uses
+  (is (= (parse-uses '[my.ns.base
+                       [my.ns [foo :exclude [foo]] [bar :only [bar]]]
+                       [my.ns.baz :as baz :only [baz]]
+                       [my.ns.quux]])
+         '{:refer {my.ns.base :all
+                   my.ns.bar #{bar}
+                   my.ns.baz #{baz}
+                   my.ns.quux :all}
+           :alias {my.ns.baz baz}
+           :exclude {my.ns.foo #{foo}}})))
 
 (deftest ^:unit test-asplode
   (is (= [{:name 'slamhound.sample

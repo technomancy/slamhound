@@ -127,6 +127,21 @@
         (vmerge m {:require #{ns-sym}})))
     {} (expand-libspecs specs)))
 
+(defn parse-uses
+  "Parse a list of use libspecs, via parse-refers and parse-requires."
+  [specs]
+  (reduce
+    (fn [m [ns-sym & opts]]
+      (if (seq opts)
+        (reduce-kv
+          (fn [m k v]
+            (vmerge m (if (contains? #{:exclude :only :rename} k)
+                        (parse-refers ns-sym [k v])
+                        (parse-requires [[ns-sym k v]]))))
+          m (apply hash-map opts))
+        (vmerge m (parse-refers ns-sym []))))
+    {} (expand-libspecs specs)))
+
 (defn- ns-to-map [ns-form]
   (let [[_ ns-name maybe-doc & clauses] ns-form
         ns-meta (meta ns-name)
