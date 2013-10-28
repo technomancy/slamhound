@@ -40,6 +40,12 @@
           ns-map
           ns-map-clauses))
 
+(defn keyword-list-from-map
+  "Returns a cons list of keyword and the value of the keyword in ns-map"
+  [kw ns-map]
+  (when-let [s (ns-map kw)]
+    (cons kw s)))
+
 (defn imports-from-map
   "Returns a collapsed :import form from a ns-map with {:import #{class-syms}}"
   [ns-map]

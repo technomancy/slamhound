@@ -1,7 +1,11 @@
 (ns slam.hound.stitch-test
   (:require [clojure.test :refer [deftest is]]
-            [slam.hound.stitch :refer [collapse-clause imports-from-map
-                                       ns-from-map sort-subclauses stitch-up]]))
+            [slam.hound.stitch :refer [collapse-clause
+                                       imports-from-map
+                                       keyword-list-from-map
+                                       ns-from-map
+                                       sort-subclauses
+                                       stitch-up]]))
 
 (def sample-ns-form '(ns slamhound.sample
                        "Testing some \"things\"
@@ -26,6 +30,11 @@ going on here."
    :import '(java.io.File java.io.ByteArrayInputStream
                           clojure.lang.Compiler$BodyExpr java.util.UUID)
    :refer-clojure '(:exclude [compile test])})
+
+(deftest test-keyword-list-from-map
+  (is (= (keyword-list-from-map
+           :gen-class '{:gen-class [:name Foo :extends Bar]})
+         '(:gen-class :name Foo :extends Bar))))
 
 (deftest test-imports-from-map
   (is (= (imports-from-map '{:import #{java.util.BitSet
