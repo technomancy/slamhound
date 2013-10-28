@@ -1,6 +1,22 @@
 (ns slam.hound.asplode
   (:import (java.io PushbackReader)))
 
+(def default-namespace-references
+  ;; NOTE: :verbose, :reload, and :reload-all can actually be specified per
+  ;;       libspec, but this is not mentioned in the docstring for require, so
+  ;;       we consider it an implementation detail.
+  '{:load      []    ; ["/path/to/ns.clj"]}
+    :gen-class []    ; [:option value ...]
+    :import    #{}   ; #{class-sym}
+    :require   #{}   ; #{ns-sym}
+    :alias     {}    ; {ns-sym ns-sym}
+    :refer     {}    ; {ns-sym #{var-sym}}
+    :exclude   {}    ; {ns-sym #{var-sym}}
+    :rename    {}    ; {ns-sym {var-sym var-sym}}
+    :verbose   false ; true/false
+    :reload    false ; true/false/:all
+    })
+
 (defn- libspec?
   "Returns true if x is a libspec.
   Copied from clojure.core/libspec?"
