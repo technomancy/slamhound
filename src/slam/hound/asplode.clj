@@ -1,4 +1,5 @@
 (ns slam.hound.asplode
+  (:require [slam.hound.future :refer [cond->]])
   (:import (java.io PushbackReader)))
 
 (def default-namespace-references
@@ -20,21 +21,6 @@
 (def namespace-reference-keys
   "Set of valid keys that begin declarations in ns forms."
   #{:refer-clojure :use :require :import :load :gen-class})
-
-;; TODO: Remove when upgrading to Clojure 1.5+
-(defmacro ^:private cond->*
-  "Takes an expression and a set of test/form pairs. Threads expr (via ->)
-  through each form for which the corresponding test
-  expression is true. Note that, unlike cond branching, cond-> threading does
-  not short circuit after the first true test expression."
-  {:added "1.5"}
-  [expr & clauses]
-  (assert (even? (count clauses)))
-  (let [g (gensym)
-        pstep (fn [[test step]] `(if ~test (-> ~g ~step) ~g))]
-    `(let [~g ~expr
-           ~@(interleave (repeat g) (map pstep (partition 2 clauses)))]
-       ~g)))
 
 (defn- libspec?
   "Returns true if x is a libspec.
@@ -104,7 +90,7 @@
   [ns-sym filters]
   (if (seq filters)
     (let [{:keys [exclude only rename]} (apply hash-map filters)]
-      (cond->* {}
+      (cond-> {}
         exclude (assoc :exclude {ns-sym (set exclude)})
         only (assoc :refer {ns-sym (set only)})
         rename (assoc :rename {ns-sym (into {} rename)})))
@@ -121,7 +107,7 @@
       (if (seq opts)
         (let [{:keys [as refer reload reload-all verbose]}
               (apply hash-map opts)]
-          (vmerge m (cond->* {}
+          (vmerge m (cond-> {}
                       as (assoc :alias {ns-sym as})
                       refer (assoc :refer {ns-sym (if (= refer :all)
                                                     :all (set refer))})
