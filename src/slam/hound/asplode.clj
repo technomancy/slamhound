@@ -17,6 +17,21 @@
     :reload    false ; true/false/:all
     })
 
+;; TODO: Remove when upgrading to Clojure 1.5+
+(defmacro cond->*
+  "Takes an expression and a set of test/form pairs. Threads expr (via ->)
+  through each form for which the corresponding test
+  expression is true. Note that, unlike cond branching, cond-> threading does
+  not short circuit after the first true test expression."
+  {:added "1.5"}
+  [expr & clauses]
+  (assert (even? (count clauses)))
+  (let [g (gensym)
+        pstep (fn [[test step]] `(if ~test (-> ~g ~step) ~g))]
+    `(let [~g ~expr
+           ~@(interleave (repeat g) (map pstep (partition 2 clauses)))]
+       ~g)))
+
 (defn- libspec?
   "Returns true if x is a libspec.
   Copied from clojure.core/libspec?"
@@ -67,6 +82,18 @@
           (let [[prefix & more] arg]
             (into s (mapv #(prependss prefix % opts) more)))))
       #{} args)))
+
+(defn parse-refers
+  "Parse as `(clojure.core/refer ~ns-sym ~@filters), returning a map with
+  :exclude, :refer, and :rename"
+  [ns-sym filters]
+  (if (seq filters)
+    (let [{:keys [exclude only rename]} (apply hash-map filters)]
+      (cond->* {}
+        exclude (assoc :exclude {ns-sym (set exclude)})
+        only (assoc :refer {ns-sym (set only)})
+        rename (assoc :rename {ns-sym (into {} rename)})))
+    {:refer {ns-sym :all}}))
 
 (defn- ns-to-map [ns-form]
   (let [[_ ns-name maybe-doc & clauses] ns-form

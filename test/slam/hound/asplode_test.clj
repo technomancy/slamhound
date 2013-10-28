@@ -2,7 +2,8 @@
   (:require [clojure.test :refer [deftest is]]
             [slam.hound.asplode :refer [asplode
                                         expand-imports
-                                        expand-libspecs]])
+                                        expand-libspecs
+                                        parse-refers]])
   (:import (java.io StringReader)))
 
 (deftest ^:unit test-expand-imports
@@ -23,6 +24,16 @@
             [my.ns.bar :as b :reload-all true]
             [my.ns.baz :as z :verbose true :reload-all true]
             [my.ns.quux :reload-all true]})))
+
+(deftest ^:unit test-parse-refers
+  (is (= (parse-refers 'my.ns '[:only [foo]
+                                :exclude [bar]
+                                :rename {baz mybaz}])
+         '{:refer {my.ns #{foo}}
+           :exclude {my.ns #{bar}}
+           :rename {my.ns {baz mybaz}}}))
+  (is (= (parse-refers 'my.ns [])
+         '{:refer {my.ns :all}})))
 
 (deftest ^:unit test-asplode
   (is (= [{:name 'slamhound.sample
