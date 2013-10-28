@@ -57,7 +57,7 @@
   [m1 m2]
   (reduce-kv
     (fn [m k v]
-      (cond (map? v) (assoc m k (merge (m k) v))
+      (cond (map? v) (merge-with vmerge m {k v})
             (set? v) (assoc m k (into (or (m k) #{}) v))
             (vector? v) (assoc m k (into (or (m k) []) v))
             :else (assoc m k v)))
