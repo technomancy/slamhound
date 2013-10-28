@@ -3,7 +3,8 @@
             [slam.hound.asplode :refer [asplode
                                         expand-imports
                                         expand-libspecs
-                                        parse-refers]])
+                                        parse-refers
+                                        parse-requires]])
   (:import (java.io StringReader)))
 
 (deftest ^:unit test-expand-imports
@@ -34,6 +35,23 @@
            :rename {my.ns {baz mybaz}}}))
   (is (= (parse-refers 'my.ns [])
          '{:refer {my.ns :all}})))
+
+(deftest ^:unit test-parse-requires
+  (is (= (parse-requires '[[my.ns.foo :as foo :refer [foo]]
+                           [my.ns [bar :as bar] [baz :refer :all]]])
+         '{:alias {my.ns.foo foo
+                   my.ns.bar bar}
+           :refer {my.ns.foo #{foo}
+                   my.ns.baz :all}}))
+  (is (= (parse-requires '[my.ns.foo [my.ns [bar] [baz]]])
+         '{:require #{my.ns.foo my.ns.bar my.ns.baz}}))
+  (is (= (parse-requires '[[my.ns.foo :as foo]
+                           [my.ns.bar :refer [bar]]
+                           :verbose :reload-all])
+         '{:alias {my.ns.foo foo}
+           :refer {my.ns.bar #{bar}}
+           :verbose true
+           :reload :all})))
 
 (deftest ^:unit test-asplode
   (is (= [{:name 'slamhound.sample

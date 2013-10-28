@@ -52,6 +52,17 @@
       (let [[x & xs] x]
         (into [(p x)] (concat xs coll))))))
 
+(defn- vmerge
+  "Value-dependent merge, intended for merging ns reference maps."
+  [m1 m2]
+  (reduce-kv
+    (fn [m k v]
+      (cond (map? v) (assoc m k (merge (m k) v))
+            (set? v) (assoc m k (into (or (m k) #{}) v))
+            (vector? v) (assoc m k (into (or (m k) []) v))
+            :else (assoc m k v)))
+    m1 m2))
+
 (defn expand-imports
   "Expand import-lists into a set of symbols.
 
@@ -94,6 +105,27 @@
         only (assoc :refer {ns-sym (set only)})
         rename (assoc :rename {ns-sym (into {} rename)})))
     {:refer {ns-sym :all}}))
+
+(defn parse-requires
+  "Parse a list of require libspecs, returning a map with :require, :alias,
+  :refer, :reload, :reload-all, and :verbose. Expands prefix lists.
+
+  cf. clojure.core/load-libs"
+  [specs]
+  (reduce
+    (fn [m [ns-sym & opts]]
+      (if (seq opts)
+        (let [{:keys [as refer reload reload-all verbose]}
+              (apply hash-map opts)]
+          (vmerge m (cond->* {}
+                      as (assoc :alias {ns-sym as})
+                      refer (assoc :refer {ns-sym (if (= refer :all)
+                                                    :all (set refer))})
+                      reload (assoc :reload true)
+                      reload-all (assoc :reload :all)
+                      verbose (assoc :verbose true))))
+        (vmerge m {:require #{ns-sym}})))
+    {} (expand-libspecs specs)))
 
 (defn- ns-to-map [ns-form]
   (let [[_ ns-name maybe-doc & clauses] ns-form
