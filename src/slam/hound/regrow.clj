@@ -14,8 +14,8 @@
     (swap! debug-log conj msg)
     (apply prn msg)))
 
-(defn- class-name? [x]
-  (Character/isUpperCase (first (name x))))
+(defn- capitalized? [x]
+  (Character/isUpperCase ^Character (first (name x))))
 
 (defn- missing-sym-name [msg]
   (second (or (re-find #"Unable to resolve \w+: ([-\+_\w\$\?!\*\>\<]+)" msg)
@@ -26,7 +26,7 @@
 (defn- failure-details [msg]
   (if-let [sym (missing-sym-name msg)]
     {:missing sym
-     :possible-types (cond (class-name? sym)
+     :possible-types (cond (capitalized? sym)
                            [:import :require-refer]
                            (re-find #"Unable to resolve var: \w+/" msg)
                            [:require-as :require-refer]
