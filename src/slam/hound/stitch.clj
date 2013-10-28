@@ -43,14 +43,16 @@
 (defn keyword-list-from-map
   "Returns a cons list of keyword and the value of the keyword in ns-map"
   [kw ns-map]
-  (when-let [s (ns-map kw)]
-    (cons kw s)))
+  (let [s (ns-map kw)]
+    (when (seq s)
+      (cons kw s))))
 
 (defn imports-from-map
   "Returns a collapsed :import form from a ns-map with {:import #{class-syms}}"
   [ns-map]
-  (when-let [imports (:import ns-map)]
-    (cons :import (group-by-package imports))))
+  (let [imports (:import ns-map)]
+    (when (seq imports)
+      (cons :import (group-by-package imports)))))
 
 (defn ns-from-map [ns-map]
   (let [ns-map (assoc ns-map :require (concat (:require-as ns-map)

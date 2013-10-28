@@ -34,14 +34,16 @@ going on here."
 (deftest test-keyword-list-from-map
   (is (= (keyword-list-from-map
            :gen-class '{:gen-class [:name Foo :extends Bar]})
-         '(:gen-class :name Foo :extends Bar))))
+         '(:gen-class :name Foo :extends Bar)))
+  (is (nil? (keyword-list-from-map :foo '{:foo []}))))
 
 (deftest test-imports-from-map
   (is (= (imports-from-map '{:import #{java.util.BitSet
                                        java.util.Random
                                        java.io.File}})
          '(:import (java.io File)
-                   (java.util BitSet Random)))))
+                   (java.util BitSet Random))))
+  (is (nil? (imports-from-map {:import #{}}))))
 
 (deftest ^:unit test-ns-from-map
   (is (= sample-ns-form (ns-from-map sample-ns-map))))
