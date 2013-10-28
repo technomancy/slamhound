@@ -40,6 +40,12 @@
           ns-map
           ns-map-clauses))
 
+(defn imports-from-map
+  "Returns a collapsed :import form from a ns-map with {:import #{class-syms}}"
+  [ns-map]
+  (when-let [imports (:import ns-map)]
+    (cons :import (group-by-package imports))))
+
 (defn ns-from-map [ns-map]
   (let [ns-map (assoc ns-map :require (concat (:require-as ns-map)
                                               (:require-refer ns-map)))]
