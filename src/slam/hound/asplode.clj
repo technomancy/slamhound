@@ -17,6 +17,10 @@
     :reload    false ; true/false/:all
     })
 
+(def namespace-reference-keys
+  "Set of valid keys that begin declarations in ns forms."
+  #{:refer-clojure :use :require :import :load :gen-class})
+
 ;; TODO: Remove when upgrading to Clojure 1.5+
 (defmacro cond->*
   "Takes an expression and a set of test/form pairs. Threads expr (via ->)
@@ -168,9 +172,13 @@
 (defn asplode [rdr]
   (let [rdr (PushbackReader. rdr)
         ns-map (ns-to-map (read rdr))
-        stripped-ns (-> ns-map
-                        (assoc :old ns-map)
-                        (dissoc :use :require :import))
+        old-ns (reduce (fn [m k]
+                         (if-let [v (ns-map k)]
+                           (parse-libs m k v)
+                           m))
+                       default-namespace-references namespace-reference-keys)
+        stripped-ns (assoc (apply dissoc ns-map namespace-reference-keys)
+                           :old old-ns)
         body (take-while #(not= ::done %)
                          (repeatedly #(read rdr false ::done)))]
     [stripped-ns body]))

@@ -80,34 +80,35 @@
            {:gen-class [:name 'bar]}))))
 
 (deftest ^:unit test-asplode
-  (is (= [{:name 'slamhound.sample
-           :meta {:doc "Testing some things going on here."}
-           :refer-clojure '(:exclude [compile test])
-           :gen-class nil
-           :old {:name 'slamhound.sample
-                 :meta {:doc "Testing some things going on here."}
-                 :use '[[slam.hound.stitch :only [ns-from-map]]
-                        [clojure.test :only [is]]
-                        [clojure.test :only [deftest]]]
-                 :require '([clojure.java.io :as io] [clojure.set :as set])
-                 :import '(java.io.File java.io.ByteArrayInputStream
-                                        clojure.lang.Compiler$BodyExpr
-                                        java.util.UUID)
-                 :refer-clojure '(:exclude [compile test])
-                 :gen-class nil}}
-          '((do something))]
-
-         (asplode (StringReader.
-                   (str '(ns slamhound.sample
-                           "Testing some things going on here."
-                           (:use [slam.hound.stitch :only [ns-from-map]]
-                                 [clojure.test :only [is]]
-                                 [clojure.test :only [deftest]])
-                           (:require [clojure.java.io :as io]
-                                     [clojure.set :as set])
-                           (:import java.io.File java.io.ByteArrayInputStream
-                                    clojure.lang.Compiler$BodyExpr
-                                    java.util.UUID)
-                           (:refer-clojure :exclude [compile test])
-                           (:gen-class))
-                        '(do something)))))))
+  (is (= (asplode (StringReader.
+                    (str '(ns slamhound.sample
+                            "Testing some things going on here."
+                            (:use [slam.hound.stitch :only [ns-from-map]]
+                                  [clojure.test :only [is]]
+                                  [clojure.test :only [deftest]])
+                            (:require [clojure.java.io :as io]
+                                      [clojure.set :as set])
+                            (:import java.io.File java.io.ByteArrayInputStream
+                                     clojure.lang.Compiler$BodyExpr
+                                     java.util.UUID)
+                            (:refer-clojure :exclude [compile test])
+                            (:gen-class))
+                         '(do something))))
+         '[{:old {:import #{java.io.File
+                            java.io.ByteArrayInputStream
+                            java.util.UUID
+                            clojure.lang.Compiler$BodyExpr}
+                  :load []
+                  :exclude {clojure.core #{test compile}}
+                  :rename {}
+                  :require #{}
+                  :refer {clojure.test #{deftest is}
+                          slam.hound.stitch #{ns-from-map}}
+                  :verbose false
+                  :gen-class []
+                  :alias {clojure.java.io io
+                          clojure.set set}
+                  :reload false}
+            :meta {:doc "Testing some things going on here."}
+            :name slamhound.sample}
+           ((do something))])))
