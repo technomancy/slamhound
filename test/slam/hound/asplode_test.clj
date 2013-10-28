@@ -1,7 +1,28 @@
 (ns slam.hound.asplode-test
   (:require [clojure.test :refer [deftest is]]
-            [slam.hound.asplode :refer [asplode]])
+            [slam.hound.asplode :refer [asplode
+                                        expand-imports
+                                        expand-libspecs]])
   (:import (java.io StringReader)))
+
+(deftest ^:unit test-expand-imports
+  (is (= (expand-imports '((my.prefix Foo Bar Baz)
+                           (empty.prefix.list)
+                           my.single.ClassSymbol))
+         '#{my.prefix.Foo
+            my.prefix.Bar
+            my.prefix.Baz
+            my.single.ClassSymbol})))
+
+(deftest ^:unit test-expand-libspecs
+  (is (= (expand-libspecs '[[my.ns.foo :as f :verbose true]
+                            [my.ns [bar :as b] [baz :as z :verbose true]]
+                            my.ns.quux
+                            :reload-all])
+         '#{[my.ns.foo :as f :verbose true :reload-all true]
+            [my.ns.bar :as b :reload-all true]
+            [my.ns.baz :as z :verbose true :reload-all true]
+            [my.ns.quux :reload-all true]})))
 
 (deftest ^:unit test-asplode
   (is (= [{:name 'slamhound.sample
