@@ -142,6 +142,19 @@
         (vmerge m (parse-refers ns-sym []))))
     {} (expand-libspecs specs)))
 
+(defn parse-libs
+  "Parse ns reference declaration and intelligently merge into nsrefs."
+  ([kw specs]
+   (parse-libs default-namespace-references kw specs))
+  ([nsrefs kw specs]
+   (case kw
+     :refer-clojure (vmerge nsrefs (parse-refers 'clojure.core specs))
+     :use (vmerge nsrefs (parse-uses specs))
+     :require (vmerge nsrefs (parse-requires specs))
+     :import (vmerge nsrefs {:import (expand-imports specs)})
+     :load (assoc nsrefs :load specs)
+     :gen-class (assoc nsrefs :gen-class specs))))
+
 (defn- ns-to-map [ns-form]
   (let [[_ ns-name maybe-doc & clauses] ns-form
         ns-meta (meta ns-name)

@@ -1,8 +1,9 @@
 (ns slam.hound.asplode-test
-  (:require [clojure.test :refer [deftest is]]
+  (:require [clojure.test :refer [deftest is testing]]
             [slam.hound.asplode :refer [asplode
                                         expand-imports
                                         expand-libspecs
+                                        parse-libs
                                         parse-refers
                                         parse-requires
                                         parse-uses]])
@@ -65,6 +66,18 @@
                    my.ns.quux :all}
            :alias {my.ns.baz baz}
            :exclude {my.ns.foo #{foo}}})))
+
+(deftest ^:unit test-parse-libs
+  (testing "refer-clojure"
+    (is (= (parse-libs {:exclude '{foo #{foo}}}
+                       :refer-clojure
+                       '[:exclude [defn defrecord]])
+           '{:exclude {foo #{foo} clojure.core #{defn defrecord}}})))
+  (testing "load, gen-class"
+    (is (= (parse-libs {:load ["/foo"]} :load ["/bar" "/baz"])
+           {:load ["/bar" "/baz"]}))
+    (is (= (parse-libs {:gen-class [:init 'foo]} :gen-class [:name 'bar])
+           {:gen-class [:name 'bar]}))))
 
 (deftest ^:unit test-asplode
   (is (= [{:name 'slamhound.sample
