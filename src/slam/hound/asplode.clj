@@ -11,7 +11,7 @@
     :import    #{}   ; #{class-sym}
     :require   #{}   ; #{ns-sym}
     :alias     {}    ; {ns-sym ns-sym}
-    :refer     {}    ; {ns-sym #{var-sym}}
+    :refer     {}    ; {ns-sym #{var-sym}/:all}
     :exclude   {}    ; {ns-sym #{var-sym}}
     :rename    {}    ; {ns-sym {var-sym var-sym}}
     :verbose   false ; true/false

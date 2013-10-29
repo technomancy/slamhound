@@ -4,6 +4,7 @@
                                        imports-from-map
                                        keyword-list-from-map
                                        ns-from-map
+                                       requires-from-map
                                        sort-subclauses
                                        stitch-up]]))
 
@@ -44,6 +45,24 @@ going on here."
          '(:import (java.io File)
                    (java.util BitSet Random))))
   (is (nil? (imports-from-map {:import #{}}))))
+
+(deftest test-requires-from-map
+  (is (= (requires-from-map '{:import    #{}
+                              :require   #{clojure.xml}
+                              :alias     {clojure.string string}
+                              :refer     {clojure.string #{trim}
+                                          clojure.set #{difference}
+                                          clojure.java.shell :all}
+                              :exclude   {clojure.java.shell [with-sh-env]}
+                              :rename    {clojure.java.shell {sh ssshhh}}
+                              :verbose   true
+                              :reload    :all})
+         '(:require [clojure.java.shell :refer :all :exclude [with-sh-env]
+                     :rename {sh ssshhh}]
+                    [clojure.set :refer [difference]]
+                    [clojure.string :as string :refer [trim]]
+                    [clojure.xml]
+                    :reload-all :verbose))))
 
 (deftest ^:unit test-ns-from-map
   (is (= sample-ns-form (ns-from-map sample-ns-map))))

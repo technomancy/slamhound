@@ -1,5 +1,6 @@
 (ns slam.hound.stitch
-  (:require [slam.hound.prettify :refer [prettify]]))
+  (:require [slam.hound.future :refer [cond->]]
+            [slam.hound.prettify :refer [prettify]]))
 
 (def ^:private ns-map-clauses [:require-as :require-refer :import])
 
@@ -53,6 +54,40 @@
   (let [imports (:import ns-map)]
     (when (seq imports)
       (cons :import (group-by-package imports)))))
+
+(defn- conj-refer [v refer ns-sym]
+  (let [rs (refer ns-sym)]
+    (if (= rs :all)
+      (conj v :refer :all)
+      (conj v :refer (vec (sort (refer ns-sym)))))))
+
+(defn- ns-requires [ns-sym alias refer exclude rename]
+  (cond-> [ns-sym]
+    (alias ns-sym) (conj :as (alias ns-sym))
+    (refer ns-sym) (conj-refer refer ns-sym)
+    (exclude ns-sym) (conj :exclude (vec (sort (exclude ns-sym))))
+    (rename ns-sym) (conj :rename (rename ns-sym))))
+
+(defn requires-from-map
+  "Returns a collapsed :require form from a ns-map with:
+   {:require #{ns-syms}
+    :alias   {ns-sym ns-sym}
+    :refer   {ns-sym #{var-syms}}
+    :exclude {ns-sym #{var-syms}}
+    :rename  {ns-sym {var-sym var-sym}}
+    :verbose true/false
+    :reload  true/false/:all}"
+  [ns-map]
+  (let [{:keys [require alias refer exclude rename verbose reload]} ns-map]
+    (when (some seq [require alias refer exclude rename])
+      ;; Build the set of namespaces that will be required
+      (let [nss (into (set require) (mapcat keys [alias refer exclude rename]))
+            reqs (reduce (fn [v ns]
+                           (conj v (ns-requires ns alias refer exclude rename)))
+                         [] nss)]
+        (cond-> (cons :require (sort-by str reqs))
+          reload (concat [(if (= reload :all) :reload-all :reload)])
+          verbose (concat [:verbose]))))))
 
 (defn ns-from-map [ns-map]
   (let [ns-map (assoc ns-map :require (concat (:require-as ns-map)
