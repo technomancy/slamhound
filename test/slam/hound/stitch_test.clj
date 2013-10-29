@@ -82,6 +82,44 @@ going on here."
          '(:refer-clojure :only [refer])))
   (is (nil? (refer-clojure-from-map '{:refer {clojure.java.io [io]}}))))
 
+(deftest test-ns-from-map
+  (is (= (ns-from-map '{:name      my.ns
+                        :meta      {:doc "My example namespace."}
+                        :import    #{java.util.BitSet java.util.Random}
+                        :require   #{clojure.xml}
+                        :alias     {clojure.string string}
+                        :refer     {clojure.core [+ - * /]
+                                    clojure.string #{trim}
+                                    clojure.set #{difference}
+                                    clojure.java.shell :all}
+                        :exclude   {clojure.java.shell [with-sh-env]}
+                        :rename    {clojure.java.shell {sh ssshhh}}
+                        :verbose   true
+                        :reload    :all
+                        :gen-class [:name Foo]
+                        :load      ["/foo" "/bar"]})
+         '(ns my.ns
+            "My example namespace."
+            (:require [clojure.java.shell :refer :all :exclude [with-sh-env]
+                       :rename {sh ssshhh}]
+                      [clojure.set :refer [difference]]
+                      [clojure.string :as string :refer [trim]]
+                      [clojure.xml]
+                      :reload-all :verbose)
+            (:import (java.util BitSet Random))
+            (:refer-clojure :only [* + - /])
+            (:gen-class :name Foo)
+            (:load "/foo" "/bar"))))
+  (is (= (ns-from-map '{:name my.ns
+                        :alias {clojure.string string
+                                clojure.set set}
+                        :refer {clojure.string [upper-case lower-case]}})
+         '(ns my.ns
+            (:require [clojure.set :as set]
+                      [clojure.string
+                       :as string
+                       :refer [lower-case upper-case]])))))
+
 (deftest ^:unit test-ns-from-map
   (is (= sample-ns-form (ns-from-map sample-ns-map))))
 

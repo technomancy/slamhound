@@ -107,17 +107,18 @@
         (when (seq refs)
           (cons :refer-clojure refs))))))
 
-(defn ns-from-map [ns-map]
-  (let [ns-map (assoc ns-map :require (concat (:require-as ns-map)
-                                              (:require-refer ns-map)))]
-    `(~'ns ~(:name ns-map)
-       ~@(if-let [doco (:doc (:meta ns-map))] ; avoid inserting nil
-           [doco])
-       ~@(for [clause-type (concat [:require :import] ns-clauses-to-preserve)
-               :when (and (contains? ns-map clause-type)
-                          (or (= clause-type :gen-class)
-                              (seq (clause-type ns-map))))]
-           (cons clause-type (clause-type ns-map))))))
+(defn ns-from-map
+  "Generate an ns-form from an ns-map in the form of
+   #'slam.hound.asplode/default-namespace-references"
+  [ns-map]
+  `(~'ns ~(:name ns-map)
+     ~@(if-let [doco (:doc (:meta ns-map))] ; avoid inserting nil
+         [doco])
+     ~@(filter identity [(requires-from-map ns-map)
+                         (imports-from-map ns-map)
+                         (refer-clojure-from-map ns-map)
+                         (keyword-list-from-map :gen-class ns-map)
+                         (keyword-list-from-map :load ns-map)])))
 
 (defn stitch-up [ns-map]
   (-> ns-map
