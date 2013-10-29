@@ -66,7 +66,7 @@
     (get alias ns-sym) (conj :as (alias ns-sym))
     (get refer ns-sym) (conj-refer refer ns-sym)
     (get exclude ns-sym) (conj :exclude (vec (sort (exclude ns-sym))))
-    (get rename ns-sym) (conj :rename (rename ns-sym))))
+    (get rename ns-sym) (conj :rename (into (sorted-map) (rename ns-sym)))))
 
 (defn requires-from-map
   "Returns a collapsed :require form from an ns-map with:
@@ -103,7 +103,7 @@
       (let [refs (cond-> []
                    (not= (get refer c) :all) (conj :only (vec (sort (refer c))))
                    (get exclude c) (conj :exclude (vec (sort (exclude c))))
-                   (get rename c) (conj :rename (rename c)))]
+                   (get rename c) (conj :rename (into (sorted-map) (rename c))))]
         (when (seq refs)
           (cons :refer-clojure refs))))))
 

@@ -64,6 +64,11 @@ going on here."
                     [clojure.string :as string :refer [trim]]
                     [clojure.xml]
                     :reload-all :verbose)))
+  (testing "sorting"
+    (is (= (str (requires-from-map '{:rename {my.ns {c cc a aa b bb}}}))
+           "(:require [my.ns :rename {a aa, b bb, c cc}])"))
+    (is (= (requires-from-map '{:refer {my.ns [c b a]}})
+           '(:require [my.ns :refer [a b c]]))))
   (testing "special handling of :refer {clojure.core :all}"
     (is (nil? (requires-from-map '{:refer {clojure.core :all}})))))
 
