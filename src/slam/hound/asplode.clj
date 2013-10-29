@@ -145,12 +145,15 @@
      :load (assoc nsrefs :load specs)
      :gen-class (assoc nsrefs :gen-class specs))))
 
-(defn- ns-to-map [ns-form]
+(defn ns-to-map [ns-form]
   (let [[_ ns-name maybe-doc & clauses] ns-form
         ns-meta (meta ns-name)
         [ns-meta clauses] (if (string? maybe-doc)
                             [(assoc ns-meta :doc maybe-doc) clauses]
-                            [ns-meta (cons maybe-doc clauses)])]
+                            [ns-meta (cons maybe-doc clauses)])
+        [ns-meta clauses] (if (map? (first clauses))
+                            [(merge ns-meta (first clauses)) (rest clauses)]
+                            [ns-meta clauses])]
     (into {:meta ns-meta :name ns-name}
           (for [[clause & body] clauses]
             [clause body]))))

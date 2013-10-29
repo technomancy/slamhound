@@ -3,6 +3,7 @@
             [slam.hound.asplode :refer [asplode
                                         expand-imports
                                         expand-libspecs
+                                        ns-to-map
                                         parse-libs
                                         parse-refers
                                         parse-requires
@@ -78,6 +79,13 @@
            {:load ["/bar" "/baz"]}))
     (is (= (parse-libs {:gen-class [:init 'foo]} :gen-class [:name 'bar])
            {:gen-class [:name 'bar]}))))
+
+(deftest test-ns-to-map
+  (testing "recognizes maps as metadata"
+    (is (= (:meta (ns-to-map '(ns my.ns {:foo "foo"})))
+           {:foo "foo"}))
+    (is (= (:meta (ns-to-map '(ns my.ns "With docstring" {:bar "bar"})))
+           {:bar "bar" :doc "With docstring"}))))
 
 (deftest ^:unit test-asplode
   (is (= (asplode (StringReader.
