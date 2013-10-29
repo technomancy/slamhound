@@ -79,7 +79,8 @@ going on here."
                                    :exclude {clojure.core [* + -]}})
          '(:refer-clojure :exclude [* + -] :rename {/ div})))
   (is (= (refer-clojure-from-map '{:refer {clojure.core [refer]}})
-         '(:refer-clojure :only [refer]))))
+         '(:refer-clojure :only [refer])))
+  (is (nil? (refer-clojure-from-map '{:refer {clojure.java.io [io]}}))))
 
 (deftest ^:unit test-ns-from-map
   (is (= sample-ns-form (ns-from-map sample-ns-map))))
