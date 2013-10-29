@@ -63,10 +63,10 @@
 
 (defn- ns-requires [ns-sym alias refer exclude rename]
   (cond-> [ns-sym]
-    (alias ns-sym) (conj :as (alias ns-sym))
-    (refer ns-sym) (conj-refer refer ns-sym)
-    (exclude ns-sym) (conj :exclude (vec (sort (exclude ns-sym))))
-    (rename ns-sym) (conj :rename (rename ns-sym))))
+    (get alias ns-sym) (conj :as (alias ns-sym))
+    (get refer ns-sym) (conj-refer refer ns-sym)
+    (get exclude ns-sym) (conj :exclude (vec (sort (exclude ns-sym))))
+    (get rename ns-sym) (conj :rename (rename ns-sym))))
 
 (defn requires-from-map
   "Returns a collapsed :require form from a ns-map with:
