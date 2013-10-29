@@ -108,15 +108,15 @@
   (:import (clojure.lang Compiler$BodyExpr)
            (java.io ByteArrayInputStream File)
            (java.util UUID))
-  (:refer-clojure :exclude [compile test]))
-          " (ns-from-map '{:name slamhound.sample
-                         :meta {:doc "Testing some \"things\"\ngoing on here."}
-                         :import #{java.io.File
-                                   java.io.ByteArrayInputStream
-                                   clojure.lang.Compiler$BodyExpr
-                                   java.util.UUID}
-                         :alias {clojure.java.io io
-                                 clojure.set set}
-                         :refer {slam.hound.stitch #{ns-from-map}
-                                 clojure.test #{is deftest}}
-                         :exclude {clojure.core #{compile test}}}))))
+  (:refer-clojure :exclude [compile test]))\n"
+         (stitch-up '{:name slamhound.sample
+                      :meta {:doc "Testing some \"things\"\ngoing on here."}
+                      :import #{java.io.File
+                                java.io.ByteArrayInputStream
+                                clojure.lang.Compiler$BodyExpr
+                                java.util.UUID}
+                      :alias {clojure.java.io io
+                              clojure.set set}
+                      :refer {slam.hound.stitch #{ns-from-map}
+                              clojure.test #{is deftest}}
+                      :exclude {clojure.core #{compile test}}}))))
