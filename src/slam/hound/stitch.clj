@@ -49,7 +49,7 @@
       (cons kw s))))
 
 (defn imports-from-map
-  "Returns a collapsed :import form from a ns-map with {:import #{class-syms}}"
+  "Returns a collapsed :import form from an ns-map with {:import #{class-syms}}"
   [ns-map]
   (let [imports (:import ns-map)]
     (when (seq imports)
@@ -69,10 +69,10 @@
     (get rename ns-sym) (conj :rename (rename ns-sym))))
 
 (defn requires-from-map
-  "Returns a collapsed :require form from a ns-map with:
+  "Returns a collapsed :require form from an ns-map with:
    {:require #{ns-syms}
     :alias   {ns-sym ns-sym}
-    :refer   {ns-sym #{var-syms}}
+    :refer   {ns-sym #{var-syms}/:all}
     :exclude {ns-sym #{var-syms}}
     :rename  {ns-sym {var-sym var-sym}}
     :verbose true/false
