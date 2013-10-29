@@ -4,6 +4,7 @@
                                        imports-from-map
                                        keyword-list-from-map
                                        ns-from-map
+                                       refer-clojure-from-map
                                        requires-from-map
                                        sort-subclauses
                                        stitch-up]]))
@@ -65,6 +66,15 @@ going on here."
                     :reload-all :verbose)))
   (testing "special handling of :refer {clojure.core :all}"
     (is (nil? (requires-from-map '{:refer {clojure.core :all}})))))
+
+(deftest test-refer-clojure-from-map
+  (is (nil? (refer-clojure-from-map '{:refer {clojure.core :all}})))
+  (is (= (refer-clojure-from-map '{:refer {clojure.core :all}
+                                   :rename {clojure.core {/ div}}
+                                   :exclude {clojure.core [* + -]}})
+         '(:refer-clojure :exclude [* + -] :rename {/ div})))
+  (is (= (refer-clojure-from-map '{:refer {clojure.core [refer]}})
+         '(:refer-clojure :only [refer]))))
 
 (deftest ^:unit test-ns-from-map
   (is (= sample-ns-form (ns-from-map sample-ns-map))))

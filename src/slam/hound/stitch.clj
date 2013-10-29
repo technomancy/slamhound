@@ -91,6 +91,22 @@
           reload (concat [(if (= reload :all) :reload-all :reload)])
           verbose (concat [:verbose]))))))
 
+(defn refer-clojure-from-map
+  "Return a :refer-clojure form from an ns-map with:
+  {:refer   {'clojure.core #{var-syms}/:all}
+   :exclude {'clojure.core #{var-syms}}
+   :rename  {'clojure.core {var-sym var-sym}}}"
+  [ns-map]
+  (let [{:keys [refer exclude rename]} ns-map
+        c 'clojure.core]
+    (when (seq (mapcat keys [refer exclude rename]))
+      (let [refs (cond-> []
+                   (not= (get refer c) :all) (conj :only (vec (sort (refer c))))
+                   (get exclude c) (conj :exclude (vec (sort (exclude c))))
+                   (get rename c) (conj :rename (rename c)))]
+        (when (seq refs)
+          (cons :refer-clojure refs))))))
+
 (defn ns-from-map [ns-map]
   (let [ns-map (assoc ns-map :require (concat (:require-as ns-map)
                                               (:require-refer ns-map)))]
