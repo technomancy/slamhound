@@ -27,7 +27,7 @@
   [ns-map]
   (let [imports (:import ns-map)]
     (when (seq imports)
-      (cons :import (group-by-package imports)))))
+      (cons :import (sort-by str (group-by-package imports))))))
 
 (defn- conj-refer [v refer ns-sym]
   (let [rs (refer ns-sym)]
