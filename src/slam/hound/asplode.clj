@@ -2,7 +2,7 @@
   (:require [slam.hound.future :refer [cond->]])
   (:import (java.io PushbackReader)))
 
-(def default-namespace-references
+(def default-ns-references
   ;; NOTE: :verbose, :reload, and :reload-all can actually be specified per
   ;;       libspec, but this is not mentioned in the docstring for require, so
   ;;       we consider it an implementation detail.
@@ -18,8 +18,8 @@
     :reload    false ; true/false/:all
     })
 
-(def namespace-reference-keys
-  "Set of valid keys that begin declarations in ns forms."
+(def ns-clauses
+  "Set of valid keys that begin clauses in ns forms."
   #{:refer-clojure :use :require :import :load :gen-class})
 
 (defn- libspec?
@@ -135,7 +135,7 @@
 (defn parse-libs
   "Parse ns reference declaration and intelligently merge into nsrefs."
   ([kw specs]
-   (parse-libs default-namespace-references kw specs))
+   (parse-libs default-ns-references kw specs))
   ([nsrefs kw specs]
    (case kw
      :refer-clojure (vmerge nsrefs (parse-refers 'clojure.core specs))
@@ -165,9 +165,8 @@
                          (if-let [v (ns-map k)]
                            (parse-libs m k v)
                            m))
-                       default-namespace-references namespace-reference-keys)
-        stripped-ns (assoc (apply dissoc ns-map namespace-reference-keys)
-                           :old old-ns)
+                       default-ns-references ns-clauses)
+        stripped-ns (assoc (apply dissoc ns-map ns-clauses) :old old-ns)
         body (take-while #(not= ::done %)
                          (repeatedly #(read rdr false ::done)))]
     [stripped-ns body]))
