@@ -33,13 +33,13 @@ going on here."
                           clojure.lang.Compiler$BodyExpr java.util.UUID)
    :refer-clojure '(:exclude [compile test])})
 
-(deftest test-keyword-list-from-map
+(deftest ^:unit test-keyword-list-from-map
   (is (= (keyword-list-from-map
            :gen-class '{:gen-class [:name Foo :extends Bar]})
          '(:gen-class :name Foo :extends Bar)))
   (is (nil? (keyword-list-from-map :foo '{:foo []}))))
 
-(deftest test-imports-from-map
+(deftest ^:unit test-imports-from-map
   (is (= (imports-from-map '{:import #{java.util.BitSet
                                        java.util.Random
                                        java.io.File}})
@@ -47,7 +47,7 @@ going on here."
                    (java.util BitSet Random))))
   (is (nil? (imports-from-map {:import #{}}))))
 
-(deftest test-requires-from-map
+(deftest ^:unit test-requires-from-map
   (is (= (requires-from-map '{:import  #{}
                               :require #{clojure.xml}
                               :alias   {clojure.string string}
@@ -82,7 +82,7 @@ going on here."
          '(:refer-clojure :only [refer])))
   (is (nil? (refer-clojure-from-map '{:refer {clojure.java.io [io]}}))))
 
-(deftest test-ns-from-map
+(deftest ^:unit test-ns-from-map
   (is (= (ns-from-map '{:name      my.ns
                         :meta      {:doc "My example namespace."}
                         :import    #{java.util.BitSet java.util.Random}
