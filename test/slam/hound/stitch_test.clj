@@ -54,6 +54,8 @@
          '(:refer-clojure :exclude [* + -] :rename {/ div})))
   (is (= (refer-clojure-from-map '{:refer {clojure.core [refer]}})
          '(:refer-clojure :only [refer])))
+  (is (= (refer-clojure-from-map '{:refer {clojure.core []}})
+         '(:refer-clojure :only []))) ; This is a common invocation
   (is (nil? (refer-clojure-from-map '{:refer {clojure.java.io [io]}}))))
 
 (deftest ^:unit test-ns-from-map
@@ -87,12 +89,14 @@
   (is (= (ns-from-map '{:name my.ns
                         :alias {clojure.string string
                                 clojure.set set}
-                        :refer {clojure.string [upper-case lower-case]}})
+                        :refer {clojure.string [upper-case lower-case]}
+                        :exclude {clojure.core [test compile]}})
          '(ns my.ns
             (:require [clojure.set :as set]
                       [clojure.string
                        :as string
-                       :refer [lower-case upper-case]])))))
+                       :refer [lower-case upper-case]])
+            (:refer-clojure :exclude [compile test])))))
 
 (deftest ^:unit test-stitch-up
   (is (= "(ns slamhound.sample

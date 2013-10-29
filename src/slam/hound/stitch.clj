@@ -74,8 +74,11 @@
   (let [{:keys [refer exclude rename]} ns-map
         c 'clojure.core]
     (when (some '#{clojure.core} (mapcat keys [refer exclude rename]))
-      (let [refs (cond-> []
-                   (not= (get refer c) :all) (conj :only (vec (sort (refer c))))
+      (let [refs (let [r (get refer c)]
+                   (if (and r (not= r :all))
+                     [:only (vec (sort r))]
+                     []))
+            refs (cond-> refs
                    (get exclude c) (conj :exclude (vec (sort (exclude c))))
                    (get rename c) (conj :rename (into (sorted-map) (rename c))))]
         (when (seq refs)
