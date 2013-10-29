@@ -15,6 +15,16 @@
           (sort (for [c classes]
                   (-> c resolve .getName (.split "\\.") last symbol))))))
 
+(defn metadata-from-map
+  "Returns a vector of: [docstring? meta-map?]"
+  [ns-map]
+  (let [meta (:meta ns-map)
+        doc (:doc meta)
+        meta (into (sorted-map) (dissoc meta :doc))]
+    (cond-> []
+      doc (conj doc)
+      (seq meta) (conj meta))))
+
 (defn keyword-list-from-map
   "Returns a cons list of keyword and the value of the keyword in ns-map"
   [kw ns-map]
@@ -89,8 +99,7 @@
    #'slam.hound.asplode/default-namespace-references"
   [ns-map]
   `(~'ns ~(:name ns-map)
-     ~@(if-let [doco (:doc (:meta ns-map))] ; avoid inserting nil
-         [doco])
+     ~@(metadata-from-map ns-map)
      ~@(filter identity [(requires-from-map ns-map)
                          (imports-from-map ns-map)
                          (refer-clojure-from-map ns-map)

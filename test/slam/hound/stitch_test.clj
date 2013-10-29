@@ -2,6 +2,7 @@
   (:require [clojure.test :refer [deftest is testing]]
             [slam.hound.stitch :refer [imports-from-map
                                        keyword-list-from-map
+                                       metadata-from-map
                                        ns-from-map
                                        refer-clojure-from-map
                                        requires-from-map
@@ -12,6 +13,13 @@
            :gen-class '{:gen-class [:name Foo :extends Bar]})
          '(:gen-class :name Foo :extends Bar)))
   (is (nil? (keyword-list-from-map :foo '{:foo []}))))
+
+(deftest ^:unit test-metadata-from-map
+  (is (= (metadata-from-map {}) []))
+  (is (= (metadata-from-map {:meta {:doc "foo"}}) ["foo"]))
+  (is (= (metadata-from-map {:meta {:bar "bar"}}) [{:bar "bar"}]))
+  (is (= (metadata-from-map {:meta {:doc "foo" :bar "bar"}})
+         ["foo" {:bar "bar"}])))
 
 (deftest ^:unit test-imports-from-map
   (is (= (imports-from-map '{:import #{java.util.BitSet
@@ -101,6 +109,7 @@
 (deftest ^:unit test-stitch-up
   (is (= "(ns slamhound.sample
   \"Testing some \\\"things\\\"\ngoing on here.\"
+  {:slamhound-skip true, :zzz \"zzz\"}
   (:require [clojure.java.io :as io]
             [clojure.set :as set]
             [clojure.test :refer [deftest is]]
@@ -110,7 +119,9 @@
            (java.util UUID))
   (:refer-clojure :exclude [compile test]))\n"
          (stitch-up '{:name slamhound.sample
-                      :meta {:doc "Testing some \"things\"\ngoing on here."}
+                      :meta {:doc "Testing some \"things\"\ngoing on here."
+                             :zzz "zzz"
+                             :slamhound-skip true}
                       :import #{java.io.File
                                 java.io.ByteArrayInputStream
                                 clojure.lang.Compiler$BodyExpr
