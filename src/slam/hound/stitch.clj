@@ -78,11 +78,13 @@
     :verbose true/false
     :reload  true/false/:all}"
   [ns-map]
-  (let [{:keys [require alias refer exclude rename verbose reload]} ns-map]
-    (when (some seq [require alias refer exclude rename])
-      ;; Build the set of namespaces that will be required
-      (let [nss (into (set require) (mapcat keys [alias refer exclude rename]))
-            reqs (reduce (fn [v ns]
+  (let [{:keys [require alias refer exclude rename verbose reload]} ns-map
+        ;; Build the set of namespaces that will be required
+        nss (into (set require) (mapcat keys [alias refer exclude rename]))
+        ;; clojure.core should be required via :refer-clojure
+        nss (disj nss 'clojure.core)]
+    (when (seq nss)
+      (let [reqs (reduce (fn [v ns]
                            (conj v (ns-requires ns alias refer exclude rename)))
                          [] nss)]
         (cond-> (cons :require (sort-by str reqs))

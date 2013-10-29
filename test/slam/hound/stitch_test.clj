@@ -1,5 +1,5 @@
 (ns slam.hound.stitch-test
-  (:require [clojure.test :refer [deftest is]]
+  (:require [clojure.test :refer [deftest is testing]]
             [slam.hound.stitch :refer [collapse-clause
                                        imports-from-map
                                        keyword-list-from-map
@@ -47,22 +47,24 @@ going on here."
   (is (nil? (imports-from-map {:import #{}}))))
 
 (deftest test-requires-from-map
-  (is (= (requires-from-map '{:import    #{}
-                              :require   #{clojure.xml}
-                              :alias     {clojure.string string}
-                              :refer     {clojure.string #{trim}
-                                          clojure.set #{difference}
-                                          clojure.java.shell :all}
-                              :exclude   {clojure.java.shell [with-sh-env]}
-                              :rename    {clojure.java.shell {sh ssshhh}}
-                              :verbose   true
-                              :reload    :all})
+  (is (= (requires-from-map '{:import  #{}
+                              :require #{clojure.xml}
+                              :alias   {clojure.string string}
+                              :refer   {clojure.string #{trim}
+                                        clojure.set #{difference}
+                                        clojure.java.shell :all}
+                              :exclude {clojure.java.shell [with-sh-env]}
+                              :rename  {clojure.java.shell {sh ssshhh}}
+                              :verbose true
+                              :reload  :all})
          '(:require [clojure.java.shell :refer :all :exclude [with-sh-env]
                      :rename {sh ssshhh}]
                     [clojure.set :refer [difference]]
                     [clojure.string :as string :refer [trim]]
                     [clojure.xml]
-                    :reload-all :verbose))))
+                    :reload-all :verbose)))
+  (testing "special handling of :refer {clojure.core :all}"
+    (is (nil? (requires-from-map '{:refer {clojure.core :all}})))))
 
 (deftest ^:unit test-ns-from-map
   (is (= sample-ns-form (ns-from-map sample-ns-map))))
