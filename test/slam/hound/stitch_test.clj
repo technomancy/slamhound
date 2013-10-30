@@ -12,7 +12,8 @@
   (is (= (keyword-list-from-map
            :gen-class '{:gen-class [:name Foo :extends Bar]})
          '(:gen-class :name Foo :extends Bar)))
-  (is (nil? (keyword-list-from-map :foo '{:foo []}))))
+  (is (= (keyword-list-from-map :foo '{:foo []}) '(:foo)))
+  (is (nil? (keyword-list-from-map :foo {:foo nil}))))
 
 (deftest ^:unit test-metadata-from-map
   (is (= (metadata-from-map {}) []))
@@ -117,7 +118,8 @@
   (:import (clojure.lang Compiler$BodyExpr)
            (java.io ByteArrayInputStream File)
            (java.util UUID))
-  (:refer-clojure :exclude [compile test]))\n"
+  (:refer-clojure :exclude [compile test])
+  (:gen-class))\n"
          (stitch-up '{:name slamhound.sample
                       :meta {:doc "Testing some \"things\"\ngoing on here."
                              :zzz "zzz"
@@ -130,4 +132,5 @@
                               clojure.set set}
                       :refer {slam.hound.stitch #{ns-from-map}
                               clojure.test #{is deftest}}
-                      :exclude {clojure.core #{compile test}}}))))
+                      :exclude {clojure.core #{compile test}}
+                      :gen-class []}))))

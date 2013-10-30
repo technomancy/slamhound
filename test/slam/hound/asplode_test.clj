@@ -7,7 +7,8 @@
                                         parse-libs
                                         parse-refers
                                         parse-requires
-                                        parse-uses]])
+                                        parse-uses
+                                        preserve-ns-references]])
   (:import (java.io StringReader)))
 
 (deftest ^:unit test-expand-imports
@@ -80,12 +81,36 @@
     (is (= (parse-libs {:gen-class [:init 'foo]} :gen-class [:name 'bar])
            {:gen-class [:name 'bar]}))))
 
-(deftest test-ns-to-map
+(deftest ^:unit test-ns-to-map
   (testing "recognizes maps as metadata"
     (is (= (:meta (ns-to-map '(ns my.ns {:foo "foo"})))
            {:foo "foo"}))
     (is (= (:meta (ns-to-map '(ns my.ns "With docstring" {:bar "bar"})))
-           {:bar "bar" :doc "With docstring"}))))
+           {:bar "bar" :doc "With docstring"})))
+  (testing "parses empty :gen-class"
+    (is (= (ns-to-map '(ns my.ns (:gen-class)))))))
+
+(deftest ^:unit test-preserve-ns-references
+  (testing "retains :gen-class and :load"
+    (is (= (preserve-ns-references '{:gen-class [:foo foo :bar bar]
+                                     :load ["foo" "bar"]
+                                     :refer {my.ns #{foo}}})
+           '{:gen-class [:foo foo :bar bar]
+             :load ["foo" "bar"]}))
+    (is (= (preserve-ns-references {:gen-class [] :load []})
+           {:gen-class [] :load []}))
+    (is (= (preserve-ns-references {:gen-class nil :load []})
+           {:load []})))
+  (testing "retains refers, exclusions, and renames for clojure.core"
+    (is (= (preserve-ns-references '{:exclude {clojure.core #{==}
+                                               my.ns #{foo}}
+                                     :rename {clojure.core {/ div}
+                                              my.ns {bar -bar}}
+                                     :refer {clojure.core #{== + - * /}
+                                             my.ns #{baz}}})
+           '{:exclude {clojure.core #{==}}
+             :rename {clojure.core {/ div}}
+             :refer {clojure.core #{== + - * /}}}))))
 
 (deftest ^:unit test-asplode
   (is (= (asplode (StringReader.
@@ -106,7 +131,7 @@
                             java.io.ByteArrayInputStream
                             java.util.UUID
                             clojure.lang.Compiler$BodyExpr}
-                  :load []
+                  :load nil
                   :exclude {clojure.core #{test compile}}
                   :rename {}
                   :require #{}
@@ -117,6 +142,8 @@
                   :alias {clojure.java.io io
                           clojure.set set}
                   :reload false}
+            :gen-class []
+            :exclude {clojure.core #{test compile}}
             :meta {:doc "Testing some things going on here."}
             :name slamhound.sample}
            ((do something))])))

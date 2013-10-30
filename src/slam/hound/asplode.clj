@@ -6,9 +6,7 @@
   ;; NOTE: :verbose, :reload, and :reload-all can actually be specified per
   ;;       libspec, but this is not mentioned in the docstring for require, so
   ;;       we consider it an implementation detail.
-  '{:load      []    ; ["/path/to/ns.clj"]}
-    :gen-class []    ; [:option value ...]
-    :import    #{}   ; #{class-sym}
+  '{:import    #{}   ; #{class-sym}
     :require   #{}   ; #{ns-sym}
     :alias     {}    ; {ns-sym ns-sym}
     :refer     {}    ; {ns-sym #{var-sym}/:all}
@@ -16,6 +14,8 @@
     :rename    {}    ; {ns-sym {var-sym var-sym}}
     :verbose   false ; true/false
     :reload    false ; true/false/:all
+    :load      nil   ; a seq of file paths
+    :gen-class nil   ; a seq of option pairs, possibly empty
     })
 
 (def ns-clauses
@@ -153,8 +153,26 @@
                             [(merge ns-meta (first clauses)) (rest clauses)]
                             [ns-meta clauses])]
     (into {:meta ns-meta :name ns-name}
-          (for [[clause & body] clauses]
+          (for [[clause & body] clauses
+                ;; (:gen-class) with no arguments is valid
+                :let [body (if (= clause :gen-class) [] body)]]
             [clause body]))))
+
+(defn preserve-ns-references
+  "Extract map of :gen-class, :load, :refer, :exclude, and :rename that should
+  be preserved in an ns declaration."
+  [ns-map]
+  (let [{:keys [gen-class load refer exclude rename]} ns-map
+        maybe-assoc (fn [m kw x]
+                      (if (and x (x 'clojure.core))
+                        (assoc m kw {'clojure.core (x 'clojure.core)})
+                        m))]
+    (-> (cond-> {}
+          gen-class (assoc :gen-class gen-class)
+          load (assoc :load load))
+        (maybe-assoc :refer refer)
+        (maybe-assoc :exclude exclude)
+        (maybe-assoc :rename rename))))
 
 (defn asplode [rdr]
   (let [rdr (PushbackReader. rdr)
@@ -165,6 +183,7 @@
                            m))
                        default-ns-references ns-clauses)
         stripped-ns (assoc (apply dissoc ns-map ns-clauses) :old old-ns)
+        stripped-ns (merge stripped-ns (preserve-ns-references old-ns))
         body (take-while #(not= ::done %)
                          (repeatedly #(read rdr false ::done)))]
     [stripped-ns body]))

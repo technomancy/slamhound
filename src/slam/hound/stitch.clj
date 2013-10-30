@@ -28,9 +28,8 @@
 (defn keyword-list-from-map
   "Returns a cons list of keyword and the value of the keyword in ns-map"
   [kw ns-map]
-  (let [s (ns-map kw)]
-    (when (seq s)
-      (cons kw s))))
+  (when-let [s (ns-map kw)]
+    (cons kw s)))
 
 (defn imports-from-map
   "Returns an :import form from an ns-map with {:import #{class-syms}}"
