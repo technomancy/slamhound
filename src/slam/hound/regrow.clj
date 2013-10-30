@@ -108,6 +108,32 @@
                    :when (= missing sym)]
                (ns-name ns)))))
 
+(defn filter-excludes
+  "Disjoin namespace symbols from ns-syms that contain values in excludes."
+  [ns-syms var-sym excludes]
+  (apply disj ns-syms (for [[ns syms] excludes
+                            :when (and (contains? ns-syms ns)
+                                       (contains? syms var-sym))]
+                        ns)))
+
+(defn filter-renames
+  "Add and remove namespace symbols from ns-syms that match values in renames."
+  [ns-syms var-sym renames]
+  (let [[-s +s] (reduce
+                  (fn [[-s +s] [ns from->to]]
+                    (let [-s (if (and (contains? ns-syms ns)
+                                      (contains? from->to var-sym))
+                               (conj -s ns)
+                               -s)
+                          +s (if (some #{var-sym} (vals from->to))
+                               (conj +s ns)
+                               +s)]
+                      [-s +s]))
+                  [#{} #{}] renames)]
+    (-> ns-syms
+        (set/difference -s)
+        (set/union +s))))
+
 (defn- expand-prefix-list [[prefix & more]]
   (map (fn [expr]
          (if (coll? expr)

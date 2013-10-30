@@ -2,6 +2,8 @@
   (:require [clojure.test :refer [deftest is testing]]
             [slam.hound.regrow :refer [expand-libs
                                        candidates
+                                       filter-excludes
+                                       filter-renames
                                        in-originals-pred
                                        regrow]]))
 
@@ -26,6 +28,20 @@
            '#{slam.hound.regrow-test}))
     (is (= (candidates :refer 'join '((join #{:a} #{:b})))
            '#{clojure.set clojure.string korma.core}))))
+
+(deftest ^:unit test-filter-excludes
+  (is (= (filter-excludes
+           '#{clojure.core core.logic} '== '{clojure.core #{==}})
+         '#{core.logic})))
+
+(deftest ^:unit test-filter-renames
+  (testing "removes namespaces that match rename map"
+    (is (= (filter-renames
+             '#{clojure.core core.logic} '== '{clojure.core {== eq?}})
+           '#{core.logic})))
+  (testing "adds namespaces with matching vars in rename map"
+    (is (= (filter-renames '#{} 'diff '{clojure.set {difference diff}})
+           '#{clojure.set}))))
 
 (deftest ^:unit test-expand-libs
   (testing "expands prefix lists into a flat list of symbols"
