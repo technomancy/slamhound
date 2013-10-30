@@ -24,16 +24,16 @@
               (re-find #"No such var: \w+/([-_\w\$\?!\*\>\<]+)" msg))))
 
 (defn- failure-details [msg]
-  (if-let [sym (missing-sym-name msg)]
-    {:missing sym
-     :possible-types (cond (capitalized? sym)
-                           [:import :require-refer]
+  (when-let [sym-name (missing-sym-name msg)]
+    {:missing (symbol sym-name) ; now returns a symbol
+     :possible-types (cond (capitalized? sym-name)
+                           [:import :refer]
                            (re-find #"Unable to resolve var: \w+/" msg)
-                           [:require-as :require-refer]
+                           [:alias :refer]
                            (re-find #"No such (var|namespace)" msg)
-                           [:require-as]
+                           [:alias]
                            :else
-                           [:require-refer :import])}))
+                           [:refer :import])}))
 
 (defn- check-for-failure [ns-map body]
   (let [sandbox-ns `slamhound.sandbox#
@@ -46,19 +46,19 @@
               (do (debug :not-found ns-form)
                   (throw e))))
         (finally
-         (remove-ns (.name *ns*)))))))
+          (remove-ns (.name *ns*)))))))
 
 (defn- symbols-in-body [body]
   (filter symbol? (remove coll? (rest (tree-seq coll? seq body)))))
 
 (def ^:private ns-qualifed-syms
-  (memoize (fn [body]
-             (apply merge-with set/union {}
-                   (for [value (symbols-in-body body)
-                         :let [[_ alias var-name] (re-matches #"(.+)/(.+)"
-                                                              (str value))]
-                         :when alias]
-                     {alias #{(symbol var-name)}})))))
+  (memoize
+    (fn [body]
+      (apply merge-with set/union {}
+             (for [sym (symbols-in-body body)
+                   :let [[_ alias var-name] (re-matches #"(.+)/(.+)" (str sym))]
+                   :when alias]
+               {(symbol alias) #{(symbol var-name)}})))))
 
 (defn- mass-refer-namespaces
   "Extract the set of namespace symbols that match [_ :refer :all] from a
@@ -73,7 +73,9 @@
 
 (defn- ns-import-candidates
   "Search (all-ns) for imports that match missing-sym, returning a set of
-  class symbols."
+  class symbols. This is slower than scanning through the list of static
+  package names, but will successfully find dynamically created classes such
+  as those created by deftype and defrecord."
   [missing-sym]
   (reduce (fn [s nspace]
             (if-let [cls ^Class ((ns-imports nspace) missing-sym)]
@@ -81,24 +83,30 @@
               s))
           #{} (all-ns)))
 
-(defn candidates [type missing body]
+(defn candidates
+  "Return a set of class or ns symbols that match the given constraints."
+  [type missing body]
   (case type
-    :import (concat
-              (ns-import-candidates (symbol missing))
-              (for [class-name search/available-classes
-                    :when (= missing (last (.split class-name "\\.")))]
-                (symbol class-name)))
-    :require-as (for [n (all-ns)
-                      :let [syms-with-alias (get (ns-qualifed-syms body)
-                                                 missing)]
-                      :when (and (seq syms-with-alias)
-                                 (every? (set (keys (ns-publics n)))
-                                         syms-with-alias))]
-                  [(ns-name n) :as (symbol missing)])
-    :require-refer (for [n (all-ns)
-                         [sym var] (ns-publics n)
-                         :when (= missing (name sym))]
-                     [(ns-name n) :refer [sym]])))
+    :import (let [m (str missing)
+                  ss (for [class-name search/available-classes
+                           :when (= m (last (.split class-name "\\.")))]
+                       (symbol class-name))]
+              ;; ns-import-candidates is slower, so only call when necessary
+              (if (seq ss)
+                (set ss)
+                (ns-import-candidates missing)))
+    :alias (set
+             (for [ns (all-ns)
+                   :let [syms-with-alias (get (ns-qualifed-syms body) missing)]
+                   :when (and (seq syms-with-alias)
+                              (set/subset? syms-with-alias
+                                           (set (keys (ns-publics ns)))))]
+               (ns-name ns)))
+    :refer (set
+             (for [ns (all-ns)
+                   [sym _] (ns-publics ns)
+                   :when (= missing sym)]
+               (ns-name ns)))))
 
 (defn- expand-prefix-list [[prefix & more]]
   (map (fn [expr]

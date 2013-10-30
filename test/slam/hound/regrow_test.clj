@@ -1,6 +1,31 @@
 (ns slam.hound.regrow-test
   (:require [clojure.test :refer [deftest is testing]]
-            [slam.hound.regrow :refer [expand-libs in-originals-pred regrow]]))
+            [slam.hound.regrow :refer [expand-libs
+                                       candidates
+                                       in-originals-pred
+                                       regrow]]))
+
+;; Classes and vars for testing
+(defrecord RegrowTestRecord [])
+(def +i-must-be-a-cl-user+ true)
+
+(deftest ^:unit test-candidates
+  (testing "finds static and dynamically created Java packages"
+    (is (= (candidates :import 'UUID '((UUID/randomUUID)))
+           '#{java.util.UUID}))
+    (is (= (candidates :import 'Compiler$BodyExpr '(Compiler$BodyExpr))
+           '#{clojure.lang.Compiler$BodyExpr}))
+    (is (= (candidates :import 'RegrowTestRecord '((RegrowTestRecord.)))
+           '#{slam.hound.regrow_test.RegrowTestRecord})))
+  (testing "finds aliased namespaces"
+    (is (= (candidates :alias 's '((s/join #{:a} #{:b})))
+           '#{clojure.set clojure.string korma.core})))
+  (testing "finds referred vars"
+    (is (= (candidates :refer '+i-must-be-a-cl-user+
+                       '((assert +i-must-be-a-cl-user+)))
+           '#{slam.hound.regrow-test}))
+    (is (= (candidates :refer 'join '((join #{:a} #{:b})))
+           '#{clojure.set clojure.string korma.core}))))
 
 (deftest ^:unit test-expand-libs
   (testing "expands prefix lists into a flat list of symbols"
