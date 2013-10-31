@@ -116,24 +116,6 @@
                                        (contains? syms var-sym))]
                         ns)))
 
-(defn filter-renames
-  "Add and remove namespace symbols from ns-syms that match values in renames."
-  [ns-syms var-sym renames]
-  (let [[-s +s] (reduce
-                  (fn [[-s +s] [ns from->to]]
-                    (let [-s (if (and (contains? ns-syms ns)
-                                      (contains? from->to var-sym))
-                               (conj -s ns)
-                               -s)
-                          +s (if (some #{var-sym} (vals from->to))
-                               (conj +s ns)
-                               +s)]
-                      [-s +s]))
-                  [#{} #{}] renames)]
-    (-> ns-syms
-        (set/difference -s)
-        (set/union +s))))
-
 (defn- expand-prefix-list [[prefix & more]]
   (map (fn [expr]
          (if (coll? expr)
