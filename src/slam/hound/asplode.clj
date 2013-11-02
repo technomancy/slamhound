@@ -1,21 +1,24 @@
 (ns slam.hound.asplode
-  (:require [slam.hound.future :refer [cond->]])
+  (:require [slam.hound.future :refer [as-> cond->]])
   (:import (java.io PushbackReader)))
 
 (def default-ns-references
   ;; NOTE: :verbose, :reload, and :reload-all can actually be specified per
   ;;       libspec, but this is not mentioned in the docstring for require, so
   ;;       we consider it an implementation detail.
-  '{:import    #{}   ; #{class-sym}
-    :require   #{}   ; #{ns-sym}
-    :alias     {}    ; {ns-sym ns-sym}
-    :refer     {}    ; {ns-sym #{var-sym}/:all}
-    :exclude   {}    ; {ns-sym #{var-sym}}
-    :rename    {}    ; {ns-sym {var-sym var-sym}}
-    :verbose   false ; true/false
-    :reload    false ; true/false/:all
-    :load      nil   ; a seq of file paths
-    :gen-class nil   ; a seq of option pairs, possibly empty
+  '{:import     #{}   ; #{class-sym}
+    :require    #{}   ; #{ns-sym}
+    :alias      {}    ; {ns-sym ns-sym}
+    :refer      {}    ; {ns-sym #{var-sym}}
+    :xrefer     #{}   ; #{ns-sym} - exclusively referred namespaces
+    :refer-all  #{}   ; #{ns-sym}
+    :exclude    {}    ; {ns-sym #{var-sym}}
+    :rename     {}    ; {ns-sym {var-sym var-sym}}
+    :reload     false ; true/false
+    :reload-all false ; true/false
+    :verbose    false ; true/false
+    :load       nil   ; a seq of file paths
+    :gen-class  nil   ; a seq of option pairs, possibly empty
     })
 
 (def ns-clauses
@@ -86,19 +89,26 @@
 
 (defn parse-refers
   "Parse as `(clojure.core/refer ~ns-sym ~@filters), returning a map with
-  :exclude, :refer, and :rename"
-  [ns-sym filters]
-  (if (seq filters)
-    (let [{:keys [exclude only rename]} (apply hash-map filters)]
-      (cond-> {}
-        exclude (assoc :exclude {ns-sym (set exclude)})
-        only (assoc :refer {ns-sym (set only)})
-        rename (assoc :rename {ns-sym (into {} rename)})))
-    {:refer {ns-sym :all}}))
+  :exclude, :refer, :refer-all, and :rename.
+
+  If exclusive-refer? is true, the :only option also adds ns-sym to the
+  :xrefer set."
+  ([ns-sym filters]
+   (parse-refers ns-sym filters false))
+  ([ns-sym filters exclusive-refer?]
+   (if (seq filters)
+     (let [{:keys [exclude only rename]} (apply hash-map filters)]
+       (cond-> {}
+         exclude (assoc :exclude {ns-sym (set exclude)})
+         only (as-> m
+                (cond-> (assoc m :refer {ns-sym (set only)})
+                  exclusive-refer? (assoc :xrefer #{ns-sym})))
+         rename (assoc :rename {ns-sym (into {} rename)})))
+     {:refer-all #{ns-sym}})))
 
 (defn parse-requires
   "Parse a list of require libspecs, returning a map with :require, :alias,
-  :refer, :reload, :reload-all, and :verbose. Expands prefix lists.
+  :refer, :refer-all, :reload, :reload-all, and :verbose. Expands prefix lists.
 
   cf. clojure.core/load-libs"
   [specs]
@@ -109,10 +119,11 @@
               (apply hash-map opts)]
           (vmerge m (cond-> {}
                       as (assoc :alias {ns-sym as})
-                      refer (assoc :refer {ns-sym (if (= refer :all)
-                                                    :all (set refer))})
+                      refer (as-> m (if (= refer :all)
+                                      (assoc m :refer-all #{ns-sym})
+                                      (assoc m :refer {ns-sym (set refer)})))
                       reload (assoc :reload true)
-                      reload-all (assoc :reload :all)
+                      reload-all (assoc :reload-all true)
                       verbose (assoc :verbose true))))
         (vmerge m {:require #{ns-sym}})))
     {} (expand-libspecs specs)))
@@ -136,7 +147,7 @@
   "Parse ns reference declaration and intelligently merge into nsrefs."
   [nsrefs kw specs]
   (case kw
-    :refer-clojure (vmerge nsrefs (parse-refers 'clojure.core specs))
+    :refer-clojure (vmerge nsrefs (parse-refers 'clojure.core specs true))
     :use (vmerge nsrefs (parse-uses specs))
     :require (vmerge nsrefs (parse-requires specs))
     :import (vmerge nsrefs {:import (expand-imports specs)})

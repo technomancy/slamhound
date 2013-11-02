@@ -31,22 +31,23 @@
             [my.ns.quux :reload-all true]})))
 
 (deftest ^:unit test-parse-refers
-  (is (= (parse-refers 'my.ns '[:only [foo]
-                                :exclude [bar]
-                                :rename {baz mybaz}])
+  (is (= (parse-refers 'my.ns '[:only [foo] :exclude [bar] :rename {baz mybaz}])
          '{:refer {my.ns #{foo}}
            :exclude {my.ns #{bar}}
            :rename {my.ns {baz mybaz}}}))
   (is (= (parse-refers 'my.ns [])
-         '{:refer {my.ns :all}})))
+         '{:refer-all #{my.ns}}))
+  (testing "exclusive-refer?"
+    (is (= (parse-refers 'my.ns '[:only [foo]] true)
+           '{:refer {my.ns #{foo}} :xrefer #{my.ns}}))))
 
 (deftest ^:unit test-parse-requires
   (is (= (parse-requires '[[my.ns.foo :as foo :refer [foo]]
                            [my.ns [bar :as bar] [baz :refer :all]]])
          '{:alias {my.ns.foo foo
                    my.ns.bar bar}
-           :refer {my.ns.foo #{foo}
-                   my.ns.baz :all}}))
+           :refer {my.ns.foo #{foo}}
+           :refer-all #{my.ns.baz}}))
   (is (= (parse-requires '[my.ns.foo [my.ns [bar] [baz]]])
          '{:require #{my.ns.foo my.ns.bar my.ns.baz}}))
   (is (= (parse-requires '[[my.ns.foo :as foo]
@@ -55,17 +56,16 @@
          '{:alias {my.ns.foo foo}
            :refer {my.ns.bar #{bar}}
            :verbose true
-           :reload :all})))
+           :reload-all true})))
 
 (deftest ^:unit test-parse-uses
   (is (= (parse-uses '[my.ns.base
                        [my.ns [foo :exclude [foo]] [bar :only [bar]]]
                        [my.ns.baz :as baz :only [baz]]
                        [my.ns.quux]])
-         '{:refer {my.ns.base :all
-                   my.ns.bar #{bar}
-                   my.ns.baz #{baz}
-                   my.ns.quux :all}
+         '{:refer {my.ns.bar #{bar}
+                   my.ns.baz #{baz}}
+           :refer-all #{my.ns.base my.ns.quux}
            :alias {my.ns.baz baz}
            :exclude {my.ns.foo #{foo}}})))
 
@@ -74,7 +74,9 @@
     (is (= (parse-libs {:exclude '{foo #{foo}}}
                        :refer-clojure
                        '[:exclude [defn defrecord]])
-           '{:exclude {foo #{foo} clojure.core #{defn defrecord}}})))
+           '{:exclude {foo #{foo} clojure.core #{defn defrecord}}}))
+    (is (= (parse-libs {} :refer-clojure '[:only [defn]])
+           '{:refer {clojure.core #{defn}} :xrefer #{clojure.core}})))
   (testing "load, gen-class"
     (is (= (parse-libs {:load ["/foo"]} :load ["/bar" "/baz"])
            {:load ["/bar" "/baz"]}))
@@ -131,17 +133,20 @@
                             java.io.ByteArrayInputStream
                             java.util.UUID
                             clojure.lang.Compiler$BodyExpr}
-                  :load nil
-                  :exclude {clojure.core #{test compile}}
-                  :rename {}
                   :require #{}
-                  :refer {clojure.test #{deftest is}
-                          slam.hound.stitch #{ns-from-map}}
-                  :verbose false
-                  :gen-class []
                   :alias {clojure.java.io io
                           clojure.set set}
-                  :reload false}
+                  :refer {clojure.test #{deftest is}
+                          slam.hound.stitch #{ns-from-map}}
+                  :xrefer #{}
+                  :refer-all #{}
+                  :exclude {clojure.core #{test compile}}
+                  :rename {}
+                  :reload false
+                  :reload-all false
+                  :verbose false
+                  :load nil
+                  :gen-class []}
             :gen-class []
             :exclude {clojure.core #{test compile}}
             :meta {:doc "Testing some things going on here."}
