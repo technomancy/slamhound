@@ -1,5 +1,6 @@
 (ns slam.hound.stitch
-  (:require [slam.hound.future :refer [cond->]]
+  (:require [clojure.set :as set]
+            [slam.hound.future :refer [cond->]]
             [slam.hound.prettify :refer [prettify]]))
 
 (defn- get-package [class-name]
@@ -38,55 +39,57 @@
     (when (seq imports)
       (cons :import (sort-by str (group-by-package imports))))))
 
-(defn- conj-refer [v refer ns-sym]
-  (let [rs (refer ns-sym)]
-    (if (= rs :all)
-      (conj v :refer :all)
-      (conj v :refer (vec (sort (refer ns-sym)))))))
-
-(defn- ns-requires [ns-sym alias refer exclude rename]
-  (cond-> [ns-sym]
-    (get alias ns-sym) (conj :as (alias ns-sym))
-    (get refer ns-sym) (conj-refer refer ns-sym)
-    (get exclude ns-sym) (conj :exclude (vec (sort (exclude ns-sym))))
-    (get rename ns-sym) (conj :rename (into (sorted-map) (rename ns-sym)))))
+(defn- ns-requires [ns-sym ns-map]
+  (let [{:keys [alias refer refer-all exclude rename]} ns-map]
+    (cond-> [ns-sym]
+      (get alias ns-sym) (conj :as (alias ns-sym))
+      (get refer ns-sym) (conj :refer (vec (sort (refer ns-sym))))
+      (get refer-all ns-sym) (conj :refer :all)
+      (get exclude ns-sym) (conj :exclude (vec (sort (exclude ns-sym))))
+      (get rename ns-sym) (conj :rename (into (sorted-map) (rename ns-sym))))))
 
 (defn requires-from-map
   "Returns a :require form from an ns-map with:
-   {:require #{ns-syms}
-    :alias   {ns-sym ns-sym}
-    :refer   {ns-sym #{var-syms}/:all}
-    :exclude {ns-sym #{var-syms}}
-    :rename  {ns-sym {var-sym var-sym}}
-    :verbose true/false
-    :reload  true/false/:all}"
+  {:require    #{ns-syms}
+   :alias      {ns-sym ns-sym}
+   :refer      {ns-sym #{var-syms}}
+   :refer-all  #{ns-sym}
+   :exclude    {ns-sym #{var-syms}}
+   :rename     {ns-sym {var-sym var-sym}}
+   :reload     true/false
+   :reload-all true/false
+   :verbose    true/false}"
   [ns-map]
-  (let [{:keys [require alias refer exclude rename verbose reload]} ns-map
+  (let [{:keys [require alias refer refer-all exclude
+                rename reload reload-all verbose]} ns-map
         ;; Build the set of namespaces that will be required
-        nss (into (set require) (mapcat keys [alias refer exclude rename]))
+        nss (reduce into #{} [require refer-all
+                              (mapcat keys [alias refer exclude rename])])
         ;; clojure.core should be required via :refer-clojure
         nss (disj nss 'clojure.core)]
     (when (seq nss)
       (let [reqs (reduce (fn [v ns]
-                           (conj v (ns-requires ns alias refer exclude rename)))
+                           (conj v (ns-requires ns ns-map)))
                          [] nss)]
         (cond-> (cons :require (sort-by str reqs))
-          reload (concat [(if (= reload :all) :reload-all :reload)])
+          reload (concat [:reload])
+          reload-all (concat [:reload-all])
           verbose (concat [:verbose]))))))
 
 (defn refer-clojure-from-map
   "Return a :refer-clojure form from an ns-map with:
-  {:refer   {'clojure.core #{var-syms}/:all}
-   :exclude {'clojure.core #{var-syms}}
-   :rename  {'clojure.core {var-sym var-sym}}}"
+  {:refer     {'clojure.core #{var-syms}}
+   :refer-all #{'clojure.core}
+   :exclude   {'clojure.core #{var-syms}}
+   :rename    {'clojure.core {var-sym var-sym}}}"
   [ns-map]
-  (let [{:keys [refer exclude rename]} ns-map
+  (let [{:keys [refer refer-all exclude rename]} ns-map
         c 'clojure.core]
-    (when (some '#{clojure.core} (mapcat keys [refer exclude rename]))
-      (let [refs (let [r (get refer c)]
-                   (if (and r (not= r :all))
-                     [:only (vec (sort r))]
-                     []))
+    (when (some #{c} (concat refer-all (mapcat keys [refer exclude rename])))
+      (let [refs (if (and (not (contains? refer-all c))
+                          (contains? refer c))
+                     [:only (vec (sort (refer c)))]
+                     [])
             refs (cond-> refs
                    (get exclude c) (conj :exclude (vec (sort (exclude c))))
                    (get rename c) (conj :rename (into (sorted-map) (rename c))))]

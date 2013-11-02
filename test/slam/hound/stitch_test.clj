@@ -31,16 +31,16 @@
   (is (nil? (imports-from-map {:import #{}}))))
 
 (deftest ^:unit test-requires-from-map
-  (is (= (requires-from-map '{:import  #{}
+  (is (= (requires-from-map '{:import #{}
                               :require #{clojure.xml}
-                              :alias   {clojure.string string}
-                              :refer   {clojure.string #{trim}
-                                        clojure.set #{difference}
-                                        clojure.java.shell :all}
+                              :alias {clojure.string string}
+                              :refer {clojure.string #{trim}
+                                      clojure.set #{difference}}
+                              :refer-all #{clojure.java.shell}
                               :exclude {clojure.java.shell [with-sh-env]}
-                              :rename  {clojure.java.shell {sh ssshhh}}
+                              :rename {clojure.java.shell {sh ssshhh}}
                               :verbose true
-                              :reload  :all})
+                              :reload-all true})
          '(:require [clojure.java.shell :refer :all :exclude [with-sh-env]
                      :rename {sh ssshhh}]
                     [clojure.set :refer [difference]]
@@ -56,8 +56,8 @@
     (is (nil? (requires-from-map '{:refer {clojure.core :all}})))))
 
 (deftest test-refer-clojure-from-map
-  (is (nil? (refer-clojure-from-map '{:refer {clojure.core :all}})))
-  (is (= (refer-clojure-from-map '{:refer {clojure.core :all}
+  (is (nil? (refer-clojure-from-map '{:refer-all #{clojure.core}})))
+  (is (= (refer-clojure-from-map '{:refer-all #{clojure.core}
                                    :rename {clojure.core {/ div}}
                                    :exclude {clojure.core [* + -]}})
          '(:refer-clojure :exclude [* + -] :rename {/ div})))
@@ -68,21 +68,21 @@
   (is (nil? (refer-clojure-from-map '{:refer {clojure.java.io [io]}}))))
 
 (deftest ^:unit test-ns-from-map
-  (is (= (ns-from-map '{:name      my.ns
-                        :meta      {:doc "My example namespace."}
-                        :import    #{java.util.BitSet java.util.Random}
-                        :require   #{clojure.xml}
-                        :alias     {clojure.string string}
-                        :refer     {clojure.core [+ - * /]
-                                    clojure.string #{trim}
-                                    clojure.set #{difference}
-                                    clojure.java.shell :all}
-                        :exclude   {clojure.java.shell [with-sh-env]}
-                        :rename    {clojure.java.shell {sh ssshhh}}
-                        :verbose   true
-                        :reload    :all
+  (is (= (ns-from-map '{:name my.ns
+                        :meta {:doc "My example namespace."}
+                        :import #{java.util.BitSet java.util.Random}
+                        :require #{clojure.xml}
+                        :alias {clojure.string string}
+                        :refer {clojure.core [+ - * /]
+                                clojure.string #{trim}
+                                clojure.set #{difference}}
+                        :refer-all #{clojure.java.shell}
+                        :exclude {clojure.java.shell [with-sh-env]}
+                        :rename {clojure.java.shell {sh ssshhh}}
+                        :verbose true
+                        :reload-all true
                         :gen-class [:name Foo]
-                        :load      ["/foo" "/bar"]})
+                        :load ["/foo" "/bar"]})
          '(ns my.ns
             "My example namespace."
             (:require [clojure.java.shell :refer :all :exclude [with-sh-env]
