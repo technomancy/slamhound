@@ -108,7 +108,7 @@
                    :when (= missing sym)]
                (ns-name ns)))))
 
-(defn filter-excludes
+(defn- filter-excludes
   "Disjoin namespace symbols from candidates that match the :exclude, :xrefer,
   and :refer values in old-ns-map."
   [candidates type missing old-ns-map]

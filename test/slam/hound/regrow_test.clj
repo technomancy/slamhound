@@ -4,7 +4,6 @@
             [korma.core]
             [slam.hound.regrow :refer [candidates
                                        disambiguate
-                                       filter-excludes
                                        grow-ns-map
                                        in-originals-pred
                                        regrow]]))
@@ -31,27 +30,21 @@
     (is (= (candidates :refer 'join '((join #{:a} #{:b})))
            '#{clojure.set clojure.string korma.core}))))
 
-(deftest ^:unit test-filter-excludes
-  (is (= (filter-excludes '#{clojure.core core.logic} :refer
-                          '== {:exclude '{clojure.core #{==}}})
-         '#{core.logic}))
-  (is (= (filter-excludes '#{clojure.core core.logic} :refer
-                          '== '{:xrefer #{clojure.core}
-                                :refer {clojure.core #{}}})
-         '#{core.logic})))
-
 (deftest ^:unit test-disambiguate
   (testing "removes candidates matching disambiguator-blacklist"
     (is (nil? (disambiguate '#{swank lancet} :alias 'swank {}))))
+  (testing "removes namespaces with excluded vars"
+    (is (nil? (disambiguate '#{clojure.string clojure.set}
+                            :refer 'join
+                            '{:exclude {clojure.string #{join}
+                                        clojure.set #{join}}})))
+    (is (nil? (disambiguate '#{clojure.core core.logic} :refer '==
+                            '{:xrefer #{clojure.core core.logic}
+                              :refer {clojure.core #{} core.logic #{}}}))))
   (testing "changes type to :refer-all when top candidate is in old :refer-all"
     (is (= (disambiguate '#{clojure.set} :refer 'join
                          '{:refer-all #{clojure.set}})
-           '[:refer-all clojure.set])))
-  (testing "removes namespaces with excluded vars"
-    (is (= (disambiguate '#{clojure.string clojure.set}
-                         :refer 'join
-                         '{:exclude {clojure.string #{join}}})
-           '[:refer clojure.set]))))
+           '[:refer-all clojure.set]))))
 
 (deftest ^:unit test-grow-ns-map
   (testing "finds basic imports, aliases, and refers"
