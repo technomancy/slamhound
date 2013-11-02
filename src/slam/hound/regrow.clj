@@ -215,10 +215,10 @@
 
 (defonce pre-load-namespaces
   (delay
-   (doseq [namespace (search/namespaces)
-           :when (not (re-find #"example|lancet$" (name namespace)))]
-     (try (with-out-str (require namespace))
-          (catch Throwable _)))))
+    (doseq [namespace (search/namespaces)
+            :when (not (re-find #"example|lancet$" (name namespace)))]
+      (try (with-out-str (require namespace))
+           (catch Throwable _)))))
 
 (defn regrow [[ns-map body]]
   (force pre-load-namespaces)
@@ -236,4 +236,3 @@
             (throw (Exception. (str "Couldn't resolve " missing
                                     ", got as far as " ns-map)))))
         ns-map))))
-
