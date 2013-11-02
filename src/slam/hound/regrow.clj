@@ -199,6 +199,20 @@
          (remove #(re-find disambiguator-blacklist (str %)))
          first)))
 
+(defn disambiguate
+  "Select the most likely class or ns symbol in the given set of candidates,
+  returning [type candidate-sym]"
+  [candidates type missing old-ns-map]
+  ;; TODO: prefer things in src/classes to jars
+  (let [cs (filter-excludes candidates type missing old-ns-map)
+        cs (remove #(re-find disambiguator-blacklist (str %)) cs)]
+    (when-let [c (first cs)]
+      ;; Honor any old [c :refer :all] specs - issue #50
+      (if (and (= type :refer)
+               (contains? (:refer-all old-ns-map) c))
+        [:refer-all c]
+        [type c]))))
+
 (defn- grow-step [missing type ns-map body]
   (let [mass-refers (mass-refer-namespaces (get-in ns-map [:old :require]))
         libspecs (candidates type missing body)
@@ -218,12 +232,14 @@
 (defn grow-ns-map
   "Return a new ns-map augmented with a single candidate ns reference."
   [ns-map type missing body]
-  (let [cs (candidates type missing body)]
-    (if-let [c (disambiguate cs type missing (:old ns-map))]
+  (let [cs (candidates type missing body)
+        old-ns-map (:old ns-map)]
+    (if-let [[type c] (disambiguate cs type missing old-ns-map)]
       (case type
         :import (update-in ns-map [:import] #(conj (or % #{}) c))
         :alias (update-in ns-map [:alias] assoc c missing)
-        :refer (update-in ns-map [:refer c] #(conj (or % #{}) missing)))
+        :refer (update-in ns-map [:refer c] #(conj (or % #{}) missing))
+        :refer-all (update-in ns-map [:refer-all] #(conj (or % #{}) c)))
       ns-map)))
 
 (defonce pre-load-namespaces

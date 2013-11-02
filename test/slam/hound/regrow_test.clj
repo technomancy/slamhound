@@ -1,8 +1,11 @@
 (ns slam.hound.regrow-test
+  {:slamhound-skip true}
   (:require [clojure.test :refer [deftest is testing]]
-            [slam.hound.regrow :refer [expand-libs
-                                       candidates
+            [korma.core]
+            [slam.hound.regrow :refer [candidates
+                                       disambiguate
                                        filter-excludes
+                                       grow-ns-map
                                        in-originals-pred
                                        regrow]]))
 
@@ -37,6 +40,19 @@
                                 :refer {clojure.core #{}}})
          '#{core.logic})))
 
+(deftest ^:unit test-disambiguate
+  (testing "removes candidates matching disambiguator-blacklist"
+    (is (nil? (disambiguate '#{swank lancet} :alias 'swank {}))))
+  (testing "changes type to :refer-all when top candidate is in old :refer-all"
+    (is (= (disambiguate '#{clojure.set} :refer 'join
+                         '{:refer-all #{clojure.set}})
+           '[:refer-all clojure.set])))
+  (testing "removes namespaces with excluded vars"
+    (is (= (disambiguate '#{clojure.string clojure.set}
+                         :refer 'join
+                         '{:exclude {clojure.string #{join}}})
+           '[:refer clojure.set]))))
+
 (deftest ^:unit test-grow-ns-map
   (testing "finds basic imports, aliases, and refers"
     (is (= (grow-ns-map {} :import 'RegrowTestRecord '((RegrowTestRecord.)))
@@ -44,7 +60,12 @@
     (is (= (grow-ns-map {} :alias 'string '((string/join)))
            '{:alias {clojure.string string}}))
     (is (= (grow-ns-map {} :refer 'pprint '((pprint [])))
-           '{:refer {clojure.pprint #{pprint}}}))))
+           '{:refer {clojure.pprint #{pprint}}})))
+  (testing "honors old :refer :all"
+    (is (= (grow-ns-map '{:old {:refer-all #{clojure.pprint}}}
+                        :refer 'pprint '((pprint [])))
+           '{:old {:refer-all #{clojure.pprint}}
+             :refer-all #{clojure.pprint}}))))
 
 (deftest ^:unit test-expand-libs
   (testing "expands prefix lists into a flat list of symbols"
