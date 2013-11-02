@@ -109,23 +109,25 @@
                (ns-name ns)))))
 
 (defn filter-excludes
-  "Disjoin namespace symbols from ns-syms that match the :exclude, :xrefer,
-  and :refer values in ns-map."
-  [ns-syms var-sym ns-map]
-  (let [{:keys [exclude xrefer refer]} ns-map
-        ns-syms (reduce (fn [s [ns syms]]
-                          (if (and (contains? s ns)
-                                   (contains? syms var-sym))
-                            (disj s ns)
-                            s))
-                        ns-syms exclude)
-        ns-syms (reduce (fn [s ns]
-                          (if (and (contains? s ns)
-                                   (not (contains? (refer ns) var-sym)))
-                            (disj s ns)
-                            s))
-                        ns-syms xrefer)]
-    ns-syms))
+  "Disjoin namespace symbols from candidates that match the :exclude, :xrefer,
+  and :refer values in old-ns-map."
+  [candidates type missing old-ns-map]
+  (if (= type :refer)
+    (let [{:keys [exclude xrefer refer]} old-ns-map
+          cs (reduce (fn [s [ns syms]]
+                       (if (and (contains? s ns)
+                                (contains? syms missing))
+                         (disj s ns)
+                         s))
+                     candidates exclude)
+          cs (reduce (fn [s ns]
+                       (if (and (contains? s ns)
+                                (not (contains? (refer ns) missing)))
+                         (disj s ns)
+                         s))
+                     cs xrefer)]
+      cs)
+    candidates))
 
 (defn- expand-prefix-list [[prefix & more]]
   (map (fn [expr]
@@ -216,9 +218,8 @@
 (defn grow-ns-map
   "Return a new ns-map augmented with a single candidate ns reference."
   [ns-map type missing body]
-  (let [cs (cond-> (candidates type missing body)
-             (= type :refer) (filter-excludes missing ns-map))]
-    (if-let [c (first cs)]
+  (let [cs (candidates type missing body)]
+    (if-let [c (disambiguate cs type missing (:old ns-map))]
       (case type
         :import (update-in ns-map [:import] #(conj (or % #{}) c))
         :alias (update-in ns-map [:alias] assoc c missing)

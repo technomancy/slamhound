@@ -29,12 +29,12 @@
            '#{clojure.set clojure.string korma.core}))))
 
 (deftest ^:unit test-filter-excludes
-  (is (= (filter-excludes
-           '#{clojure.core core.logic} '== {:exclude '{clojure.core #{==}}})
+  (is (= (filter-excludes '#{clojure.core core.logic} :refer
+                          '== {:exclude '{clojure.core #{==}}})
          '#{core.logic}))
-  (is (= (filter-excludes
-           '#{clojure.core core.logic} '== '{:xrefer #{clojure.core}
-                                             :refer {clojure.core #{}}})
+  (is (= (filter-excludes '#{clojure.core core.logic} :refer
+                          '== '{:xrefer #{clojure.core}
+                                :refer {clojure.core #{}}})
          '#{core.logic})))
 
 (deftest ^:unit test-grow-ns-map
