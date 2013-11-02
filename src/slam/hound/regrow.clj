@@ -213,6 +213,18 @@
       (update-in ns-map [type] conj addition)
       ns-map)))
 
+(defn grow-ns-map
+  "Return a new ns-map augmented with a single candidate ns reference."
+  [ns-map type missing body]
+  (let [cs (cond-> (candidates type missing body)
+             (= type :refer) (filter-excludes missing ns-map))]
+    (if-let [c (first cs)]
+      (case type
+        :import (update-in ns-map [:import] #(conj (or % #{}) c))
+        :alias (update-in ns-map [:alias] assoc c missing)
+        :refer (update-in ns-map [:refer c] #(conj (or % #{}) missing)))
+      ns-map)))
+
 (defonce pre-load-namespaces
   (delay
     (doseq [namespace (search/namespaces)
@@ -232,7 +244,7 @@
                          (inc type-to-try)
                          0)]
           (if-let [type (get possible-types type-idx)]
-            (recur (grow-step missing type ns-map body) missing type-idx)
+            (recur (grow-ns-map ns-map type missing body) missing type-idx)
             (throw (Exception. (str "Couldn't resolve " missing
                                     ", got as far as " ns-map)))))
         ns-map))))

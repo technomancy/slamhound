@@ -37,6 +37,15 @@
                                              :refer {clojure.core #{}}})
          '#{core.logic})))
 
+(deftest ^:unit test-grow-ns-map
+  (testing "finds basic imports, aliases, and refers"
+    (is (= (grow-ns-map {} :import 'RegrowTestRecord '((RegrowTestRecord.)))
+           '{:import #{slam.hound.regrow_test.RegrowTestRecord}}))
+    (is (= (grow-ns-map {} :alias 'string '((string/join)))
+           '{:alias {clojure.string string}}))
+    (is (= (grow-ns-map {} :refer 'pprint '((pprint [])))
+           '{:refer {clojure.pprint #{pprint}}}))))
+
 (deftest ^:unit test-expand-libs
   (testing "expands prefix lists into a flat list of symbols"
     (is (= (expand-libs '((java.util Date Random UUID)))
