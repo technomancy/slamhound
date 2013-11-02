@@ -109,12 +109,23 @@
                (ns-name ns)))))
 
 (defn filter-excludes
-  "Disjoin namespace symbols from ns-syms that contain values in excludes."
-  [ns-syms var-sym excludes]
-  (apply disj ns-syms (for [[ns syms] excludes
-                            :when (and (contains? ns-syms ns)
-                                       (contains? syms var-sym))]
-                        ns)))
+  "Disjoin namespace symbols from ns-syms that match the :exclude, :xrefer,
+  and :refer values in ns-map."
+  [ns-syms var-sym ns-map]
+  (let [{:keys [exclude xrefer refer]} ns-map
+        ns-syms (reduce (fn [s [ns syms]]
+                          (if (and (contains? s ns)
+                                   (contains? syms var-sym))
+                            (disj s ns)
+                            s))
+                        ns-syms exclude)
+        ns-syms (reduce (fn [s ns]
+                          (if (and (contains? s ns)
+                                   (not (contains? (refer ns) var-sym)))
+                            (disj s ns)
+                            s))
+                        ns-syms xrefer)]
+    ns-syms))
 
 (defn- expand-prefix-list [[prefix & more]]
   (map (fn [expr]

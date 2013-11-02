@@ -30,7 +30,11 @@
 
 (deftest ^:unit test-filter-excludes
   (is (= (filter-excludes
-           '#{clojure.core core.logic} '== '{clojure.core #{==}})
+           '#{clojure.core core.logic} '== {:exclude '{clojure.core #{==}}})
+         '#{core.logic}))
+  (is (= (filter-excludes
+           '#{clojure.core core.logic} '== '{:xrefer #{clojure.core}
+                                             :refer {clojure.core #{}}})
          '#{core.logic})))
 
 (deftest ^:unit test-expand-libs
