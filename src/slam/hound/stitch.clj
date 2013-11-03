@@ -1,6 +1,5 @@
 (ns slam.hound.stitch
-  (:require [clojure.set :as set]
-            [slam.hound.future :refer [cond->*]]
+  (:require [slam.hound.future :refer [cond->*]]
             [slam.hound.prettify :refer [prettify]]))
 
 (defn- get-package [class-name]

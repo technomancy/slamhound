@@ -194,7 +194,7 @@
 (defn regrow [[ns-map body]]
   (force pre-load-namespaces)
   (if (:slamhound-skip (:meta ns-map))
-    ns-map
+    (merge ns-map (:old ns-map))
     (loop [ns-map ns-map
            last-missing nil
            type-to-try 0]

@@ -2,8 +2,8 @@
   {:slamhound-skip true}
   (:require [clojure.test :refer [deftest is testing]]
             [korma.core]
-            [slam.hound.regrow :refer [candidates disambiguate
-                                       grow-ns-map regrow]]))
+            [slam.hound.regrow :refer [candidates
+                                       disambiguate grow-ns-map regrow]]))
 
 (def sample-body
   '((set/union #{:a} #{:b})

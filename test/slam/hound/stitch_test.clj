@@ -5,8 +5,7 @@
                                        metadata-from-map
                                        ns-from-map
                                        refer-clojure-from-map
-                                       requires-from-map
-                                       stitch-up]]))
+                                       requires-from-map stitch-up]]))
 
 (deftest ^:unit test-keyword-list-from-map
   (is (= (keyword-list-from-map
