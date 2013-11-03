@@ -59,6 +59,10 @@
   (testing "prefers aliases where the last segment matches"
     (is (= (disambiguate '#{clojure.set clojure.string} :alias 'set {})
            '[:alias clojure.set])))
+  (testing "prefers shortest candidates when no other predicates match"
+    (is (= (disambiguate '#{clojure.java.io clojure.set clojure.string}
+                         :alias 'a {})
+           '[:alias clojure.set])))
   (testing "changes type to :refer-all when top candidate is in old :refer-all"
     (is (= (disambiguate '#{clojure.set clojure.string}
                          :refer 'join

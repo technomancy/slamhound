@@ -217,7 +217,8 @@
         cs (remove #(re-find disambiguator-blacklist (str %)) cs)
         cs (sort-by (juxt
                       (complement (in-originals-pred type missing old-ns-map))
-                      (complement (last-segment-matches-pred type missing)))
+                      (complement (last-segment-matches-pred type missing))
+                      (comp count str))
                     cs)]
     (when-let [c (first cs)]
       ;; Honor any old [c :refer :all] specs - issue #50
