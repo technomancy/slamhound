@@ -152,6 +152,7 @@
   returning [type candidate-sym]"
   [candidates type missing old-ns-map]
   ;; TODO: prefer things in src/classes to jars
+  (debug :disambiguating missing :in candidates)
   (let [cs (filter-excludes candidates type missing old-ns-map)
         cs (remove #(re-find disambiguator-blacklist (str %)) cs)
         cs (sort-by (juxt
