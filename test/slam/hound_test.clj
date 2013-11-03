@@ -99,7 +99,7 @@
             in the old version of the ns form"
     (is (= "(ns foo.bar
   (:require [clojure.set :refer [union]]
-            [clojure.string :refer [join]]))
+            [clojure.string :refer :all]))
 "
            (reconstruct (StringReader.
                          (str '(ns foo.bar

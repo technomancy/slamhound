@@ -118,29 +118,34 @@
       cs)
     candidates))
 
-(defn- in-originals-pred [type missing old-ns-map]
-  (fn [candidate]
-    (case type
-      :import (contains? (:import old-ns-map) candidate)
-      :alias (let [as (:alias old-ns-map)]
-               (and (contains? as candidate)
-                    (= (as candidate) missing)))
-      :refer (let [[all rs] ((juxt :refer-all :refer) old-ns-map)]
-               (or (contains? all candidate)
-                   (and (contains? rs candidate)
-                        (contains? (rs candidate) missing)))))))
-
 (def ^:private disambiguator-blacklist
   (if-let [v (resolve 'user/slamhound-disambiguator-blacklist)]
     @v
     #"swank|lancet"))
 
+(defn- in-originals-pred [type missing old-ns-map]
+  (fn [candidate]
+    (case type
+      :import (if (contains? (:import old-ns-map) candidate) 0 1)
+      :alias (let [as (:alias old-ns-map)]
+               (if (and (contains? as candidate)
+                        (= (as candidate) missing))
+                 0 1))
+      :refer (let [[all rs] ((juxt :refer-all :refer) old-ns-map)
+                   all? (contains? all candidate)
+                   ref? (and (contains? rs candidate)
+                             (contains? (rs candidate) missing))]
+               (cond (and all? ref?) 0
+                     ref? 1
+                     all? 2
+                     :else 3)))))
+
 (defn- last-segment-matches-pred [type missing]
   (let [s (name missing)]
     (fn [candidate]
       (if (= type :alias)
-        (= s (peek (string/split (name candidate) #"\.")))
-        false))))
+        (if (= s (peek (string/split (name candidate) #"\."))) 0 1)
+        1))))
 
 (defn disambiguate
   "Select the most likely class or ns symbol in the given set of candidates,
@@ -150,8 +155,8 @@
   (let [cs (filter-excludes candidates type missing old-ns-map)
         cs (remove #(re-find disambiguator-blacklist (str %)) cs)
         cs (sort-by (juxt
-                      (complement (in-originals-pred type missing old-ns-map))
-                      (complement (last-segment-matches-pred type missing))
+                      (in-originals-pred type missing old-ns-map)
+                      (last-segment-matches-pred type missing)
                       (comp count str))
                     cs)]
     (when-let [c (first cs)]

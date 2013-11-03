@@ -63,6 +63,12 @@
                          :refer 'join
                          '{:refer {clojure.set #{join}}})
            '[:refer clojure.set])))
+  (testing "prefers explicit refers over mass refers from old ns"
+    (is (= (disambiguate '#{clojure.set clojure.string}
+                         :refer 'join
+                         '{:refer-all #{clojure.set}
+                           :refer {clojure.string #{join}}})
+           '[:refer clojure.string])))
   (testing "prefers aliases where the last segment matches"
     (is (= (disambiguate '#{clojure.set clojure.string} :alias 'set {})
            '[:alias clojure.set])))
