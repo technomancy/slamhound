@@ -112,7 +112,7 @@
   \"Testing some \\\"things\\\"\ngoing on here.\"
   {:slamhound-skip true, :zzz \"zzz\"}
   (:require [clojure.java.io :as io]
-            [clojure.set :as set]
+            [clojure.set :as set :refer [union]]
             [clojure.test :refer [deftest is]]
             [slam.hound.stitch :refer [ns-from-map]])
   (:import (clojure.lang Compiler$BodyExpr)
@@ -131,6 +131,7 @@
                       :alias {clojure.java.io io
                               clojure.set set}
                       :refer {slam.hound.stitch #{ns-from-map}
-                              clojure.test #{is deftest}}
+                              clojure.test #{is deftest}
+                              clojure.set #{union}}
                       :exclude {clojure.core #{compile test}}
                       :gen-class []}))))
