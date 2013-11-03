@@ -1,6 +1,6 @@
 (ns slam.hound.stitch
   (:require [clojure.set :as set]
-            [slam.hound.future :refer [cond->]]
+            [slam.hound.future :refer [cond->*]]
             [slam.hound.prettify :refer [prettify]]))
 
 (defn- get-package [class-name]
@@ -22,7 +22,7 @@
   (let [meta (:meta ns-map)
         doc (:doc meta)
         meta (into (sorted-map) (dissoc meta :doc))]
-    (cond-> []
+    (cond->* []
       doc (conj doc)
       (seq meta) (conj meta))))
 
@@ -41,7 +41,7 @@
 
 (defn- ns-requires [ns-sym ns-map]
   (let [{:keys [alias refer refer-all exclude rename]} ns-map]
-    (cond-> [ns-sym]
+    (cond->* [ns-sym]
       (get alias ns-sym) (conj :as (alias ns-sym))
       (get refer ns-sym) (conj :refer (vec (sort (refer ns-sym))))
       (get refer-all ns-sym) (conj :refer :all)
@@ -71,7 +71,7 @@
       (let [reqs (reduce (fn [v ns]
                            (conj v (ns-requires ns ns-map)))
                          [] nss)]
-        (cond-> (cons :require (sort-by str reqs))
+        (cond->* (cons :require (sort-by str reqs))
           reload (concat [:reload])
           reload-all (concat [:reload-all])
           verbose (concat [:verbose]))))))
@@ -90,7 +90,7 @@
                           (contains? refer c))
                      [:only (vec (sort (refer c)))]
                      [])
-            refs (cond-> refs
+            refs (cond->* refs
                    (get exclude c) (conj :exclude (vec (sort (exclude c))))
                    (get rename c) (conj :rename (into (sorted-map) (rename c))))]
         (when (seq refs)

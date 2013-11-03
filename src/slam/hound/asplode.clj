@@ -1,5 +1,5 @@
 (ns slam.hound.asplode
-  (:require [slam.hound.future :refer [as-> cond->]])
+  (:require [slam.hound.future :refer [as->* cond->*]])
   (:import (java.io PushbackReader)))
 
 (def default-ns-references
@@ -98,10 +98,10 @@
   ([ns-sym filters exclusive-refer?]
    (if (seq filters)
      (let [{:keys [exclude only rename]} (apply hash-map filters)]
-       (cond-> {}
+       (cond->* {}
          exclude (assoc :exclude {ns-sym (set exclude)})
-         only (as-> m
-                (cond-> (assoc m :refer {ns-sym (set only)})
+         only (as->* m
+                (cond->* (assoc m :refer {ns-sym (set only)})
                   exclusive-refer? (assoc :xrefer #{ns-sym})))
          rename (assoc :rename {ns-sym (into {} rename)})))
      {:refer-all #{ns-sym}})))
@@ -117,9 +117,9 @@
       (if (seq opts)
         (let [{:keys [as refer reload reload-all verbose]}
               (apply hash-map opts)]
-          (vmerge m (cond-> {}
+          (vmerge m (cond->* {}
                       as (assoc :alias {ns-sym as})
-                      refer (as-> m (if (= refer :all)
+                      refer (as->* m (if (= refer :all)
                                       (assoc m :refer-all #{ns-sym})
                                       (assoc m :refer {ns-sym (set refer)})))
                       reload (assoc :reload true)
@@ -178,7 +178,7 @@
                       (if (and x (x 'clojure.core))
                         (assoc m kw {'clojure.core (x 'clojure.core)})
                         m))]
-    (-> (cond-> {}
+    (-> (cond->* {}
           gen-class (assoc :gen-class gen-class)
           load (assoc :load load))
         (maybe-assoc :refer refer)
