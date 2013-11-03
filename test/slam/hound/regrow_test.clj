@@ -56,6 +56,9 @@
                          :refer 'join
                          '{:refer {clojure.set #{join}}})
            '[:refer clojure.set])))
+  (testing "prefers aliases where the last segment matches"
+    (is (= (disambiguate '#{clojure.set clojure.string} :alias 'set {})
+           '[:alias clojure.set])))
   (testing "changes type to :refer-all when top candidate is in old :refer-all"
     (is (= (disambiguate '#{clojure.set clojure.string}
                          :refer 'join

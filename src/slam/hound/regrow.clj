@@ -187,10 +187,12 @@
                         (= (first aliases1) (first aliases2))
                         (= ns1 ns2))))))))
 
-(defn- last-segment-matches? [expr]
-  (when (and (coll? expr) (= (second expr) :as))
-    (let [[x _ y] expr]
-      (= (peek (string/split (name x) #"\.")) (name y)))))
+(defn- last-segment-matches-pred [type missing]
+  (let [s (name missing)]
+    (fn [candidate]
+      (if (= type :alias)
+        (= s (peek (string/split (name candidate) #"\.")))
+        false))))
 
 (defn- disambiguate [candidates missing ns-map type]
   ;; TODO: prefer things in src/classes to jars
@@ -214,7 +216,8 @@
   (let [cs (filter-excludes candidates type missing old-ns-map)
         cs (remove #(re-find disambiguator-blacklist (str %)) cs)
         cs (sort-by (juxt
-                      (complement (in-originals-pred type missing old-ns-map)))
+                      (complement (in-originals-pred type missing old-ns-map))
+                      (complement (last-segment-matches-pred type missing)))
                     cs)]
     (when-let [c (first cs)]
       ;; Honor any old [c :refer :all] specs - issue #50
