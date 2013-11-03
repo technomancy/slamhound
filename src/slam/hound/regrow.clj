@@ -127,7 +127,7 @@
     @v
     #"swank|lancet"))
 
-(defn- in-originals-pred [type missing old-ns-map]
+(defn- in-originals-fn [type missing old-ns-map]
   (fn [candidate]
     (case type
       :import (if (contains? (:import old-ns-map) candidate) 0 1)
@@ -144,7 +144,7 @@
                      all? 2
                      :else 3)))))
 
-(defn- last-segment-matches-pred [type missing]
+(defn- last-segment-matches-fn [type missing]
   (let [s (name missing)]
     (fn [candidate]
       (if (= type :alias)
@@ -160,8 +160,8 @@
   (let [cs (filter-excludes candidates type missing old-ns-map)
         cs (remove #(re-find disambiguator-blacklist (str %)) cs)
         cs (sort-by (juxt
-                      (in-originals-pred type missing old-ns-map)
-                      (last-segment-matches-pred type missing)
+                      (in-originals-fn type missing old-ns-map)
+                      (last-segment-matches-fn type missing)
                       (comp count str))
                     cs)]
     (when-let [c (first cs)]
