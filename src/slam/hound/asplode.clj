@@ -178,14 +178,18 @@
   "Extract map of :gen-class, :load, :refer, :exclude, and :rename that should
   be preserved in an ns declaration."
   [ns-map]
-  (let [{:keys [gen-class load refer exclude rename]} ns-map
+  (let [{:keys [gen-class load refer exclude rename
+                reload reload-all verbose]} ns-map
         maybe-assoc (fn [m kw x]
                       (if (and x (x 'clojure.core))
                         (assoc m kw {'clojure.core (x 'clojure.core)})
                         m))]
     (-> (cond->* {}
           gen-class (assoc :gen-class gen-class)
-          load (assoc :load load))
+          load (assoc :load load)
+          reload (assoc :reload reload)
+          reload-all (assoc :reload-all reload-all)
+          verbose (assoc :verbose verbose))
         (maybe-assoc :refer refer)
         (maybe-assoc :exclude exclude)
         (maybe-assoc :rename rename))))

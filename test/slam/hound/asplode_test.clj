@@ -109,6 +109,11 @@
            {:gen-class [] :load []}))
     (is (= (preserve-ns-references {:gen-class nil :load []})
            {:load []})))
+  (testing "retains :reload, :reload-all, and :verbose"
+    (is (= (preserve-ns-references {:reload true})
+           {:reload true}))
+    (is (= (preserve-ns-references {:reload-all true :verbose true})
+           {:reload-all true :verbose true})))
   (testing "retains refers, exclusions, and renames for clojure.core"
     (is (= (preserve-ns-references '{:exclude {clojure.core #{==}
                                                my.ns #{foo}}
