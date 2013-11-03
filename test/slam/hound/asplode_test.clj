@@ -37,6 +37,9 @@
            :rename {my.ns {baz mybaz}}}))
   (is (= (parse-refers 'my.ns [])
          '{:refer-all #{my.ns}}))
+  (testing "also excludes from cljs.core when excluding clojure.core"
+    (is (= (parse-refers 'clojure.core '[:exclude [defn]])
+           '{:exclude {clojure.core #{defn} cljs.core #{defn}}})))
   (testing "exclusive-refer?"
     (is (= (parse-refers 'my.ns '[:only [foo]] true)
            '{:refer {my.ns #{foo}} :xrefer #{my.ns}}))))
@@ -74,9 +77,12 @@
     (is (= (parse-libs {:exclude '{foo #{foo}}}
                        :refer-clojure
                        '[:exclude [defn defrecord]])
-           '{:exclude {foo #{foo} clojure.core #{defn defrecord}}}))
+           '{:exclude {foo #{foo}
+                       clojure.core #{defn defrecord}
+                       cljs.core #{defn defrecord}}}))
     (is (= (parse-libs {} :refer-clojure '[:only [defn]])
-           '{:refer {clojure.core #{defn}} :xrefer #{clojure.core}})))
+           '{:refer {clojure.core #{defn} cljs.core #{defn}}
+             :xrefer #{clojure.core cljs.core}})))
   (testing "load, gen-class"
     (is (= (parse-libs {:load ["/foo"]} :load ["/bar" "/baz"])
            {:load ["/bar" "/baz"]}))
@@ -140,7 +146,8 @@
                           slam.hound.stitch #{ns-from-map}}
                   :xrefer #{}
                   :refer-all #{}
-                  :exclude {clojure.core #{test compile}}
+                  :exclude {clojure.core #{test compile}
+                            cljs.core #{test compile}}
                   :rename {}
                   :reload false
                   :reload-all false

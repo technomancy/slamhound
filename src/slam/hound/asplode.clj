@@ -92,18 +92,23 @@
   :exclude, :refer, :refer-all, and :rename.
 
   If exclusive-refer? is true, the :only option also adds ns-sym to the
-  :xrefer set."
+  :xrefer set.
+
+  If ns-sym is 'clojure.core, all entries are duplicated with 'cljs.core."
   ([ns-sym filters]
    (parse-refers ns-sym filters false))
   ([ns-sym filters exclusive-refer?]
    (if (seq filters)
-     (let [{:keys [exclude only rename]} (apply hash-map filters)]
-       (cond->* {}
-         exclude (assoc :exclude {ns-sym (set exclude)})
-         only (as->* m
-                (cond->* (assoc m :refer {ns-sym (set only)})
-                  exclusive-refer? (assoc :xrefer #{ns-sym})))
-         rename (assoc :rename {ns-sym (into {} rename)})))
+     (let [{:keys [exclude only rename]} (apply hash-map filters)
+           m (cond->* {}
+               exclude (assoc :exclude {ns-sym (set exclude)})
+               only (as->* m
+                      (cond->* (assoc m :refer {ns-sym (set only)})
+                        exclusive-refer? (assoc :xrefer #{ns-sym})))
+               rename (assoc :rename {ns-sym (into {} rename)}))]
+       (if (= ns-sym 'clojure.core)
+         (vmerge m (parse-refers 'cljs.core filters exclusive-refer?))
+         m))
      {:refer-all #{ns-sym}})))
 
 (defn parse-requires
