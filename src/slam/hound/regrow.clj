@@ -23,17 +23,21 @@
               (re-find #"No such namespace: ([-_\w\$\?!\*\>\<]+)" msg)
               (re-find #"No such var: \w+/([-_\w\$\?!\*\>\<]+)" msg))))
 
-(defn- failure-details [msg]
+(defn- failure-details [msg old-ns-map]
   (when-let [sym-name (missing-sym-name msg)]
-    {:missing (symbol sym-name) ; now returns a symbol
-     :possible-types (cond (capitalized? sym-name)
-                           [:import :refer]
-                           (re-find #"Unable to resolve var: \w+/" msg)
-                           [:alias :refer]
-                           (re-find #"No such (var|namespace)" msg)
-                           [:alias]
-                           :else
-                           [:refer :import])}))
+    (let [sym (symbol sym-name)]
+      {:missing sym ; now returns a symbol
+       :possible-types (cond (capitalized? sym-name)
+                             (if (first (filter (partial some #{sym})
+                                                (vals (:refer old-ns-map))))
+                               [:refer :import]
+                               [:import :refer])
+                             (re-find #"Unable to resolve var: \w+/" msg)
+                             [:alias :refer]
+                             (re-find #"No such (var|namespace)" msg)
+                             [:alias]
+                             :else
+                             [:refer :import])})))
 
 (defn- check-for-failure [ns-map body]
   (let [sandbox-ns `slamhound.sandbox#
@@ -42,7 +46,7 @@
       (try
         (eval `(do ~ns-form ~@body nil))
         (catch Exception e
-          (or (failure-details (.getMessage e))
+          (or (failure-details (.getMessage e) (:old ns-map))
               (do (debug :not-found ns-form)
                   (throw e))))
         (finally

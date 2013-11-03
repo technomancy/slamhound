@@ -2,7 +2,8 @@
   {:slamhound-skip true}
   (:require [clojure.test :refer [deftest is testing]]
             [korma.core]
-            [slam.hound.regrow :refer [candidates disambiguate grow-ns-map]]))
+            [slam.hound.regrow :refer [candidates disambiguate
+                                       grow-ns-map regrow]]))
 
 (def sample-body
   '((set/union #{:a} #{:b})
@@ -18,6 +19,8 @@
 (defrecord RegrowTestRecord [])
 (defrecord UUID [])
 (def +i-must-be-a-cl-user+ true)
+(def CapitalVar true)
+(def Pattern "Not java.util.Pattern")
 
 (deftest ^:unit test-candidates
   (testing "finds static and dynamically created Java packages"
@@ -94,4 +97,18 @@
     (is (= (grow-ns-map '{:old {:refer-all #{clojure.pprint}}}
                         :refer 'pprint '((pprint [])))
            '{:old {:refer-all #{clojure.pprint}}
-             :refer-all #{clojure.pprint}}))))
+             :refer-all #{clojure.pprint}})))
+  (testing "finds capitalized vars"
+    (is (= (grow-ns-map '{} :refer 'CapitalVar '((type CapitalVar)))
+           '{:refer {slam.hound.regrow-test #{CapitalVar}}}))))
+
+(deftest ^:unit test-regrow
+  (testing "prefers capitalized vars referred in old ns to classes"
+    (is (= (regrow '[{:old {:refer {slam.hound.regrow-test #{Pattern}}}}
+                     ((def p Pattern))])
+           '{:old {:refer {slam.hound.regrow-test #{Pattern}}}
+             :refer {slam.hound.regrow-test #{Pattern}}}))
+    (is (= (regrow '[{:old {:refer {my.ns #{BitSet}}}}
+                     ((def bs BitSet))])
+           '{:old {:refer {my.ns #{BitSet}}}
+             :import #{java.util.BitSet}}))))
