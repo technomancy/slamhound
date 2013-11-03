@@ -97,7 +97,7 @@
 
 (defn ns-from-map
   "Generate an ns-form from an ns-map in the form of
-   #'slam.hound.asplode/default-ns-references"
+   #'slam.hound.asplode/empty-ns-references"
   [ns-map]
   `(~'ns ~(:name ns-map)
      ~@(metadata-from-map ns-map)

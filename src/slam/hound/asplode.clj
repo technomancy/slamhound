@@ -2,7 +2,7 @@
   (:require [slam.hound.future :refer [as->* cond->*]])
   (:import (java.io PushbackReader)))
 
-(def default-ns-references
+(def empty-ns-references
   ;; NOTE: :verbose, :reload, and :reload-all can actually be specified per
   ;;       libspec, but this is not mentioned in the docstring for require, so
   ;;       we consider it an implementation detail.
@@ -201,7 +201,7 @@
                          (if-let [v (ns-map k)]
                            (parse-libs m k v)
                            m))
-                       default-ns-references ns-clauses)
+                       empty-ns-references ns-clauses)
         stripped-ns (assoc (apply dissoc ns-map ns-clauses) :old old-ns)
         stripped-ns (merge stripped-ns (preserve-ns-references old-ns))
         body (take-while #(not= ::done %)
