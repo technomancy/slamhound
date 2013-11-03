@@ -5,11 +5,11 @@
             [slam.hound.regrow :refer [candidates
                                        disambiguate
                                        grow-ns-map
-                                       in-originals-pred
                                        regrow]]))
 
 ;; Classes and vars for testing
 (defrecord RegrowTestRecord [])
+(defrecord UUID [])
 (def +i-must-be-a-cl-user+ true)
 
 (deftest ^:unit test-candidates
@@ -41,8 +41,24 @@
     (is (nil? (disambiguate '#{clojure.core core.logic} :refer '==
                             '{:xrefer #{clojure.core core.logic}
                               :refer {clojure.core #{} core.logic #{}}}))))
+  (testing "prefers imports from old ns"
+    (is (= (disambiguate '#{java.util.UUID slam.hound.regrow.UUID}
+                         :import 'UUID
+                         '{:import #{java.util.UUID}})
+           '[:import java.util.UUID])))
+  (testing "prefers aliases from old ns"
+    (is (= (disambiguate '#{clojure.set clojure.string}
+                         :alias 's
+                         '{:alias {clojure.set s}})
+           '[:alias clojure.set])))
+  (testing "prefers refers from old ns"
+    (is (= (disambiguate '#{clojure.set clojure.string}
+                         :refer 'join
+                         '{:refer {clojure.set #{join}}})
+           '[:refer clojure.set])))
   (testing "changes type to :refer-all when top candidate is in old :refer-all"
-    (is (= (disambiguate '#{clojure.set} :refer 'join
+    (is (= (disambiguate '#{clojure.set clojure.string}
+                         :refer 'join
                          '{:refer-all #{clojure.set}})
            '[:refer-all clojure.set]))))
 

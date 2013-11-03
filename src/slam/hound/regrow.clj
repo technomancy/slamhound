@@ -151,10 +151,17 @@
         (conj s lib)))
     #{} coll))
 
-(defn in-originals-pred [originals]
-  (let [libs (expand-libs originals)]
-    (fn [candidate]
-      (contains? libs candidate))))
+(defn- in-originals-pred [type missing old-ns-map]
+  (fn [candidate]
+    (case type
+      :import (contains? (:import old-ns-map) candidate)
+      :alias (let [as (:alias old-ns-map)]
+               (and (contains? as candidate)
+                    (= (as candidate) missing)))
+      :refer (let [[all rs] ((juxt :refer-all :refer) old-ns-map)]
+               (or (contains? all candidate)
+                   (and (contains? rs candidate)
+                        (contains? (rs candidate) missing)))))))
 
 (def ^:private disambiguator-blacklist
   (if-let [v (resolve 'user/slamhound-disambiguator-blacklist)]
@@ -205,7 +212,10 @@
   [candidates type missing old-ns-map]
   ;; TODO: prefer things in src/classes to jars
   (let [cs (filter-excludes candidates type missing old-ns-map)
-        cs (remove #(re-find disambiguator-blacklist (str %)) cs)]
+        cs (remove #(re-find disambiguator-blacklist (str %)) cs)
+        cs (sort-by (juxt
+                      (complement (in-originals-pred type missing old-ns-map)))
+                    cs)]
     (when-let [c (first cs)]
       ;; Honor any old [c :refer :all] specs - issue #50
       (if (and (= type :refer)
