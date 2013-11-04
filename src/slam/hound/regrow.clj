@@ -59,8 +59,8 @@
   (memoize
     (fn [body]
       (apply merge-with set/union {}
-             (for [sym (symbols-in-body body)
-                   :let [[_ alias var-name] (re-matches #"(.+)/(.+)" (str sym))]
+             (for [ss (symbols-in-body body)
+                   :let [[_ alias var-name] (re-matches #"(.+)/(.+)" (str ss))]
                    :when alias]
                {(symbol alias) #{(symbol var-name)}})))))
 
@@ -130,11 +130,14 @@
 (defn- in-originals-fn [type missing old-ns-map]
   (fn [candidate]
     (case type
-      :import (if (contains? (:import old-ns-map) candidate) 0 1)
+      :import (if (contains? (:import old-ns-map) candidate)
+                0
+                1)
       :alias (let [as (:alias old-ns-map)]
                (if (and (contains? as candidate)
                         (= (as candidate) missing))
-                 0 1))
+                 0
+                 1))
       :refer (let [[all rs] ((juxt :refer-all :refer) old-ns-map)
                    all? (contains? all candidate)
                    ref? (and (contains? rs candidate)
@@ -145,10 +148,12 @@
                      :else 3)))))
 
 (defn- last-segment-matches-fn [type missing]
-  (let [s (name missing)]
+  (let [alias (name missing)]
     (fn [candidate]
       (if (= type :alias)
-        (if (= s (peek (string/split (name candidate) #"\."))) 0 1)
+        (if (= alias (peek (string/split (name candidate) #"\.")))
+          0
+          1)
         1))))
 
 (defn disambiguate

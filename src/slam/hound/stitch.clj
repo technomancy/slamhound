@@ -67,9 +67,7 @@
         ;; clojure.core should be required via :refer-clojure
         nss (disj nss 'clojure.core)]
     (when (seq nss)
-      (let [reqs (reduce (fn [v ns]
-                           (conj v (ns-requires ns ns-map)))
-                         [] nss)]
+      (let [reqs (map #(ns-requires % ns-map) nss)]
         (cond->* (cons :require (sort-by str reqs))
           reload (concat [:reload])
           reload-all (concat [:reload-all])
@@ -85,15 +83,15 @@
   (let [{:keys [refer refer-all exclude rename]} ns-map
         c 'clojure.core]
     (when (some #{c} (concat refer-all (mapcat keys [refer exclude rename])))
-      (let [refs (if (and (not (contains? refer-all c))
-                          (contains? refer c))
-                     [:only (vec (sort (refer c)))]
-                     [])
-            refs (cond->* refs
-                   (get exclude c) (conj :exclude (vec (sort (exclude c))))
-                   (get rename c) (conj :rename (into (sorted-map) (rename c))))]
-        (when (seq refs)
-          (cons :refer-clojure refs))))))
+      (let [rs (if (and (not (contains? refer-all c))
+                        (contains? refer c))
+                 [:only (vec (sort (refer c)))]
+                 [])
+            rs (cond->* rs
+                 (get exclude c) (conj :exclude (vec (sort (exclude c))))
+                 (get rename c) (conj :rename (into (sorted-map) (rename c))))]
+        (when (seq rs)
+          (cons :refer-clojure rs))))))
 
 (defn ns-from-map
   "Generate an ns-form from an ns-map in the form of

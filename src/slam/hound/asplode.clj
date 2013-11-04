@@ -6,20 +6,20 @@
   ;; NOTE: :verbose, :reload, and :reload-all can actually be specified per
   ;;       libspec, but this is not mentioned in the docstring for require, so
   ;;       we consider it an implementation detail.
-  '{:import     #{}   ; #{class-sym}
-    :require    #{}   ; #{ns-sym}
-    :alias      {}    ; {ns-sym ns-sym}
-    :refer      {}    ; {ns-sym #{var-sym}}
-    :xrefer     #{}   ; #{ns-sym} - exclusively referred namespaces
-    :refer-all  #{}   ; #{ns-sym}
-    :exclude    {}    ; {ns-sym #{var-sym}}
-    :rename     {}    ; {ns-sym {var-sym var-sym}}
-    :reload     false ; true/false
-    :reload-all false ; true/false
-    :verbose    false ; true/false
-    :load       nil   ; a seq of file paths
-    :gen-class  nil   ; a seq of option pairs, possibly empty
-    })
+  {:import     #{}   ; #{class-sym}
+   :require    #{}   ; #{ns-sym}
+   :alias      {}    ; {ns-sym ns-sym}
+   :refer      {}    ; {ns-sym #{var-sym}}
+   :xrefer     #{}   ; #{ns-sym} - exclusively referred namespaces
+   :refer-all  #{}   ; #{ns-sym}
+   :exclude    {}    ; {ns-sym #{var-sym}}
+   :rename     {}    ; {ns-sym {var-sym var-sym}}
+   :reload     false ; true/false
+   :reload-all false ; true/false
+   :verbose    false ; true/false
+   :load       nil   ; a seq of file paths
+   :gen-class  nil   ; a seq of option pairs, possibly empty
+   })
 
 (def ns-clauses
   "Set of valid keys that begin clauses in ns forms."
@@ -180,9 +180,9 @@
   [ns-map]
   (let [{:keys [gen-class load refer exclude rename
                 reload reload-all verbose]} ns-map
-        maybe-assoc (fn [m kw x]
-                      (if (and x (x 'clojure.core))
-                        (assoc m kw {'clojure.core (x 'clojure.core)})
+        maybe-assoc (fn [m kw vs]
+                      (if-let [v (get vs 'clojure.core)]
+                        (assoc m kw {'clojure.core v})
                         m))]
     (-> (cond->* {}
           gen-class (assoc :gen-class gen-class)
