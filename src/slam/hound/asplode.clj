@@ -171,7 +171,9 @@
     (into {:meta ns-meta :name ns-name}
           (for [[clause & body] clauses
                 ;; (:gen-class) with no arguments is valid
-                :let [body (if (= clause :gen-class) [] body)]]
+                :let [body (if (and (nil? body) (= clause :gen-class))
+                             []
+                             body)]]
             [clause body]))))
 
 (defn preserve-ns-references

@@ -96,7 +96,10 @@
     (is (= (:meta (ns-to-map '(ns my.ns "With docstring" {:bar "bar"})))
            {:bar "bar" :doc "With docstring"})))
   (testing "parses empty :gen-class"
-    (is (= (ns-to-map '(ns my.ns (:gen-class)))))))
+    (is (= (ns-to-map '(ns my.ns (:gen-class)))
+           '{:name my.ns :meta nil :gen-class []}))
+    (is (= (ns-to-map '(ns my.ns (:gen-class :name my.ns.Foo)))
+           '{:name my.ns :meta nil :gen-class [:name my.ns.Foo]}))))
 
 (deftest ^:unit test-preserve-ns-references
   (testing "retains :gen-class and :load"
