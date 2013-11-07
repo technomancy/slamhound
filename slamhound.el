@@ -6,7 +6,6 @@
 ;; URL: https://github.com/technomancy/slamhound
 ;; Version: 2.0.0
 ;; Keywords: tools, lisp
-;;; Package-Requires: ((nrepl "0"))
 
 ;; This file is not part of GNU Emacs.
 
@@ -40,7 +39,9 @@
 
 ;;; Code:
 
-(require 'nrepl)
+(or (require 'nrepl-client nil t)
+    (require 'nrepl nil t)
+    (error "Please install either the nrepl.el or cider package."))
 
 (defun slamhound-clj-string (filename)
   (format "%s" `(do (require 'slam.hound)
