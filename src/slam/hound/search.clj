@@ -64,7 +64,7 @@
     (for [entry (enumeration-seq (.entries jarfile))
           :when (and (not (.isDirectory entry))
                      (clj? entry))]
-      (if-let [ns-form (ns-in-jar-entry jarfile entry)]
+      (when-let [ns-form (ns-in-jar-entry jarfile entry)]
         (second ns-form)))))
 
 (defn namespaces []

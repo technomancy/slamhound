@@ -1,9 +1,6 @@
 (ns slam.hound.stitch
-  (:require [slam.hound.prettify :refer [prettify]]))
-
-(def ^:private ns-map-clauses [:require-as :require-refer :import])
-
-(def ^:private ns-clauses-to-preserve [:refer-clojure :gen-class :load])
+  (:require [slam.hound.future :refer [cond->*]]
+            [slam.hound.prettify :refer [prettify]]))
 
 (defn- get-package [class-name]
   (let [cls ^Class (resolve class-name)]
@@ -18,43 +15,97 @@
           (sort (for [c classes]
                   (-> c resolve .getName (.split "\\.") last symbol))))))
 
-(defn- group-by-namespace [uses]
-  (for [[namespace subclause] (group-by first uses)
-        :let [sc (for [[_ _ vars] subclause]
-                   (if (coll? vars) (first vars) vars))
-              vars (if (= [:all] sc) :all (vec (sort sc)))]]
-    [namespace :refer vars]))
+(defn metadata-from-map
+  "Returns a vector of: [docstring? meta-map?]"
+  [ns-map]
+  (let [meta (:meta ns-map)
+        doc (:doc meta)
+        meta (into (sorted-map) (dissoc meta :doc))]
+    (cond->* []
+      doc (conj doc)
+      (seq meta) (conj meta))))
 
-(defn collapse-clause [ns-map clause]
-  (case clause
-    :require-refer (update-in ns-map [:require-refer] group-by-namespace)
-    :import (update-in ns-map [:import] group-by-package)
-    :require-as ns-map))
+(defn keyword-list-from-map
+  "Returns a cons list of keyword and the value of the keyword in ns-map"
+  [kw ns-map]
+  (when-let [s (ns-map kw)]
+    (cons kw s)))
 
-(defn- collapse-clauses [ns-map]
-  (reduce collapse-clause ns-map ns-map-clauses))
+(defn imports-from-map
+  "Returns an :import form from an ns-map with {:import #{class-syms}}"
+  [ns-map]
+  (let [imports (:import ns-map)]
+    (when (seq imports)
+      (cons :import (sort-by str (group-by-package imports))))))
 
-(defn sort-subclauses [ns-map]
-  ;; lists aren't comparable? huh?
-  (reduce #(update-in %1 [%2] (partial sort-by str))
-          ns-map
-          ns-map-clauses))
+(defn- ns-requires [ns-sym ns-map]
+  (let [{:keys [alias refer refer-all exclude rename]} ns-map]
+    (cond->* [ns-sym]
+      (get alias ns-sym) (conj :as (alias ns-sym))
+      (get refer ns-sym) (conj :refer (vec (sort (refer ns-sym))))
+      (get refer-all ns-sym) (conj :refer :all)
+      (get exclude ns-sym) (conj :exclude (vec (sort (exclude ns-sym))))
+      (get rename ns-sym) (conj :rename (into (sorted-map) (rename ns-sym))))))
 
-(defn ns-from-map [ns-map]
-  (let [ns-map (assoc ns-map :require (concat (:require-as ns-map)
-                                              (:require-refer ns-map)))]
-    `(~'ns ~(:name ns-map)
-       ~@(if-let [doco (:doc (:meta ns-map))] ; avoid inserting nil
-           [doco])
-       ~@(for [clause-type (concat [:require :import] ns-clauses-to-preserve)
-               :when (and (contains? ns-map clause-type)
-                          (or (= clause-type :gen-class)
-                              (seq (clause-type ns-map))))]
-           (cons clause-type (clause-type ns-map))))))
+(defn requires-from-map
+  "Returns a :require form from an ns-map with:
+  {:require    #{ns-syms}
+   :alias      {ns-sym ns-sym}
+   :refer      {ns-sym #{var-syms}}
+   :refer-all  #{ns-sym}
+   :exclude    {ns-sym #{var-syms}}
+   :rename     {ns-sym {var-sym var-sym}}
+   :reload     true/false
+   :reload-all true/false
+   :verbose    true/false}"
+  [ns-map]
+  (let [{:keys [require alias refer refer-all exclude
+                rename reload reload-all verbose]} ns-map
+        ;; Build the set of namespaces that will be required
+        nss (reduce into #{} [require refer-all
+                              (mapcat keys [alias refer exclude rename])])
+        ;; clojure.core should be required via :refer-clojure
+        nss (disj nss 'clojure.core)]
+    (when (seq nss)
+      (let [reqs (map #(ns-requires % ns-map) nss)]
+        (cond->* (cons :require (sort-by str reqs))
+          reload (concat [:reload])
+          reload-all (concat [:reload-all])
+          verbose (concat [:verbose]))))))
+
+(defn refer-clojure-from-map
+  "Return a :refer-clojure form from an ns-map with:
+  {:refer     {'clojure.core #{var-syms}}
+   :refer-all #{'clojure.core}
+   :exclude   {'clojure.core #{var-syms}}
+   :rename    {'clojure.core {var-sym var-sym}}}"
+  [ns-map]
+  (let [{:keys [refer refer-all exclude rename]} ns-map
+        c 'clojure.core]
+    (when (some #{c} (concat refer-all (mapcat keys [refer exclude rename])))
+      (let [rs (if (and (not (contains? refer-all c))
+                        (contains? refer c))
+                 [:only (vec (sort (refer c)))]
+                 [])
+            rs (cond->* rs
+                 (get exclude c) (conj :exclude (vec (sort (exclude c))))
+                 (get rename c) (conj :rename (into (sorted-map) (rename c))))]
+        (when (seq rs)
+          (cons :refer-clojure rs))))))
+
+(defn ns-from-map
+  "Generate an ns-form from an ns-map in the form of
+   #'slam.hound.asplode/empty-ns-references"
+  [ns-map]
+  `(~'ns ~(:name ns-map)
+     ~@(metadata-from-map ns-map)
+     ~@(filter identity [(requires-from-map ns-map)
+                         (imports-from-map ns-map)
+                         (refer-clojure-from-map ns-map)
+                         (keyword-list-from-map :gen-class ns-map)
+                         (keyword-list-from-map :load ns-map)])))
 
 (defn stitch-up [ns-map]
   (-> ns-map
-      collapse-clauses
-      sort-subclauses
       ns-from-map
       prettify))
