@@ -75,3 +75,16 @@
         (if (System/getenv "DEBUG")
           (.printStackTrace e)
           (println (.getMessage e)))))))
+
+;; See https://github.com/technomancy/nrepl-discover
+(defn ^{:nrepl/op {:name "slam"
+                   :args [["file" "file" "File: "]]
+                   :doc "Rewrite the ns form of a given file."}}
+  slam-ns
+  "Slamhound rewrite command intended to be exposed for direct editor use."
+  [{:keys [transport file] :as msg}]
+  (let [nrepl-send (resolve 'clojure.tools.nrepl.transport/send)
+        response-for (resolve 'clojure.tools.nrepl.misc/response-for)]
+    (nrepl-send transport (response-for msg :message "Reconstructing..."))
+    (swap-in-reconstructed-ns-form (io/file file))
+    (nrepl-send transport (response-for msg :reload file))))
