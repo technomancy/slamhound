@@ -5,6 +5,7 @@
                                         expand-libspecs
                                         ns-to-map
                                         parse-libs
+                                        parse-ns-map
                                         parse-refers
                                         parse-requires
                                         parse-uses
@@ -105,6 +106,27 @@
                          (:require [foo :as f])
                          (:require [bar :as b])))
            '{:name my.ns :meta nil :require [[foo :as f] [bar :as b]]}))))
+
+(deftest ^:unit test-parse-ns-map
+  (is (= (parse-ns-map '{:require [[foo :as f :refer [r]] [bar :as b] baz [qux]]
+                         :use [[foo :only [u]]]
+                         :import [(my.ns A B C) my.ns.D]
+                         :refer-clojure [:only [defn]]
+                         :load ["/a" "/b" "/c"]
+                         :gen-class []})
+         '{:refer {foo #{r u} clojure.core #{defn} cljs.core #{defn}}
+           :alias {foo f bar b}
+           :require #{baz qux}
+           :import #{my.ns.A my.ns.B my.ns.C my.ns.D}
+           :xrefer #{clojure.core cljs.core}
+           :load ["/a" "/b" "/c"]
+           :gen-class []
+           :exclude {}
+           :rename {}
+           :refer-all #{}
+           :reload-all false
+           :verbose false
+           :reload false})))
 
 (deftest ^:unit test-preserve-ns-references
   (testing "retains :gen-class and :load"

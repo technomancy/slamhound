@@ -177,6 +177,15 @@
           (assoc m clause (into (get m clause []) body))))
       {:meta ns-meta :name ns-name} clauses)))
 
+(defn parse-ns-map
+  "Reduce namespace map into slam.hound.asplode/empty-ns-references"
+  [ns-map]
+  (reduce (fn [m k]
+            (if-let [v (ns-map k)]
+              (parse-libs m k v)
+              m))
+          empty-ns-references ns-clauses))
+
 (defn preserve-ns-references
   "Extract map of :gen-class, :load, :refer, :exclude, and :rename that should
   be preserved in an ns declaration."
@@ -200,11 +209,7 @@
 (defn asplode [rdr]
   (let [rdr (PushbackReader. rdr)
         ns-map (ns-to-map (read rdr))
-        old-ns (reduce (fn [m k]
-                         (if-let [v (ns-map k)]
-                           (parse-libs m k v)
-                           m))
-                       empty-ns-references ns-clauses)
+        old-ns (parse-ns-map ns-map)
         stripped-ns (assoc (apply dissoc ns-map ns-clauses) :old old-ns)
         stripped-ns (merge stripped-ns (preserve-ns-references old-ns))
         body (take-while #(not= ::done %)
