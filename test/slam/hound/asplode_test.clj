@@ -99,7 +99,12 @@
     (is (= (ns-to-map '(ns my.ns (:gen-class)))
            '{:name my.ns :meta nil :gen-class []}))
     (is (= (ns-to-map '(ns my.ns (:gen-class :name my.ns.Foo)))
-           '{:name my.ns :meta nil :gen-class [:name my.ns.Foo]}))))
+           '{:name my.ns :meta nil :gen-class [:name my.ns.Foo]})))
+  (testing "parses multiple clauses of the same type"
+    (is (= (ns-to-map '(ns my.ns
+                         (:require [foo :as f])
+                         (:require [bar :as b])))
+           '{:name my.ns :meta nil :require [[foo :as f] [bar :as b]]}))))
 
 (deftest ^:unit test-preserve-ns-references
   (testing "retains :gen-class and :load"

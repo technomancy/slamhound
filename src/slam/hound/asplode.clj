@@ -168,13 +168,14 @@
         [ns-meta clauses] (if (map? (first clauses))
                             [(merge ns-meta (first clauses)) (rest clauses)]
                             [ns-meta clauses])]
-    (into {:meta ns-meta :name ns-name}
-          (for [[clause & body] clauses
-                ;; (:gen-class) with no arguments is valid
-                :let [body (if (and (nil? body) (= clause :gen-class))
-                             []
-                             body)]]
-            [clause body]))))
+    (reduce
+      (fn [m [clause & body]]
+        ;; (:gen-class) with no arguments is valid
+        (let [body (if (and (nil? body) (= clause :gen-class))
+                     []
+                     body)]
+          (assoc m clause (into (get m clause []) body))))
+      {:meta ns-meta :name ns-name} clauses)))
 
 (defn preserve-ns-references
   "Extract map of :gen-class, :load, :refer, :exclude, and :rename that should
