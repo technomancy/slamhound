@@ -14,9 +14,9 @@
    :refer-all  #{}   ; #{ns-sym}
    :exclude    {}    ; {ns-sym #{var-sym}}
    :rename     {}    ; {ns-sym {var-sym var-sym}}
-   :reload     false ; true/false
-   :reload-all false ; true/false
-   :verbose    false ; true/false
+   :reload     #{}   ; #{ns-sym}
+   :reload-all #{}   ; #{ns-sym}
+   :verbose    #{}   ; #{ns-sym}
    :load       nil   ; a seq of file paths
    :gen-class  nil   ; a seq of option pairs, possibly empty
    })
@@ -125,11 +125,13 @@
           (vmerge m (cond->* {}
                       as (assoc :alias {ns-sym as})
                       refer (as->* m (if (= refer :all)
-                                      (assoc m :refer-all #{ns-sym})
-                                      (assoc m :refer {ns-sym (set refer)})))
-                      reload (assoc :reload true)
-                      reload-all (assoc :reload-all true)
-                      verbose (assoc :verbose true))))
+                                       (assoc m :refer-all #{ns-sym})
+                                       (assoc m :refer {ns-sym (set refer)})))
+                      reload (assoc :reload (conj (get m :reload #{}) ns-sym))
+                      reload-all (assoc :reload-all
+                                        (conj (get m :reload-all #{}) ns-sym))
+                      verbose (assoc :verbose
+                                     (conj (get m :verbose #{}) ns-sym)))))
         (vmerge m {:require #{ns-sym}})))
     {} (expand-libspecs specs)))
 
@@ -199,9 +201,9 @@
     (-> (cond->* {}
           gen-class (assoc :gen-class gen-class)
           load (assoc :load load)
-          reload (assoc :reload reload)
-          reload-all (assoc :reload-all reload-all)
-          verbose (assoc :verbose verbose))
+          (seq reload) (assoc :reload reload)
+          (seq reload-all) (assoc :reload-all reload-all)
+          (seq verbose) (assoc :verbose verbose))
         (maybe-assoc :refer refer)
         (maybe-assoc :exclude exclude)
         (maybe-assoc :rename rename))))

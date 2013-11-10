@@ -59,8 +59,8 @@
                            :verbose :reload-all])
          '{:alias {my.ns.foo foo}
            :refer {my.ns.bar #{bar}}
-           :verbose true
-           :reload-all true})))
+           :verbose #{my.ns.foo my.ns.bar}
+           :reload-all #{my.ns.foo my.ns.bar}})))
 
 (deftest ^:unit test-parse-uses
   (is (= (parse-uses '[my.ns.base
@@ -124,9 +124,9 @@
            :exclude {}
            :rename {}
            :refer-all #{}
-           :reload-all false
-           :verbose false
-           :reload false})))
+           :reload-all #{}
+           :verbose #{}
+           :reload #{}})))
 
 (deftest ^:unit test-preserve-ns-references
   (testing "retains :gen-class and :load"
@@ -140,10 +140,10 @@
     (is (= (preserve-ns-references {:gen-class nil :load []})
            {:load []})))
   (testing "retains :reload, :reload-all, and :verbose"
-    (is (= (preserve-ns-references {:reload true})
-           {:reload true}))
-    (is (= (preserve-ns-references {:reload-all true :verbose true})
-           {:reload-all true :verbose true})))
+    (is (= (preserve-ns-references '{:reload #{my.ns}})
+           '{:reload #{my.ns}}))
+    (is (= (preserve-ns-references '{:reload-all #{my.ns} :verbose #{my.ns}})
+           '{:reload-all #{my.ns} :verbose #{my.ns}})))
   (testing "retains refers, exclusions, and renames for clojure.core"
     (is (= (preserve-ns-references '{:exclude {clojure.core #{==}
                                                my.ns #{foo}}
@@ -184,9 +184,9 @@
                   :exclude {clojure.core #{test compile}
                             cljs.core #{test compile}}
                   :rename {}
-                  :reload false
-                  :reload-all false
-                  :verbose false
+                  :reload #{}
+                  :reload-all #{}
+                  :verbose #{}
                   :load nil
                   :gen-class []}
             :gen-class []
