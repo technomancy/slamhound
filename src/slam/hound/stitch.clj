@@ -1,5 +1,6 @@
 (ns slam.hound.stitch
-  (:require [slam.hound.future :refer [cond->*]]
+  (:require [clojure.set :as set]
+            [slam.hound.future :refer [cond->*]]
             [slam.hound.prettify :refer [prettify]]))
 
 (defn- get-package [class-name]
@@ -47,31 +48,54 @@
       (get exclude ns-sym) (conj :exclude (vec (sort (exclude ns-sym))))
       (get rename ns-sym) (conj :rename (into (sorted-map) (rename ns-sym))))))
 
+(defn- group-by-require-flags
+  "Returns map of {#{require-flag} #{ns-sym}}"
+  [ns-syms ns-map]
+  (let [{:keys [reload reload-all verbose]} ns-map
+        none (set/difference ns-syms reload reload-all verbose)
+        rs {:reload reload
+            :reload-all reload-all
+            :verbose verbose
+            :none none}
+        ;; Invert the map of {require-flag #{ns-sym}} such that the set
+        ;; members are the new keys and the old keys are grouped in a set.
+        rs (reduce-kv
+             (fn [m k s]
+               (reduce (fn [m v] (assoc m v (conj (get m v #{}) k))) m s))
+             {} rs)]
+    ;; Invert the map of {ns-sym #{require-flag}}, returning a map of
+    ;; {#{require-flag} #{ns-sym}}
+    (reduce-kv (fn [m k v]
+                 (let [v (disj v :none)]
+                   (assoc m v (conj (get m v #{}) k))))
+               {} rs)))
+
 (defn requires-from-map
-  "Returns a :require form from an ns-map with:
+  "Returns a vector of :require forms from an ns-map with:
   {:require    #{ns-syms}
    :alias      {ns-sym ns-sym}
    :refer      {ns-sym #{var-syms}}
    :refer-all  #{ns-sym}
    :exclude    {ns-sym #{var-syms}}
    :rename     {ns-sym {var-sym var-sym}}
-   :reload     true/false
-   :reload-all true/false
-   :verbose    true/false}"
+   :reload     #{ns-sym}
+   :reload-all #{ns-sym}
+   :verbose    #{ns-sym}}"
   [ns-map]
-  (let [{:keys [require alias refer refer-all exclude
-                rename reload reload-all verbose]} ns-map
+  (let [{:keys [require alias refer refer-all exclude rename]} ns-map
         ;; Build the set of namespaces that will be required
         nss (reduce into #{} [require refer-all
                               (mapcat keys [alias refer exclude rename])])
         ;; clojure.core should be required via :refer-clojure
         nss (disj nss 'clojure.core)]
     (when (seq nss)
-      (let [reqs (map #(ns-requires % ns-map) nss)]
-        (cond->* (cons :require (sort-by str reqs))
-          reload (concat [:reload])
-          reload-all (concat [:reload-all])
-          verbose (concat [:verbose]))))))
+      (let [flags->nss (->> (group-by-require-flags nss ns-map)
+                            (sort-by (comp count key)))]
+        (mapv (fn [[flags nss]]
+                (let [reqs (map #(ns-requires % ns-map) nss)
+                      clause (cons :require (sort-by str reqs))]
+                  (concat clause (sort flags))))
+              flags->nss)))))
 
 (defn refer-clojure-from-map
   "Return a :refer-clojure form from an ns-map with:
@@ -99,8 +123,8 @@
   [ns-map]
   `(~'ns ~(:name ns-map)
      ~@(metadata-from-map ns-map)
-     ~@(filter identity [(requires-from-map ns-map)
-                         (imports-from-map ns-map)
+     ~@(requires-from-map ns-map)
+     ~@(filter identity [(imports-from-map ns-map)
                          (refer-clojure-from-map ns-map)
                          (keyword-list-from-map :gen-class ns-map)
                          (keyword-list-from-map :load ns-map)])))

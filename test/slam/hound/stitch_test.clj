@@ -38,21 +38,33 @@
                               :refer-all #{clojure.java.shell}
                               :exclude {clojure.java.shell [with-sh-env]}
                               :rename {clojure.java.shell {sh ssshhh}}
-                              :verbose true
-                              :reload-all true})
-         '(:require [clojure.java.shell :refer :all :exclude [with-sh-env]
-                     :rename {sh ssshhh}]
-                    [clojure.set :refer [difference]]
-                    [clojure.string :as string :refer [trim]]
-                    [clojure.xml]
-                    :reload-all :verbose)))
+                              :verbose #{clojure.string clojure.set
+                                         clojure.java.shell clojure.xml}
+                              :reload-all #{clojure.string clojure.set
+                                            clojure.java.shell clojure.xml}})
+         '((:require [clojure.java.shell :refer :all :exclude [with-sh-env]
+                      :rename {sh ssshhh}]
+                     [clojure.set :refer [difference]]
+                     [clojure.string :as string :refer [trim]]
+                     [clojure.xml]
+                     :reload-all :verbose))))
   (testing "sorting"
     (is (= (str (requires-from-map '{:rename {my.ns {c cc a aa b bb}}}))
-           "(:require [my.ns :rename {a aa, b bb, c cc}])"))
+           "[(:require [my.ns :rename {a aa, b bb, c cc}])]"))
     (is (= (requires-from-map '{:refer {my.ns [c b a]}})
-           '(:require [my.ns :refer [a b c]]))))
+           '[(:require [my.ns :refer [a b c]])])))
   (testing "special handling of :refer {clojure.core :all}"
-    (is (nil? (requires-from-map '{:refer {clojure.core :all}})))))
+    (is (nil? (requires-from-map '{:refer {clojure.core :all}}))))
+  (testing "returns multiple require clauses for each set of require flags"
+    (is (= (requires-from-map '{:require #{a b c d e}
+                                :verbose #{a b}
+                                :reload #{a c}
+                                :reload-all #{b d}})
+           '[(:require [e])
+             (:require [c] :reload)
+             (:require [d] :reload-all)
+             (:require [a] :reload :verbose)
+             (:require [b] :reload-all :verbose)]))))
 
 (deftest test-refer-clojure-from-map
   (is (nil? (refer-clojure-from-map '{:refer-all #{clojure.core}})))
@@ -78,8 +90,6 @@
                         :refer-all #{clojure.java.shell}
                         :exclude {clojure.java.shell [with-sh-env]}
                         :rename {clojure.java.shell {sh ssshhh}}
-                        :verbose true
-                        :reload-all true
                         :gen-class [:name Foo]
                         :load ["/foo" "/bar"]})
          '(ns my.ns
@@ -88,8 +98,7 @@
                        :rename {sh ssshhh}]
                       [clojure.set :refer [difference]]
                       [clojure.string :as string :refer [trim]]
-                      [clojure.xml]
-                      :reload-all :verbose)
+                      [clojure.xml])
             (:import (java.util BitSet Random))
             (:refer-clojure :only [* + - /])
             (:gen-class :name Foo)
@@ -104,7 +113,14 @@
                       [clojure.string
                        :as string
                        :refer [lower-case upper-case]])
-            (:refer-clojure :exclude [compile test])))))
+            (:refer-clojure :exclude [compile test]))))
+  (testing "generates multiple require clauses for each set of require flags"
+    (is (= (ns-from-map '{:name my.ns
+                          :require #{foo bar baz}
+                          :reload-all #{bar}})
+           '(ns my.ns
+              (:require [baz] [foo])
+              (:require [bar] :reload-all))))))
 
 (deftest ^:unit test-stitch-up
   (is (= "(ns slamhound.sample
