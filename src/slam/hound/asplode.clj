@@ -78,7 +78,7 @@
   [specs]
   (let [flags (filter keyword? specs)
         opts (interleave flags (repeat true))
-        args (filter (complement keyword?) specs)]
+        args (remove keyword? specs)]
     (reduce
       (fn [s arg]
         (if (libspec? arg)
