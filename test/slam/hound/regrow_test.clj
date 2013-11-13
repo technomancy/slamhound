@@ -19,6 +19,7 @@
 (defrecord RegrowTestRecord [])
 (defrecord UUID [])
 (def +i-must-be-a-cl-user+ true)
+(def -+_$?!*>< :horribly-named-var)
 (def CapitalVar true)
 (def Pattern "Not java.util.Pattern")
 
@@ -34,9 +35,6 @@
     (is (= (candidates :alias 's '((s/join #{:a} #{:b})))
            '#{clojure.set clojure.string korma.core})))
   (testing "finds referred vars"
-    (is (= (candidates :refer '+i-must-be-a-cl-user+
-                       '((assert +i-must-be-a-cl-user+)))
-           '#{slam.hound.regrow-test}))
     (is (= (candidates :refer 'join '((join #{:a} #{:b})))
            '#{clojure.set clojure.string korma.core}))))
 
@@ -111,4 +109,9 @@
     (is (= (regrow '[{:old {:refer {my.ns #{BitSet}}}}
                      ((def bs BitSet))])
            '{:old {:refer {my.ns #{BitSet}}}
-             :import #{java.util.BitSet}}))))
+             :import #{java.util.BitSet}})))
+  (testing "finds referred vars with strange names"
+    (is (= (regrow '[{} ((assert +i-must-be-a-cl-user+))])
+           '{:refer {slam.hound.regrow-test #{+i-must-be-a-cl-user+}}}))
+    (is (= (regrow '[{} ((keyword? -+_$?!*><))])
+           '{:refer {slam.hound.regrow-test #{-+_$?!*><}}}))))

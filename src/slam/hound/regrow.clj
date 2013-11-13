@@ -2,7 +2,8 @@
   (:require [clojure.set :as set]
             [clojure.string :as string]
             [slam.hound.search :as search]
-            [slam.hound.stitch :as stitch]))
+            [slam.hound.stitch :as stitch])
+  (:import (java.util.regex Pattern)))
 
 (def ^:dynamic *debug* false)
 
@@ -17,11 +18,16 @@
 (defn- capitalized? [x]
   (Character/isUpperCase ^Character (first (name x))))
 
-(defn- missing-sym-name [msg]
-  (second (or (re-find #"Unable to resolve \w+: ([-\+_\w\$\?!\*\>\<]+)" msg)
-              (re-find #"Can't resolve: ([-_\w\$\?!\*\>\<]+)" msg)
-              (re-find #"No such namespace: ([-_\w\$\?!\*\>\<]+)" msg)
-              (re-find #"No such var: \w+/([-_\w\$\?!\*\>\<]+)" msg))))
+(def ^:private missing-sym-patterns
+  (let [sym-pat #"([-\+_\w\$\?!\*\>\<]+)"
+        prefixes [#"Unable to resolve \w+: "
+                  "Can't resolve: "
+                  "No such namespace: "
+                  #"No such var: \w+/"]]
+    (mapv #(Pattern/compile (str % sym-pat)) prefixes)))
+
+(defn missing-sym-name [msg]
+  (second (some #(re-find % msg) missing-sym-patterns)))
 
 (defn- failure-details [msg old-ns-map]
   (when-let [sym-name (missing-sym-name msg)]
