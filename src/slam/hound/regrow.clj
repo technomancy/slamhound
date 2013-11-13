@@ -206,7 +206,7 @@
 (defn- strip-ns-qualified-symbols
   "De-qualify symbols in body that are qualified with ns-sym."
   [ns-sym body]
-  (let [pat (Pattern/compile (str "\\A" ns-sym "/(.+)"))
+  (let [pat (Pattern/compile (str "\\A\\Q" ns-sym "\\E/(.+)"))
         walk-fn (fn [expr]
                   (if (symbol? expr)
                     (if-let [m (re-find pat (str expr))]
