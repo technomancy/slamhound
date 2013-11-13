@@ -87,7 +87,7 @@
         nss (reduce into #{} [require refer-all
                               (mapcat keys [alias refer exclude rename])])
         ;; clojure.core should be required via :refer-clojure
-        nss (disj nss 'clojure.core)]
+        nss (disj nss 'clojure.core 'cljs.core)]
     (when (seq nss)
       (let [flags->nss (->> (group-by-require-flags nss ns-map)
                             (sort-by (comp count key)))]

@@ -53,8 +53,8 @@
            "[(:require [my.ns :rename {a aa, b bb, c cc}])]"))
     (is (= (requires-from-map '{:refer {my.ns [c b a]}})
            '[(:require [my.ns :refer [a b c]])])))
-  (testing "special handling of :refer {clojure.core :all}"
-    (is (nil? (requires-from-map '{:refer {clojure.core :all}}))))
+  (testing "special handling of clojure.core and cljs.core"
+    (is (nil? (requires-from-map '{:refer-all #{clojure.core cljs.core}}))))
   (testing "returns multiple require clauses for each set of require flags"
     (is (= (requires-from-map '{:require #{a b c d e}
                                 :verbose #{a b}
