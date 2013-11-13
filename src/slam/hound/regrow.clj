@@ -19,7 +19,7 @@
   (Character/isUpperCase ^Character (first (name x))))
 
 (def ^:private missing-sym-patterns
-  (let [sym-pat #"([-\+_\w\$\?!\*\>\<]+)"
+  (let [sym-pat #"([-\+_\w\$\?!\*\>\<]+|/)"
         prefixes [#"Unable to resolve \w+: "
                   "Can't resolve: "
                   "No such namespace: "
