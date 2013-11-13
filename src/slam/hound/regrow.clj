@@ -26,7 +26,7 @@
                   #"No such var: \w+/"]]
     (mapv #(Pattern/compile (str % sym-pat)) prefixes)))
 
-(defn missing-sym-name [msg]
+(defn- missing-sym-name [msg]
   (second (some #(re-find % msg) missing-sym-patterns)))
 
 (defn- failure-details [msg old-ns-map]
