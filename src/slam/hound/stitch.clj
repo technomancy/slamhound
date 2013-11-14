@@ -52,11 +52,10 @@
   "Returns map of {#{require-flag} #{ns-sym}}"
   [ns-syms ns-map]
   (let [{:keys [reload reload-all verbose]} ns-map
-        none (set/difference ns-syms reload reload-all verbose)
-        rs {:reload reload
-            :reload-all reload-all
-            :verbose verbose
-            :none none}
+        rs {:reload (set/intersection ns-syms reload)
+            :reload-all (set/intersection ns-syms reload-all)
+            :verbose (set/intersection ns-syms verbose)
+            :none (set/difference ns-syms reload reload-all verbose)}
         ;; Invert the map of {require-flag #{ns-sym}} such that the set
         ;; members are the new keys and the old keys are grouped in a set.
         rs (reduce-kv

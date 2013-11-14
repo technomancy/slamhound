@@ -57,9 +57,9 @@
     (is (nil? (requires-from-map '{:refer-all #{clojure.core cljs.core}}))))
   (testing "returns multiple require clauses for each set of require flags"
     (is (= (requires-from-map '{:require #{a b c d e}
-                                :verbose #{a b}
-                                :reload #{a c}
-                                :reload-all #{b d}})
+                                :verbose #{a b x}
+                                :reload #{a c y}
+                                :reload-all #{b d z}})
            '[(:require [e])
              (:require [c] :reload)
              (:require [d] :reload-all)
