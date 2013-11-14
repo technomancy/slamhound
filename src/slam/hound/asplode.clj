@@ -156,7 +156,7 @@
   (case kw
     :refer-clojure (vmerge nsrefs (parse-refers 'clojure.core specs true))
     :use (vmerge nsrefs (parse-uses specs))
-    :require (vmerge nsrefs (parse-requires specs))
+    :require (reduce (fn [m s] (vmerge m (parse-requires s))) nsrefs specs)
     :import (vmerge nsrefs {:import (expand-imports specs)})
     :load (assoc nsrefs :load specs)
     :gen-class (assoc nsrefs :gen-class specs)))
@@ -175,8 +175,10 @@
         ;; (:gen-class) with no arguments is valid
         (let [body (if (and (nil? body) (= clause :gen-class))
                      []
-                     body)]
-          (assoc m clause (into (get m clause []) body))))
+                     body)
+              ;; Separate require clauses may have different flags
+              add (if (= clause :require) conj into)]
+          (assoc m clause (add (get m clause []) body))))
       {:meta ns-meta :name ns-name} clauses)))
 
 (defn parse-ns-map

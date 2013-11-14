@@ -104,11 +104,13 @@
   (testing "parses multiple clauses of the same type"
     (is (= (ns-to-map '(ns my.ns
                          (:require [foo :as f])
-                         (:require [bar :as b])))
-           '{:name my.ns :meta nil :require [[foo :as f] [bar :as b]]}))))
+                         (:require [bar :as b] :reload)))
+           '{:name my.ns :meta nil
+             :require [([foo :as f]) ([bar :as b] :reload)]}))))
 
 (deftest ^:unit test-parse-ns-map
-  (is (= (parse-ns-map '{:require [[foo :as f :refer [r]] [bar :as b] baz [qux]]
+  (is (= (parse-ns-map '{:require [([foo :as f :refer [r]] :reload)
+                                   ([bar :as b] baz [qux])]
                          :use [[foo :only [u]]]
                          :import [(my.ns A B C) my.ns.D]
                          :refer-clojure [:only [defn]]
@@ -126,7 +128,7 @@
            :refer-all #{}
            :reload-all #{}
            :verbose #{}
-           :reload #{}})))
+           :reload #{foo}})))
 
 (deftest ^:unit test-preserve-ns-references
   (testing "retains :gen-class and :load"
