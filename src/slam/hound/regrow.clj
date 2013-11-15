@@ -90,10 +90,7 @@
                   ss (for [class-name search/available-classes
                            :when (= m (last (.split class-name "\\.")))]
                        (symbol class-name))]
-              ;; ns-import-candidates is slower, so only call when necessary
-              (if (seq ss)
-                (set ss)
-                (ns-import-candidates missing)))
+              (into (ns-import-candidates missing) ss))
     :alias (set
              (for [ns (all-ns)
                    :let [syms-with-alias (get (ns-qualifed-syms body) missing)]

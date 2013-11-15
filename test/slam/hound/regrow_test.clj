@@ -28,7 +28,7 @@
 (deftest ^:unit test-candidates
   (testing "finds static and dynamically created Java packages"
     (is (= (candidates :import 'UUID '((UUID/randomUUID)))
-           '#{java.util.UUID}))
+           '#{java.util.UUID slam.hound.regrow_test.UUID}))
     (is (= (candidates :import 'Compiler$BodyExpr '(Compiler$BodyExpr))
            '#{clojure.lang.Compiler$BodyExpr}))
     (is (= (candidates :import 'RegrowTestRecord '((RegrowTestRecord.)))
@@ -52,10 +52,10 @@
                             '{:xrefer #{clojure.core core.logic}
                               :refer {clojure.core #{} core.logic #{}}}))))
   (testing "prefers imports from old ns"
-    (is (= (disambiguate '#{java.util.UUID slam.hound.regrow.UUID}
+    (is (= (disambiguate '#{java.util.UUID slam.hound.regrow_test.UUID}
                          :import 'UUID
-                         '{:import #{java.util.UUID}})
-           '[:import java.util.UUID])))
+                         '{:import #{slam.hound.regrow_test.UUID}})
+           '[:import slam.hound.regrow_test.UUID])))
   (testing "prefers aliases from old ns"
     (is (= (disambiguate '#{clojure.set clojure.string}
                          :alias 's
