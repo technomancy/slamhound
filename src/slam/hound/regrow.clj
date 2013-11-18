@@ -154,23 +154,30 @@
 (defn- last-segment-matches-fn [type missing]
   (let [alias (name missing)]
     (fn [candidate]
-      (if (= type :alias)
-        (if (= alias (peek (string/split (name candidate) #"\.")))
-          0
-          1)
+      (if (and (= type :alias)
+               (= alias (peek (string/split (name candidate) #"\."))))
+        0
         1))))
+
+(defn- is-project-namespace-fn [type missing]
+  (fn [candidate]
+    (if (and (contains? #{:alias :refer} type)
+             (contains? (search/namespaces-from-files) candidate))
+      0
+      1)))
 
 (defn disambiguate
   "Select the most likely class or ns symbol in the given set of candidates,
   returning [type candidate-sym]"
   [candidates type missing old-ns-map]
-  ;; TODO: prefer things in src/classes to jars
+  ;; TODO: prefer things in classes to jars
   (debug :disambiguating missing :in candidates)
   (let [cs (filter-excludes candidates type missing old-ns-map)
         cs (remove #(re-find disambiguator-blacklist (str %)) cs)
         cs (sort-by (juxt
                       (in-originals-fn type missing old-ns-map)
                       (last-segment-matches-fn type missing)
+                      (is-project-namespace-fn type missing)
                       (comp count str))
                     cs)]
     (when-let [c (first cs)]

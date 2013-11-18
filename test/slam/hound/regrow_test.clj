@@ -24,6 +24,7 @@
 (def / :special-case-token)
 (def CapitalVar true)
 (def Pattern "Not java.util.Pattern")
+(def trim (constantly "Conflicts with clojure.string/trim"))
 
 (deftest ^:unit test-candidates
   (testing "finds static and dynamically created Java packages"
@@ -75,6 +76,10 @@
   (testing "prefers aliases where the last segment matches"
     (is (= (disambiguate '#{clojure.set clojure.string} :alias 'set {})
            '[:alias clojure.set])))
+  (testing "prefers candidates in project namespaces"
+    (is (= (disambiguate
+             '#{clojure.string slam.hound.regrow-test} :refer 'trim {})
+           '[:refer slam.hound.regrow-test])))
   (testing "prefers shortest candidates when no other predicates match"
     (is (= (disambiguate '#{clojure.java.io clojure.set clojure.string}
                          :alias 'a {})
