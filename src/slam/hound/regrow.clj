@@ -159,7 +159,7 @@
         0
         1))))
 
-(defn- is-project-namespace-fn [type missing]
+(defn- is-project-namespace-fn [type]
   (fn [candidate]
     (if (and (contains? #{:alias :refer} type)
              (contains? (search/namespaces-from-files) candidate))
@@ -177,7 +177,7 @@
         cs (sort-by (juxt
                       (in-originals-fn type missing old-ns-map)
                       (last-segment-matches-fn type missing)
-                      (is-project-namespace-fn type missing)
+                      (is-project-namespace-fn type)
                       (comp count str))
                     cs)]
     (when-let [c (first cs)]
