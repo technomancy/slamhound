@@ -2,8 +2,8 @@
   {:slamhound-skip true}
   (:require [clojure.test :refer [deftest is testing]]
             [korma.core]
-            [slam.hound.regrow :refer [candidates
-                                       disambiguate grow-ns-map regrow]])
+            [slam.hound.regrow :refer [candidates disambiguate
+                                       grow-ns-map regrow]])
   (:refer-clojure :exclude [/]))
 
 (def sample-body
@@ -122,4 +122,9 @@
                      ((keyword? /))])
            '{:old {:exclude {clojure.core #{/} cljs.core #{/}}}
              :exclude {clojure.core #{/}}
-             :refer {slam.hound.regrow-test #{/}}}))))
+             :refer {slam.hound.regrow-test #{/}}})))
+  (testing "finds consumed references within syntax-quotes"
+    (is (= (regrow '[{:name slam.hound.regrow-test}
+                     ((eval `(instance? Named :foo)))])
+           '{:name slam.hound.regrow-test
+             :import #{clojure.lang.Named}}))))

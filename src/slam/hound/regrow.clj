@@ -1,6 +1,7 @@
 (ns slam.hound.regrow
   (:require [clojure.set :as set]
             [clojure.string :as string]
+            [clojure.walk :refer [prewalk]]
             [slam.hound.search :as search]
             [slam.hound.stitch :as stitch])
   (:import (java.util.regex Pattern)))
@@ -23,7 +24,7 @@
         prefixes [#"Unable to resolve \w+: "
                   "Can't resolve: "
                   "No such namespace: "
-                  #"No such var: \w+/"]]
+                  #"No such var: \S+/"]]
     (mapv #(Pattern/compile (str % sym-pat)) prefixes)))
 
 (defn- missing-sym-name [msg]
@@ -199,19 +200,35 @@
       (try (with-out-str (require namespace))
            (catch Throwable _)))))
 
+(defn- strip-ns-qualified-symbols
+  "De-qualify symbols in body that are qualified with ns-sym."
+  [ns-sym body]
+  (let [pat (Pattern/compile (str "\\A\\Q" ns-sym "\\E/(.+)"))
+        walk-fn (fn [expr]
+                  (if (symbol? expr)
+                    (if-let [m (re-find pat (str expr))]
+                      (symbol (second m))
+                      expr)
+                    expr))]
+    (prewalk walk-fn body)))
+
 (defn regrow [[ns-map body]]
   (force pre-load-namespaces)
+  ;; Since body was likely acquired through the reader, we must de-qualify
+  ;; symbols that may have been erroneously qualified to the current ns within
+  ;; syntax-quoted forms.
   (if (:slamhound-skip (:meta ns-map))
     (merge ns-map (:old ns-map))
-    (loop [ns-map ns-map
-           last-missing nil
-           type-to-try 0]
-      (if-let [{:keys [missing possible-types]} (check-for-failure ns-map body)]
-        (let [type-idx (if (= last-missing missing)
-                         (inc type-to-try)
-                         0)]
-          (if-let [type (get possible-types type-idx)]
-            (recur (grow-ns-map ns-map type missing body) missing type-idx)
-            (throw (Exception. (str "Couldn't resolve " missing
-                                    ", got as far as " ns-map)))))
-        ns-map))))
+    (let [body (strip-ns-qualified-symbols (:name ns-map) body)]
+      (loop [ns-map ns-map
+             last-missing nil
+             type-to-try 0]
+        (if-let [{:keys [missing possible-types]} (check-for-failure ns-map body)]
+          (let [type-idx (if (= last-missing missing)
+                           (inc type-to-try)
+                           0)]
+            (if-let [type (get possible-types type-idx)]
+              (recur (grow-ns-map ns-map type missing body) missing type-idx)
+              (throw (Exception. (str "Couldn't resolve " missing
+                                      ", got as far as " ns-map)))))
+          ns-map)))))
