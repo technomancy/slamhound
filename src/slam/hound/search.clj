@@ -67,11 +67,22 @@
       (when-let [ns-form (ns-in-jar-entry jarfile entry)]
         (second ns-form)))))
 
-(defn namespaces []
-  (let [files (mapcat namespaces-in-dir (filter #(.isDirectory %)
-                                                classpath-files))
-        jars (mapcat namespaces-in-jar (filter jar? classpath-files))]
-    (set (remove nil? (concat files jars)))))
+(defn- filter-ns [file-pred ns-pred paths]
+  (-> (mapcat ns-pred (filter file-pred paths))
+      set
+      (disj nil)))
+
+(defn namespaces-from-files
+  ([] (namespaces-from-files classpath-files))
+  ([paths] (filter-ns #(.isDirectory %) namespaces-in-dir paths)))
+
+(defn namespaces-from-jars
+  ([] (namespaces-from-jars classpath-files))
+  ([paths] (filter-ns jar? namespaces-in-jar paths)))
+
+(defn namespaces
+  ([] (namespaces classpath-files))
+  ([paths] (into (namespaces-from-files paths) (namespaces-from-jars paths))))
 
 ;;; Java classes
 
