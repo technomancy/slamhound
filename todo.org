@@ -1,0 +1,29 @@
+* Deferred reference validation
+  technomancy, from https://github.com/technomancy/slamhound/issues/19:
+
+  "I've thought a bit about trying to walk all defmacro bodies in the
+  namespace and check for symbols with a namespace, but that would almost
+  positively result in false positives."
+
+  "I'd rather not handle this than handle this in a way that would have edge
+  cases which could make it go looking for vars that don't exist."
+
+  Does a solution exist that does not produce false positives, nor
+  accidentally call (launch-missiles)?
+
+  - [ ] Detect qualified references within syntax-quote
+  - [ ] Detect fully qualified namespaces
+* Performance
+  The slowest operation in slamhound is the pre-loading of namespaces, which
+  is CPU bound (note that it is always slow regardless of the disk cache).
+
+  Pre-loading in parallel with (Executors/newFixedThreadPool #cpu-threads)
+  does divide the execution time by ~ 0.8*cpu-threads, but obviously does not
+  decrease the actual amount of work.
+
+  - [ ] Improve performance of slam.hound.reload/pre-load-namespaces if possible
+* Minor enhancements
+  - [ ] Satisfy all reflection warnings (there are only a handful)
+  - [ ] Support Unicode characters in regrow/missing-sym-name
+  - [ ] Sort alias candidates by Levenshtein distance, with emphasis on initial letters
+  - [ ] Sort refer candidates by matching arity. e.g. (join []) should prefer clojure.string/join
