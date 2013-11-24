@@ -45,7 +45,7 @@ Take a namespace with a sparse ns form that won't compile:
     (defn -main [& args]
       (pprint args)
       (io/copy (ByteArrayInputStream. (.getBytes "hello"))
-               (first args))) 
+               (first args)))
 
 Then run slamhound on it:
 
@@ -64,16 +64,22 @@ Running on a directory will perform the same operation on every .clj file inside
 
 ## Repl Usage
 
-You can do it manually from the repl to avoid the slow startup time:
+You can reconstruct namespaces from a repl to avoid the slow startup time:
 
-    user=> (use 'slam.hound)
+    user=> (require '[slam.hound :refer [reconstruct]])
     nil
     user=> (println (reconstruct "src/my/namespace.clj"))
     (ns my.namespace
       "I have a doc string."
-      (:use [clojure.pprint :only [pprint]])
-      (:require [clojure.java.io :as io])
+      (:require [clojure.java.io :as io]
+                [clojure.pprint :refer [pprint]])
       (:import (java.io ByteArrayInputStream)))
+
+Or to reconstruct files in place:
+
+    user=> (slam.hound/-main "src/my/namespace.clj")
+    nil
+    ;; Reload the file in your editor to pick up changes
 
 ## Emacs Usage
 
@@ -109,6 +115,18 @@ vars being present:
 Slamhound will also not find references to fully-qualified vars or
 vars resolved at runtime since it relies on detecting compilation
 failures to determine when it's done.
+
+Slamhound aggressively loads all namespaces on the classpath on first
+invocation. This is computationally expensive, so first use may be slow,
+though subsequent calls should be relatively quick.
+
+This also taxes the class loading system, so there is a possibility that
+the JVM may run out of PermGen space in large projects. If this happens,
+try running your JVM with the following options:
+
+```
+-Xmx5g -XX:+CMSClassUnloadingEnabled -XX:+CMSClassUnloadingEnabled -XX:MaxPermSize=128M
+```
 
 ## Leiningen 1.x
 
