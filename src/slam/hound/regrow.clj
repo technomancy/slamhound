@@ -108,7 +108,7 @@
 (defn- filter-excludes
   "Disjoin namespace symbols from candidates that match the :exclude, :xrefer,
   and :refer values in old-ns-map."
-  [candidates type missing old-ns-map]
+  [type missing old-ns-map candidates]
   (if (= type :refer)
     (let [{:keys [exclude xrefer refer]} old-ns-map
           cs (reduce (fn [s [ns syms]]
@@ -172,14 +172,13 @@
   [candidates type missing old-ns-map]
   ;; TODO: prefer things in classes to jars
   (debug :disambiguating missing :in candidates)
-  (let [cs (filter-excludes candidates type missing old-ns-map)
-        cs (remove #(re-find disambiguator-blacklist (str %)) cs)
-        cs (sort-by (juxt
-                      (in-originals-fn type missing old-ns-map)
-                      (last-segment-matches-fn type missing)
-                      (is-project-namespace-fn type)
-                      (comp count str))
-                    cs)]
+  (let [cs (->> (disj candidates (:name old-ns-map))
+                (filter-excludes type missing old-ns-map)
+                (remove #(re-find disambiguator-blacklist (str %)))
+                (sort-by (juxt (in-originals-fn type missing old-ns-map)
+                               (last-segment-matches-fn type missing)
+                               (is-project-namespace-fn type)
+                               (comp count str))))]
     (when-let [c (first cs)]
       ;; Honor any old [c :refer :all] specs - issue #50
       (if (and (= type :refer)

@@ -42,6 +42,9 @@
            '#{clojure.set clojure.string korma.core}))))
 
 (deftest ^:unit test-disambiguate
+  (testing "removes namespace matching :name in old-ns-map"
+    (is (= (disambiguate '#{foo bar} :alias 'foo '{:name foo})
+           '[:alias bar])))
   (testing "removes candidates matching disambiguator-blacklist"
     (is (nil? (disambiguate '#{swank lancet} :alias 'swank {}))))
   (testing "removes namespaces with excluded vars"
