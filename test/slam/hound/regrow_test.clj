@@ -1,9 +1,7 @@
 (ns slam.hound.regrow-test
-  {:slamhound-skip true}
   (:require [clojure.test :refer [deftest is testing]]
-            [korma.core]
-            [slam.hound.regrow :refer [candidates disambiguate
-                                       grow-ns-map regrow]])
+            [slam.hound.regrow :refer [candidates disambiguate grow-ns-map
+                                       regrow]])
   (:refer-clojure :exclude [/]))
 
 (def sample-body
@@ -25,6 +23,9 @@
 (def CapitalVar true)
 (def Pattern "Not java.util.Pattern")
 (def trim (constantly "Conflicts with clojure.string/trim"))
+
+;; Explicitly require korma for tests below
+(require 'korma.core)
 
 (deftest ^:unit test-candidates
   (testing "finds static and dynamically created Java packages"
