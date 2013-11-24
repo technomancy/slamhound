@@ -1,0 +1,62 @@
+Changes from 1.4.0 to 1.5.0, 24 November 2013
+=============================================
+
+- Disjoin current ns from candidate namespaces.
+
+- Prefer candidates from project namespaces.
+
+- Find consumed references within syntax-quotes. Closes #14
+
+- Find special case token `/` and vars with trailing `'`s during regrow.
+
+- Prefer capitalized vars that shadow class names when they appear in the old
+  ns map. Closes #27
+
+- Use old ns form to disambiguate potential classes for import. Closes #26
+
+- The :require flags :reload, :reload-all, and :verbose are parsed and
+  re-emitted.
+
+- Parse multiple ns clauses of the same type.
+
+- Metadata maps in ns forms are parsed and re-emitted.
+
+- Multiple :key value options are emitted per libspec; i.e. no separate :as
+  and :refer vectors.
+
+- Refer candidates are now subject to :exclude rules from the old ns.
+
+- Excluding vars in clojure.core also excludes vars from cljs.core.
+
+- New ns form parser for more reliable disambiguation.
+  https://github.com/technomancy/slamhound/pull/53
+
+- Allow slamhound.el to work with either nrepl.el or cider.
+
+- Include dynamically generated Classes in :import search.
+
+- Avoid excessive tempfile creation.
+
+- Honor existing :refer :all and :use clauses.
+  https://github.com/technomancy/slamhound/issues/29#issuecomment-22086914
+
+- Preserve file comment headers.
+
+- Fix multiline docstrings.
+
+- Drop support for slime from elisp interface.
+
+Changes from 1.3.3 to 1.4.0, 20 June 2013
+=========================================
+
+- Force print newlines between namespaces in short :requires. Closes #23
+
+- Fix docstring unescaping. Closes #40
+
+- Prefer candidates where last segment matches.
+
+- Ignore temp files when globbing directories.
+
+- Make sure the PushBackReader is actually closed.
+
+- Remove lein1 compatibility gunk.
