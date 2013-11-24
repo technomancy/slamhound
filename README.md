@@ -81,6 +81,11 @@ The included `slamhound.el` allows for convenient access within nREPL
 or SLIME sessions via `M-x slamhound`. Install manually or via
 [Marmalade](http://marmalade-repo.org).
 
+## Vim Usage
+
+Install [`vim-slamhound`](https://github.com/guns/vim-slamhound) for use
+of the `:Slamhound` command within Clojure buffers.
+
 ## Shortcomings
 
 Slamhound will only find references to vars in a namespace that are
