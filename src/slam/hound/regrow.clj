@@ -2,6 +2,7 @@
   (:require [clojure.set :as set]
             [clojure.string :as string]
             [clojure.walk :refer [prewalk]]
+            [slam.hound.future :refer [cond->*]]
             [slam.hound.search :as search]
             [slam.hound.stitch :as stitch])
   (:import (java.util.regex Pattern)))
@@ -169,10 +170,16 @@
 (defn disambiguate
   "Select the most likely class or ns symbol in the given set of candidates,
   returning [type candidate-sym]"
-  [candidates type missing old-ns-map]
+  [candidates type missing ns-maps]
   ;; TODO: prefer things in classes to jars
   (debug :disambiguating missing :in candidates)
-  (let [cs (->> (disj candidates (:name old-ns-map))
+  (let [{:keys [old-ns-map new-ns-map]} ns-maps
+        cs (cond->* candidates
+             ;; Current ns is never a valid reference source
+             true (disj (:name old-ns-map))
+             ;; Prevent multiple aliases to a single namespace (ugh)
+             (= type :alias) (set/difference (set (keys (:alias new-ns-map)))))
+        cs (->> cs
                 (filter-excludes type missing old-ns-map)
                 (remove #(re-find disambiguator-blacklist (str %)))
                 (sort-by (juxt (in-originals-fn type missing old-ns-map)
@@ -191,7 +198,8 @@
   [ns-map type missing body]
   (let [cs (candidates type missing body)
         old-ns-map (:old ns-map)]
-    (if-let [[type c] (disambiguate cs type missing old-ns-map)]
+    (if-let [[type c] (disambiguate cs type missing {:old-ns-map old-ns-map
+                                                     :new-ns-map ns-map})]
       (case type
         :import (update-in ns-map [:import] #(conj (or % #{}) c))
         :alias (update-in ns-map [:alias] assoc c missing)

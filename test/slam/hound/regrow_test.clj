@@ -44,38 +44,46 @@
 
 (deftest ^:unit test-disambiguate
   (testing "removes namespace matching :name in old-ns-map"
-    (is (= (disambiguate '#{foo bar} :alias 'foo '{:name foo})
+    (is (= (disambiguate '#{foo bar} :alias 'foo '{:old-ns-map {:name foo}})
            '[:alias bar])))
   (testing "removes candidates matching disambiguator-blacklist"
     (is (nil? (disambiguate '#{swank lancet} :alias 'swank {}))))
   (testing "removes namespaces with excluded vars"
     (is (nil? (disambiguate '#{clojure.string clojure.set}
                             :refer 'join
-                            '{:exclude {clojure.string #{join}
-                                        clojure.set #{join}}})))
+                            '{:old-ns-map
+                              {:exclude {clojure.string #{join}
+                                         clojure.set #{join}}}})))
     (is (nil? (disambiguate '#{clojure.core core.logic} :refer '==
-                            '{:xrefer #{clojure.core core.logic}
-                              :refer {clojure.core #{} core.logic #{}}}))))
+                            '{:old-ns-map
+                              {:xrefer #{clojure.core core.logic}
+                               :refer {clojure.core #{} core.logic #{}}}}))))
+  (testing "enforces one alias per namespace"
+    (is (nil? (disambiguate '#{clojure.string}
+                            :alias 's
+                            '{:new-ns-map {:alias {clojure.string string}}}))))
   (testing "prefers imports from old ns"
     (is (= (disambiguate '#{java.util.UUID slam.hound.regrow_test.UUID}
                          :import 'UUID
-                         '{:import #{slam.hound.regrow_test.UUID}})
+                         '{:old-ns-map
+                           {:import #{slam.hound.regrow_test.UUID}}})
            '[:import slam.hound.regrow_test.UUID])))
   (testing "prefers aliases from old ns"
     (is (= (disambiguate '#{clojure.set clojure.string}
                          :alias 's
-                         '{:alias {clojure.set s}})
+                         '{:old-ns-map {:alias {clojure.set s}}})
            '[:alias clojure.set])))
   (testing "prefers refers from old ns"
     (is (= (disambiguate '#{clojure.set clojure.string}
                          :refer 'join
-                         '{:refer {clojure.set #{join}}})
+                         '{:old-ns-map {:refer {clojure.set #{join}}}})
            '[:refer clojure.set])))
   (testing "prefers explicit refers over mass refers from old ns"
     (is (= (disambiguate '#{clojure.set clojure.string}
                          :refer 'join
-                         '{:refer-all #{clojure.set}
-                           :refer {clojure.string #{join}}})
+                         '{:old-ns-map
+                           {:refer-all #{clojure.set}
+                            :refer {clojure.string #{join}}}})
            '[:refer clojure.string])))
   (testing "prefers aliases where the last segment matches"
     (is (= (disambiguate '#{clojure.set clojure.string} :alias 'set {})
@@ -91,7 +99,7 @@
   (testing "changes type to :refer-all when top candidate is in old :refer-all"
     (is (= (disambiguate '#{clojure.set clojure.string}
                          :refer 'join
-                         '{:refer-all #{clojure.set}})
+                         '{:old-ns-map {:refer-all #{clojure.set}}})
            '[:refer-all clojure.set]))))
 
 (deftest ^:unit test-grow-ns-map
