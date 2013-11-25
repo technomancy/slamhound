@@ -40,13 +40,18 @@
       (cons :import (sort-by str (group-by-package imports))))))
 
 (defn- ns-requires [ns-sym ns-map]
-  (let [{:keys [alias refer refer-all exclude rename]} ns-map]
-    (cond->* [ns-sym]
-      (get alias ns-sym) (conj :as (alias ns-sym))
-      (get refer ns-sym) (conj :refer (vec (sort (refer ns-sym))))
-      (get refer-all ns-sym) (conj :refer :all)
-      (get exclude ns-sym) (conj :exclude (vec (sort (exclude ns-sym))))
-      (get rename ns-sym) (conj :rename (into (sorted-map) (rename ns-sym))))))
+  (if (= ns-sym 'clojure.core)
+    ;; clojure.core is only valid in a :require clause as an alias
+    (let [{:keys [alias]} ns-map]
+      (cond->* [ns-sym]
+        (get alias ns-sym) (conj :as (alias ns-sym))))
+    (let [{:keys [alias refer refer-all exclude rename]} ns-map]
+      (cond->* [ns-sym]
+        (get alias ns-sym) (conj :as (alias ns-sym))
+        (get refer ns-sym) (conj :refer (vec (sort (refer ns-sym))))
+        (get refer-all ns-sym) (conj :refer :all)
+        (get exclude ns-sym) (conj :exclude (vec (sort (exclude ns-sym))))
+        (get rename ns-sym) (conj :rename (into (sorted-map) (rename ns-sym)))))))
 
 (defn- group-by-require-flags
   "Returns map of {#{require-flag} #{ns-sym}}"
@@ -84,9 +89,13 @@
   (let [{:keys [require alias refer refer-all exclude rename]} ns-map
         ;; Build the set of namespaces that will be required
         nss (reduce into #{} [require refer-all
-                              (mapcat keys [alias refer exclude rename])])
-        ;; clojure.core should be required via :refer-clojure
-        nss (disj nss 'clojure.core 'cljs.core)]
+                              (mapcat keys [refer exclude rename])])
+        ;; Refers from clojure.core are handled via :refer-clojure
+        nss (disj nss 'clojure.core)
+        ;; However, aliasing clojure.core in a :require is fine
+        nss (into nss (keys alias))
+        ;; cljs.core is an implementation detail, so always prune it
+        nss (disj nss 'cljs.core)]
     (when (seq nss)
       (let [flags->nss (->> (group-by-require-flags nss ns-map)
                             (sort-by (comp count key)))]

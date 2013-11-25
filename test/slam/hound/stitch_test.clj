@@ -54,7 +54,10 @@
     (is (= (requires-from-map '{:refer {my.ns [c b a]}})
            '[(:require [my.ns :refer [a b c]])])))
   (testing "special handling of clojure.core and cljs.core"
-    (is (nil? (requires-from-map '{:refer-all #{clojure.core cljs.core}}))))
+    (is (nil? (requires-from-map '{:refer-all #{clojure.core cljs.core}})))
+    (is (= (requires-from-map '{:alias {clojure.core core}
+                                :refer {clojure.core #{replace}}})
+           '[(:require [clojure.core :as core])])))
   (testing "returns multiple require clauses for each set of require flags"
     (is (= (requires-from-map '{:require #{a b c d e}
                                 :verbose #{a b x}
