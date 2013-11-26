@@ -38,11 +38,8 @@
            :rename {my.ns {baz mybaz}}}))
   (is (= (parse-refers 'my.ns [])
          '{:refer-all #{my.ns}}))
-  (testing "also excludes from cljs.core when excluding clojure.core"
-    (is (= (parse-refers 'clojure.core '[:exclude [defn]])
-           '{:exclude {clojure.core #{defn} cljs.core #{defn}}})))
   (testing "exclusive-refer?"
-    (is (= (parse-refers 'my.ns '[:only [foo]] true)
+    (is (= (parse-refers 'my.ns '[:only [foo]] :exclusive true)
            '{:refer {my.ns #{foo}} :xrefer #{my.ns}}))))
 
 (deftest ^:unit test-parse-requires
@@ -79,11 +76,10 @@
                        :refer-clojure
                        '[:exclude [defn defrecord]])
            '{:exclude {foo #{foo}
-                       clojure.core #{defn defrecord}
-                       cljs.core #{defn defrecord}}}))
+                       clojure.core #{defn defrecord}}}))
     (is (= (parse-libs {} :refer-clojure '[:only [defn]])
-           '{:refer {clojure.core #{defn} cljs.core #{defn}}
-             :xrefer #{clojure.core cljs.core}})))
+           '{:refer {clojure.core #{defn}}
+             :xrefer #{clojure.core}})))
   (testing "load, gen-class"
     (is (= (parse-libs {:load ["/foo"]} :load ["/bar" "/baz"])
            {:load ["/bar" "/baz"]}))
@@ -116,11 +112,11 @@
                          :refer-clojure [:only [defn]]
                          :load ["/a" "/b" "/c"]
                          :gen-class []})
-         '{:refer {foo #{r u} clojure.core #{defn} cljs.core #{defn}}
+         '{:refer {foo #{r u} clojure.core #{defn}}
            :alias {foo f bar b}
            :require #{baz qux}
            :import #{my.ns.A my.ns.B my.ns.C my.ns.D}
-           :xrefer #{clojure.core cljs.core}
+           :xrefer #{clojure.core}
            :load ["/a" "/b" "/c"]
            :gen-class []
            :exclude {}
@@ -183,8 +179,7 @@
                           slam.hound.stitch #{ns-from-map}}
                   :xrefer #{}
                   :refer-all #{}
-                  :exclude {clojure.core #{test compile}
-                            cljs.core #{test compile}}
+                  :exclude {clojure.core #{test compile}}
                   :rename {}
                   :reload #{}
                   :reload-all #{}

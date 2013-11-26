@@ -89,27 +89,21 @@
 
 (defn parse-refers
   "Parse as `(clojure.core/refer ~ns-sym ~@filters), returning a map with
-  :exclude, :refer, :refer-all, and :rename.
+  :exclude, :refer, :xrefer, :refer-all, and :rename.
 
-  If exclusive-refer? is true, the :only option also adds ns-sym to the
-  :xrefer set.
-
-  If ns-sym is 'clojure.core, all entries are duplicated with 'cljs.core."
-  ([ns-sym filters]
-   (parse-refers ns-sym filters false))
-  ([ns-sym filters exclusive-refer?]
-   (if (seq filters)
-     (let [{:keys [exclude only rename]} (apply hash-map filters)
-           m (cond->* {}
-               exclude (assoc :exclude {ns-sym (set exclude)})
-               only (as->* m
-                      (cond->* (assoc m :refer {ns-sym (set only)})
-                        exclusive-refer? (assoc :xrefer #{ns-sym})))
-               rename (assoc :rename {ns-sym (into {} rename)}))]
-       (if (= ns-sym 'clojure.core)
-         (vmerge m (parse-refers 'cljs.core filters exclusive-refer?))
-         m))
-     {:refer-all #{ns-sym}})))
+  If the :exclusive option is true, the :only option also adds ns-sym to the
+  :xrefer set."
+  [ns-sym filters & opts]
+  (if (seq filters)
+    (let [{:keys [exclude only rename]} (apply hash-map filters)
+          {:keys [exclusive]} (apply hash-map opts)]
+      (cond->* {}
+        exclude (assoc :exclude {ns-sym (set exclude)})
+        only (as->* m
+               (cond->* (assoc m :refer {ns-sym (set only)})
+                 exclusive (assoc :xrefer #{ns-sym})))
+        rename (assoc :rename {ns-sym (into {} rename)})))
+    {:refer-all #{ns-sym}}))
 
 (defn parse-requires
   "Parse a list of require libspecs, returning a map with :require, :alias,
@@ -154,7 +148,8 @@
   "Parse ns reference declaration and intelligently merge into nsrefs."
   [nsrefs kw specs]
   (case kw
-    :refer-clojure (vmerge nsrefs (parse-refers 'clojure.core specs true))
+    :refer-clojure (vmerge nsrefs (parse-refers
+                                    'clojure.core specs :exclusive true))
     :use (vmerge nsrefs (parse-uses specs))
     :require (reduce (fn [m s] (vmerge m (parse-requires s))) nsrefs specs)
     :import (vmerge nsrefs {:import (expand-imports specs)})

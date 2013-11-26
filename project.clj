@@ -6,6 +6,9 @@
   :main ^:skip-aot slam.hound
   :dependencies [[org.clojure/clojure "1.4.0"]]
   :profiles {:dev {:dependencies [[org.clojure/tools.trace "0.7.3"]
+                                  ;; Last version of CLJS compatible with
+                                  ;; Clojure 1.4.0
+                                  [org.clojure/clojurescript "0.0-1535"]
                                   [org.clojars.runa/clj-schema "0.7.0"]
                                   [korma "0.3.0-beta11"]]}}
   :test-selectors {:default (constantly true)

@@ -46,6 +46,8 @@
   (testing "removes namespace matching :name in old-ns-map"
     (is (= (disambiguate '#{foo bar} :alias 'foo '{:old-ns-map {:name foo}})
            '[:alias bar])))
+  (testing "removes cljs.core from candidates"
+    (is (nil? (disambiguate '#{cljs.core} :refer 'defn {}))))
   (testing "removes candidates matching disambiguator-blacklist"
     (is (nil? (disambiguate '#{swank lancet} :alias 'swank {}))))
   (testing "removes namespaces with excluded vars"
@@ -134,10 +136,10 @@
            '{:refer {slam.hound.regrow-test #{+i-must-be-a-cl-user+}}}))
     (is (= (regrow '[{} ((keyword? -+_$?!*><''))])
            '{:refer {slam.hound.regrow-test #{-+_$?!*><''}}}))
-    (is (= (regrow '[{:old {:exclude {clojure.core #{/} cljs.core #{/}}}
+    (is (= (regrow '[{:old {:exclude {clojure.core #{/}}}
                       :exclude {clojure.core #{/}}}
                      ((keyword? /))])
-           '{:old {:exclude {clojure.core #{/} cljs.core #{/}}}
+           '{:old {:exclude {clojure.core #{/}}}
              :exclude {clojure.core #{/}}
              :refer {slam.hound.regrow-test #{/}}})))
   (testing "finds consumed references within syntax-quotes"

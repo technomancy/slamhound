@@ -93,9 +93,7 @@
         ;; Refers from clojure.core are handled via :refer-clojure
         nss (disj nss 'clojure.core)
         ;; However, aliasing clojure.core in a :require is fine
-        nss (into nss (keys alias))
-        ;; cljs.core is an implementation detail, so always prune it
-        nss (disj nss 'cljs.core)]
+        nss (into nss (keys alias))]
     (when (seq nss)
       (let [flags->nss (->> (group-by-require-flags nss ns-map)
                             (sort-by (comp count key)))]
