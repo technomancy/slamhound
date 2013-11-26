@@ -23,7 +23,8 @@
 
   - [ ] Improve performance of slam.hound.reload/pre-load-namespaces if possible
 * Minor enhancements
+  - [X] Sort alias candidates by L̶e̶v̶e̶n̶s̶h̶t̶e̶i̶n̶ "alias" distance, with emphasis on initial letters
+  - [ ] Count dashes as word separators when calculating "alias" distance
   - [ ] Satisfy all reflection warnings (there are only a handful)
   - [ ] Support Unicode characters in regrow/missing-sym-name
-  - [ ] Sort alias candidates by Levenshtein distance, with emphasis on initial letters
   - [ ] Sort refer candidates by matching arity. e.g. (join []) should prefer clojure.string/join

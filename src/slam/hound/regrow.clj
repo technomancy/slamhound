@@ -127,6 +127,9 @@
       cs)
     candidates))
 
+(defn- last-segment [s]
+  (peek (string/split s #"\.")))
+
 (def ^:private disambiguator-blacklist
   (if-let [v (resolve 'user/slamhound-disambiguator-blacklist)]
     @v
@@ -160,7 +163,7 @@
   (let [alias (name missing)]
     (fn [candidate]
       (if (and (= type :alias)
-               (= alias (peek (string/split (name candidate) #"\."))))
+               (= alias (last-segment (name candidate))))
         0
         1))))
 
@@ -172,6 +175,53 @@
              (contains? (search/namespaces-from-files) candidate))
       0
       1)))
+
+(defn- alias-distance [^String alias ^String cand]
+  (if (= (first alias) (first cand))
+    (let [alen (.length alias)
+          clen (.length cand)]
+      (loop [d 0           ; alias-distance
+             i 1           ; alias index
+             j 1           ; candidate index
+             matched? true ; current alias match state
+             ]
+        (if (or (>= i alen) (>= j clen))
+          (if (and matched? (= i alen))
+            d
+            Long/MAX_VALUE)
+          (if (= (.charAt alias i) (.charAt cand j))
+            (recur d (inc i) (inc j) true)
+            (recur (inc d) i (inc j) false)))))
+    Long/MAX_VALUE))
+
+(defn- alias-distance-fn
+  "If the candidate shares the same first character with the missing alias,
+  how many characters must be added between the first and last characters of
+  the alias to form a subsequence of the last segment of the candidate?
+
+  e.g. 0: st -> clojure.string
+       1: st -> clojure.set
+       2: st -> my.switchboard
+       MAX_VALUE: str  -> clojure.set
+       MAX_VALUE: ring -> clojure.string"
+  [type missing]
+  (let [alias (name missing)]
+    (fn [candidate]
+      (if (= type :alias)
+        (alias-distance alias (last-segment (name candidate)))
+        Long/MAX_VALUE))))
+
+(defn- initials-match-alias-fn
+  "Do the initials of the candidate match the missing alias?"
+  [type missing]
+  (let [alias (name missing)]
+    (fn [candidate]
+      (if (and (= type :alias)
+               (= alias (->> (string/split (name candidate) #"\.")
+                             (map first)
+                             (string/join))))
+        0
+        1))))
 
 (defn disambiguate
   "Select the most likely class or ns symbol in the given set of candidates,
@@ -192,6 +242,8 @@
                 (sort-by (juxt (in-originals-fn type missing old-ns-map)
                                (last-segment-matches-fn type missing)
                                (is-project-namespace-fn type)
+                               (alias-distance-fn type missing)
+                               (initials-match-alias-fn type missing)
                                (comp count str))))]
     (when-let [c (first cs)]
       ;; Honor any old [c :refer :all] specs - issue #50

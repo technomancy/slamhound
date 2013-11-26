@@ -42,6 +42,18 @@
     (is (= (candidates :refer 'join '((join #{:a} #{:b})))
            '#{clojure.set clojure.string korma.core}))))
 
+(deftest test-alias-distance
+  (let [d #'slam.hound.regrow/alias-distance
+        max? (partial = Long/MAX_VALUE)]
+    (is (max? (d "zbc" "abcdef")))
+    (is (max? (d "azc" "abcdef")))
+    (is (max? (d "abz" "abcdef")))
+    (is (max? (d "abcd" "abc")))
+    (is (= (d "a" "abcdef") 0))
+    (is (= (d "abc" "abcdef") 0))
+    (is (= (d "ace" "abcdef") 2))
+    (is (= (d "fbb" "foo-bar-baz") 6))))
+
 (deftest ^:unit test-disambiguate
   (testing "removes namespace matching :name in old-ns-map"
     (is (= (disambiguate '#{foo bar} :alias 'foo '{:old-ns-map {:name foo}})
@@ -92,6 +104,14 @@
     (is (= (disambiguate
              '#{clojure.string slam.hound.regrow-test} :refer 'trim {})
            '[:refer slam.hound.regrow-test])))
+  (testing "prefers candidates whose initials match the alias"
+    (is (= (disambiguate '#{xray.yankee.zulu abc} :alias 'xyz {})
+           '[:alias xray.yankee.zulu])))
+  (testing "prefers candidates with the shortest alias-distance"
+    (is (= (disambiguate '#{clojure.string clojure.core} :alias 's {})
+           '[:alias clojure.string]))
+    (is (= (disambiguate '#{clojure.string clojure.set} :alias 'st {})
+           '[:alias clojure.string])))
   (testing "prefers shortest candidates when no other predicates match"
     (is (= (disambiguate '#{clojure.java.io clojure.set clojure.string}
                          :alias 'a {})

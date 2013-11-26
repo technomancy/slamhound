@@ -1,6 +1,11 @@
 Changes from 1.4.0 to 1.5.0, 24 November 2013
 =============================================
 
+- Prefer aliases with shorter "alias" distance (number of insertions to create
+  anchored subsequence).
+
+- Prefer alias that are namespace initialisms.
+
 - Prevent multiple aliases to a single namespace.
 
 - Disjoin current ns from candidate namespaces.
