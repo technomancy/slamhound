@@ -132,7 +132,9 @@
     @v
     #"swank|lancet"))
 
-(defn- in-originals-fn [type missing old-ns-map]
+(defn- in-originals-fn
+  "To what extent is the candidate present in the original ns-map?"
+  [type missing old-ns-map]
   (fn [candidate]
     (case type
       :import (if (contains? (:import old-ns-map) candidate)
@@ -143,16 +145,18 @@
                         (= (as candidate) missing))
                  0
                  1))
-      :refer (let [[all rs] ((juxt :refer-all :refer) old-ns-map)
-                   all? (contains? all candidate)
-                   ref? (and (contains? rs candidate)
-                             (contains? (rs candidate) missing))]
+      :refer (let [{:keys [refer-all refer]} old-ns-map
+                   all? (contains? refer-all candidate)
+                   ref? (and (contains? refer candidate)
+                             (contains? (refer candidate) missing))]
                (cond (and all? ref?) 0
                      ref? 1
                      all? 2
                      :else 3)))))
 
-(defn- last-segment-matches-fn [type missing]
+(defn- last-segment-matches-fn
+  "Does the last segment of the candidate match the missing alias?"
+  [type missing]
   (let [alias (name missing)]
     (fn [candidate]
       (if (and (= type :alias)
@@ -160,7 +164,9 @@
         0
         1))))
 
-(defn- is-project-namespace-fn [type]
+(defn- is-project-namespace-fn
+  "Is the namespace defined in a file on the classpath, as opposed to a jar?"
+  [type]
   (fn [candidate]
     (if (and (contains? #{:alias :refer} type)
              (contains? (search/namespaces-from-files) candidate))

@@ -71,15 +71,13 @@
                            {:import #{slam.hound.regrow_test.UUID}}})
            '[:import slam.hound.regrow_test.UUID])))
   (testing "prefers aliases from old ns"
-    (is (= (disambiguate '#{clojure.set clojure.string}
-                         :alias 's
-                         '{:old-ns-map {:alias {clojure.set s}}})
-           '[:alias clojure.set])))
+    (is (= (disambiguate '#{a zzz} :alias 'x
+                         '{:old-ns-map {:alias {zzz x}}})
+           '[:alias zzz])))
   (testing "prefers refers from old ns"
-    (is (= (disambiguate '#{clojure.set clojure.string}
-                         :refer 'join
-                         '{:old-ns-map {:refer {clojure.set #{join}}}})
-           '[:refer clojure.set])))
+    (is (= (disambiguate '#{a zzz} :refer 'x
+                         '{:old-ns-map {:refer {zzz #{x}}}})
+           '[:refer zzz])))
   (testing "prefers explicit refers over mass refers from old ns"
     (is (= (disambiguate '#{clojure.set clojure.string}
                          :refer 'join
@@ -88,8 +86,8 @@
                             :refer {clojure.string #{join}}}})
            '[:refer clojure.string])))
   (testing "prefers aliases where the last segment matches"
-    (is (= (disambiguate '#{clojure.set clojure.string} :alias 'set {})
-           '[:alias clojure.set])))
+    (is (= (disambiguate '#{clojure.set clojure.string} :alias 'string {})
+           '[:alias clojure.string])))
   (testing "prefers candidates in project namespaces"
     (is (= (disambiguate
              '#{clojure.string slam.hound.regrow-test} :refer 'trim {})
