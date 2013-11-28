@@ -18,7 +18,7 @@
 (defrecord RegrowTestRecord [])
 (defrecord UUID [])
 (def +i-must-be-a-cl-user+ true)
-(def -+_$?!*><'' :horribly-named-var)
+(def -+_$?!*><='' :horribly-named-var)
 (def / :special-case-token)
 (def CapitalVar true)
 (def Pattern "Not java.util.Pattern")
@@ -152,8 +152,8 @@
   (testing "finds referred vars with strange names"
     (is (= (regrow '[{} ((assert +i-must-be-a-cl-user+))])
            '{:refer {slam.hound.regrow-test #{+i-must-be-a-cl-user+}}}))
-    (is (= (regrow '[{} ((keyword? -+_$?!*><''))])
-           '{:refer {slam.hound.regrow-test #{-+_$?!*><''}}}))
+    (is (= (regrow '[{} ((keyword? -+_$?!*><=''))])
+           '{:refer {slam.hound.regrow-test #{-+_$?!*><=''}}}))
     (is (= (regrow '[{:old {:exclude {clojure.core #{/}}}
                       :exclude {clojure.core #{/}}}
                      ((keyword? /))])
