@@ -129,7 +129,7 @@ the JVM may run out of PermGen space in large projects. If this happens,
 try running your JVM with the following options:
 
 ```
--Xmx5g -XX:+CMSClassUnloadingEnabled -XX:+CMSClassUnloadingEnabled -XX:MaxPermSize=128M
+-Xmx5g -XX:+CMSClassUnloadingEnabled -XX:MaxPermSize=128M
 ```
 
 ## Leiningen 1.x
