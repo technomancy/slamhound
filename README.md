@@ -27,6 +27,10 @@ surgeon required.
 
 Add `[slamhound "1.5.0"]` to the `:dependencies` of your `:user` profile.
 
+## Screencast
+
+<http://vimeo.com/user133347/slamhound-screencast>
+
 ## Leiningen Usage
 
 Make an alias for `run -m slam.hound` in your `:user` profile:
