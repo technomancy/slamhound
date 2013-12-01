@@ -132,6 +132,10 @@ try running your JVM with the following options:
 -Xmx5g -XX:+CMSClassUnloadingEnabled -XX:MaxPermSize=128M
 ```
 
+Finally, as namespaces may potentially be reloaded many times during
+reconstruction, it is important that no side-effects (aside from var
+definition) occur during namespace evaluation.
+
 ## Leiningen 1.x
 
 The `lein-slamhound` plugin is deprecated, and the `:aliases` approach
