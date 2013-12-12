@@ -44,7 +44,7 @@ Take a namespace with a sparse ns form that won't compile:
     $ cat src/my/namespace.clj # before: ns form is missing clauses
 
     (ns my.namespace
-      "I have a docstring.")
+      "I have a doc string.")
 
     (defn -main [& args]
       (pprint args)
