@@ -29,7 +29,7 @@ Add `[slamhound "1.5.0"]` to the `:dependencies` of your `:user` profile.
 
 ## Screencast
 
-<http://vimeo.com/user133347/slamhound-screencast>
+<http://vimeo.com/80650659>
 
 ## Leiningen Usage
 
@@ -98,6 +98,8 @@ of the `:Slamhound` command within Clojure buffers.
 
 ## Shortcomings
 
+### Syntax-quoted references
+
 Slamhound will only find references to vars in a namespace that are
 consumed within the namespace itself. For example, if you have a macro
 that refers to a var inside syntax-quote (backtick), but the macro is
@@ -110,15 +112,32 @@ You can work around this problem by attaching dummy metadata to the
 vars being present:
 
 ```clj
-(defmacro ^{:requires [a/b c/d]} let-qp [q p & body]
+(defmacro let-qp
+  {:requires [a/b c/d]}
+  [q p & body]
   `(let [~'q a/b
          ~'p c/d]
      ~@body))
 ```
 
+If the syntax quoted references refer to functions or constant data,
+unquoting them will work as well:
+
+```clj
+(defmacro defcustom [name & body]
+  `(def ~name (~string/join \, [~@body])))
+```
+
+In this case, `string/join` must be resolved at compile time, so
+Slamhound will successfully find the alias to `clojure.string`.
+
+### Fully qualified and dynamically resolved Vars
+
 Slamhound will also not find references to fully-qualified vars or
 vars resolved at runtime since it relies on detecting compilation
 failures to determine when it's done.
+
+### PermGen memory pressure
 
 Slamhound aggressively loads all namespaces on the classpath on first
 invocation. This is computationally expensive, so first use may be slow,
@@ -132,7 +151,9 @@ try running your JVM with the following options:
 -Xmx5g -XX:+CMSClassUnloadingEnabled -XX:MaxPermSize=128M
 ```
 
-Finally, as namespaces may potentially be reloaded many times during
+### Side effects during namespace evaluation
+
+As namespaces may potentially be reloaded many times during
 reconstruction, it is important that no side-effects (aside from var
 definition) occur during namespace evaluation.
 
