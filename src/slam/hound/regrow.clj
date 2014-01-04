@@ -90,7 +90,7 @@
   (case type
     :import (let [m (str missing)
                   ss (for [class-name search/available-classes
-                           :when (= m (last (.split class-name "\\.")))]
+                           :when (= m (last (string/split class-name #"\.")))]
                        (symbol class-name))]
               (into (ns-import-candidates missing) ss))
     :alias (set

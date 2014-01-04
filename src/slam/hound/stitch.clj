@@ -4,7 +4,7 @@
             [slam.hound.prettify :refer [prettify]]))
 
 (defn- get-package [class-name]
-  (let [cls ^Class (resolve class-name)]
+  (let [^Class cls (resolve class-name)]
     (if-let [pkg (.getPackage cls)]
       (.getName pkg)
       ;; Fall back to string matching for dynamically generated classes
@@ -13,8 +13,9 @@
 (defn- group-by-package [imports]
   (for [[package classes] (group-by get-package imports)]
     (cons (symbol package)
-          (sort (for [c classes]
-                  (-> c resolve .getName (.split "\\.") last symbol))))))
+          (sort (for [c classes
+                      :let [^Class c (resolve c)]]
+                  (-> c .getName (.split "\\.") last symbol))))))
 
 (defn metadata-from-map
   "Returns a vector of: [docstring? meta-map?]"

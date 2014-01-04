@@ -17,21 +17,20 @@
                   (System/getProperty "path.separator"))]
     (file f)))
 
-(defn clj? [f]
-  (.endsWith (.getName f) ".clj"))
+(defn clj? [^String path]
+  (.endsWith path ".clj"))
 
-(defn jar? [f]
-  (let [f (file f)]
-    (and (.isFile f) (.endsWith (.getName f) ".jar"))))
+(defn jar? [^File f]
+  (and (.isFile f) (.endsWith (.getName f) ".jar")))
 
-(defn class-file? [f]
-  (.endsWith f ".class"))
+(defn class-file? [^String path]
+  (.endsWith path ".class"))
 
 (defn clojure-fn-file? [f]
   (re-find #"\$.*__\d+\.class" f))
 
-(defn clojure-ns-file? [n]
-  (.endsWith n "__init.class"))
+(defn clojure-ns-file? [^String path]
+  (.endsWith path "__init.class"))
 
 (defn read-ns-form [r f]
   (let [form (try (read r false ::done)
@@ -41,8 +40,8 @@
       (when-not (= ::done form)
         (recur r f)))))
 
-(defn find-ns-form [f]
-  (when (and (.isFile (file f)) (clj? f))
+(defn find-ns-form [^File f]
+  (when (and (.isFile f) (clj? (.getName f)))
     (read-ns-form (PushbackReader. (reader f)) f)))
 
 (defn namespaces-in-dir [dir]
@@ -51,7 +50,7 @@
               :when ns-form]
           (second ns-form))))
 
-(defn ns-in-jar-entry [jarfile entry]
+(defn ns-in-jar-entry [^JarFile jarfile ^JarEntry entry]
   (with-open [rdr (-> jarfile
                       (.getInputStream (.getEntry jarfile (.getName entry)))
                       InputStreamReader.
@@ -59,11 +58,11 @@
                       PushbackReader.)]
     (read-ns-form rdr jarfile)))
 
-(defn namespaces-in-jar [jar]
+(defn namespaces-in-jar [^File jar]
   (let [jarfile (JarFile. jar)]
-    (for [entry (enumeration-seq (.entries jarfile))
+    (for [^JarEntry entry (enumeration-seq (.entries jarfile))
           :when (and (not (.isDirectory entry))
-                     (clj? entry))]
+                     (clj? (.getName entry)))]
       (when-let [ns-form (ns-in-jar-entry jarfile entry)]
         (second ns-form)))))
 
@@ -74,15 +73,15 @@
 
 (defn namespaces-from-files
   ([] (namespaces-from-files classpath-files))
-  ([paths] (filter-ns #(.isDirectory %) namespaces-in-dir paths)))
+  ([files] (filter-ns (fn [^File f] (.isDirectory f)) namespaces-in-dir files)))
 
 (defn namespaces-from-jars
   ([] (namespaces-from-jars classpath-files))
-  ([paths] (filter-ns jar? namespaces-in-jar paths)))
+  ([files] (filter-ns jar? namespaces-in-jar files)))
 
 (defn namespaces
   ([] (namespaces classpath-files))
-  ([paths] (into (namespaces-from-files paths) (namespaces-from-jars paths))))
+  ([files] (into (namespaces-from-files files) (namespaces-from-jars files))))
 
 ;;; Java classes
 
@@ -101,12 +100,11 @@
 
 (defn class-or-ns-name
   "Returns the Java class or Clojure namespace name for a class relative path."
-  [n]
-  (.replace
-   (if (clojure-ns-file? n)
-     (-> n (.replace "__init.class" "") (.replace "_" "-"))
-     (.replace n ".class" ""))
-   File/separator "."))
+  [^String path]
+  (-> (if (clojure-ns-file? path)
+        (-> path (.replace "__init.class" "") (.replace "_" "-"))
+        (.replace path ".class" ""))
+      (.replace File/separator ".")))
 
 (def path-class-files nil)
 (defmulti path-class-files

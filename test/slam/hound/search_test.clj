@@ -4,7 +4,8 @@
             [slam.hound.search :refer [classpath-files
                                        namespaces
                                        namespaces-from-files
-                                       namespaces-from-jars]]))
+                                       namespaces-from-jars]])
+  (:import (java.io File)))
 
 (def slamhound-namespaces
   '#{slam.hound
@@ -24,7 +25,8 @@
      korma.sql.utils})
 
 (def korma-jar
-  (first (filter #(re-find #"\Akorma-.+\.jar\z" (.getName %)) classpath-files)))
+  (first (filter (fn [^File f] (re-find #"\Akorma-.+\.jar\z" (.getName f)))
+                 classpath-files)))
 
 (deftest ^:unit test-namespaces-from-files
   (is (= (namespaces-from-files (file-seq (io/file "src")))

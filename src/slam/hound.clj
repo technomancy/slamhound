@@ -45,7 +45,7 @@
   (let [tmp-file (File/createTempFile "slamhound_tmp" ".clj")]
     (try
       (io/copy file tmp-file)
-      (let [new-ns (.trim (reconstruct tmp-file))]
+      (let [new-ns (string/trim (reconstruct tmp-file))]
         (with-open [rdr (PushbackReader. (io/reader tmp-file))
                     writer (io/writer file :append true)]
           (io/copy "" file)
