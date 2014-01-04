@@ -23,6 +23,9 @@
 (def CapitalVar true)
 (def Pattern "Not java.util.Pattern")
 (def trim (constantly "Conflicts with clojure.string/trim"))
+(def τ (* Math/PI 2))
+(def ∩ :intersection)
+(def ★ :star)
 
 ;; Explicitly require korma for tests below
 (require 'korma.core)
@@ -159,7 +162,9 @@
                      ((keyword? /))])
            '{:old {:exclude {clojure.core #{/}}}
              :exclude {clojure.core #{/}}
-             :refer {slam.hound.regrow-test #{/}}})))
+             :refer {slam.hound.regrow-test #{/}}}))
+    (is (= (regrow '[{} ((def unicode-syms [τ ∩ ★]))])
+           '{:refer {slam.hound.regrow-test #{τ ∩ ★}}})))
   (testing "finds consumed references within syntax-quotes"
     (is (= (regrow '[{:name slam.hound.regrow-test}
                      ((eval `(instance? Named :foo)))])

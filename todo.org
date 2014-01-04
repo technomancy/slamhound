@@ -25,6 +25,6 @@
 * Minor enhancements
   - [X] Sort alias candidates by L̶e̶v̶e̶n̶s̶h̶t̶e̶i̶n̶ "alias" distance, with emphasis on initial letters
   - [X] Satisfy all reflection warnings (there are only a handful)
+  - [X] Support Unicode characters in regrow/missing-sym-name
   - [ ] Count dashes as word separators when calculating "alias" distance
-  - [ ] Support Unicode characters in regrow/missing-sym-name
   - [ ] Sort refer candidates by matching arity. e.g. (join []) should prefer clojure.string/join
