@@ -13,6 +13,15 @@
 
   - [ ] Detect qualified references within syntax-quote
   - [ ] Detect fully qualified namespaces
+* Static Analysis
+  With the advent of official Clojure analyzers (see org.clojure/tools.analyzer
+  and related projects), it may be possible to augment or replace Slamhound's
+  failure-driven missing reference detection algorithm with static analysis.
+
+  This has the potential to greatly improve the performance of the regrow
+  step, and may also allow us to support ClojureScript.
+
+  - [ ] Investigate use of a static analyzer to detect missing ns references
 * Performance
   The slowest operation in slamhound is the pre-loading of namespaces, which
   is CPU bound (note that it is always slow regardless of the disk cache).
