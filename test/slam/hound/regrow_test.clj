@@ -128,7 +128,8 @@
 (deftest ^:unit test-grow-ns-map
   (testing "finds basic imports, aliases, and refers"
     (is (= (grow-ns-map {} :import 'RegrowTestRecord '((RegrowTestRecord.)))
-           '{:import #{slam.hound.regrow_test.RegrowTestRecord}}))
+           '{:import #{slam.hound.regrow_test.RegrowTestRecord}
+             :require #{slam.hound.regrow-test}}))
     (is (= (grow-ns-map {} :alias 'string '((string/join)))
            '{:alias {clojure.string string}}))
     (is (= (grow-ns-map {} :refer 'pprint '((pprint [])))

@@ -252,15 +252,50 @@
         [:refer-all c]
         [type c]))))
 
+(defn- deftype? [cls]
+  (or (.isAssignableFrom clojure.lang.IType cls)
+      (.isAssignableFrom clojure.lang.IRecord cls)))
+
+(defn- make-munged-ns-pattern [package-name]
+  (->> (string/split package-name #"_")
+       (map #(Pattern/quote %))
+       (string/join "[_-]")
+       (#(Pattern/compile (str "\\A" % "\\z")))))
+
+(defn- find-matching-ns
+  "Returns a ns symbol or nil"
+  [package-name]
+  ;; Try the simple case before doing a search
+  (let [ns-sym (symbol (string/replace package-name \_ \-))]
+    (if (find-ns ns-sym)
+      ns-sym
+      (let [pat (make-munged-ns-pattern package-name)]
+        (first (filter #(re-find pat (str (ns-name %))) (all-ns)))))))
+
+(defn- update-imports-in
+  "Adds candidate to :import entry in ns-map, and also adds matching namespace
+  to :require if the candidate class was created by deftype or defrecord."
+  [ns-map candidate]
+  (let [class-name (str candidate)
+        cls (Class/forName class-name)
+        ns-map (update-in ns-map [:import] #(conj (or % #{}) candidate))]
+    (if (deftype? cls)
+      ;; cf. slam.hound.stitch/get-package
+      (let [package-name (second (re-find #"(.*)\." class-name))
+            ns-sym (find-matching-ns package-name)]
+        (cond->* ns-map
+          ns-sym (update-in [:require] #(conj (or % #{}) ns-sym))))
+      ns-map)))
+
 (defn grow-ns-map
-  "Return a new ns-map augmented with a single candidate ns reference."
+  "Return a new ns-map augmented with candidate ns reference(s)."
   [ns-map type missing body]
   (let [cs (candidates type missing body)
         old-ns-map (:old ns-map)]
     (if-let [[type c] (disambiguate cs type missing {:old-ns-map old-ns-map
                                                      :new-ns-map ns-map})]
       (case type
-        :import (update-in ns-map [:import] #(conj (or % #{}) c))
+        :import (update-imports-in ns-map c)
         :alias (update-in ns-map [:alias] assoc c missing)
         :refer (update-in ns-map [:refer c] #(conj (or % #{}) missing))
         :refer-all (update-in ns-map [:refer-all] #(conj (or % #{}) c)))
