@@ -4,16 +4,6 @@
                                        regrow]])
   (:refer-clojure :exclude [/]))
 
-(def sample-body
-  '((set/union #{:a} #{:b})
-    (string/join ["a" "b"]) ; Try to conflict with set/join
-    (UUID/randomUUID)
-    (instance? Compiler$BodyExpr nil)
-    (io/copy (ByteArrayInputStream. (.getBytes "remotely human"))
-             (doto (File. "/tmp/remotely-human") .deleteOnExit))
-    (deftest ^:unit test-ns-to-map
-      (is (= (ns-from-map {:ns 'slam.hound}))))))
-
 ;; Classes and vars for testing
 (defrecord RegrowTestRecord [])
 (defrecord UUID [])
