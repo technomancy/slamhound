@@ -124,6 +124,16 @@
            '{:alias {clojure.string string}}))
     (is (= (grow-ns-map {} :refer 'pprint '((pprint [])))
            '{:refer {clojure.pprint #{pprint}}})))
+  (testing "finds imports + requires for underscored namespaces"
+    (binding [*ns* (create-ns `slam.hound.underscored_ns#)]
+      (try
+        (eval `(defrecord ~'Underscored_Record []))
+        (is (= (grow-ns-map {} :import 'Underscored_Record
+                            '((Underscored_Record.)))
+               {:import #{(symbol (str *ns* ".Underscored_Record"))}
+                :require #{(.name *ns*)}}))
+        (finally
+          (remove-ns (.name *ns*))))))
   (testing "honors old :refer :all"
     (is (= (grow-ns-map '{:old {:refer-all #{clojure.pprint}}}
                         :refer 'pprint '((pprint [])))

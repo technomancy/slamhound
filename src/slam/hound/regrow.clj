@@ -260,7 +260,7 @@
   (->> (string/split package-name #"_")
        (map #(Pattern/quote %))
        (string/join "[_-]")
-       (#(Pattern/compile (str "\\A" % "\\z")))))
+       (#(Pattern/compile (str "\\A" % "_*\\z")))))
 
 (defn- find-matching-ns
   "Returns a ns symbol or nil"
@@ -270,7 +270,7 @@
     (if (find-ns ns-sym)
       ns-sym
       (let [pat (make-munged-ns-pattern package-name)]
-        (first (filter #(re-find pat (str (ns-name %))) (all-ns)))))))
+        (first (filter #(re-find pat (str %)) (map ns-name (all-ns))))))))
 
 (defn- update-imports-in
   "Adds candidate to :import entry in ns-map, and also adds matching namespace
