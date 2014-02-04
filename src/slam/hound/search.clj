@@ -1,6 +1,7 @@
 (ns slam.hound.search
   "Search the classpath for vars and classes."
-  (:require [clojure.java.io :refer [file reader]])
+  (:require [clojure.java.io :refer [file reader]]
+            [clojure.string :as string])
   (:import (java.io BufferedReader File FilenameFilter InputStreamReader
                     PushbackReader)
            (java.util StringTokenizer)
@@ -166,7 +167,11 @@
      (reduce #(concat %1 (scan-paths %2)) (scan-paths cp) more)))
 
 (def available-classes
-  (remove clojure-fn-file?
-          (scan-paths (System/getProperty "sun.boot.class.path")
-                      (System/getProperty "java.ext.dirs")
-                      (System/getProperty "java.class.path"))))
+  (->> (scan-paths (System/getProperty "sun.boot.class.path")
+                   (System/getProperty "java.ext.dirs")
+                   (System/getProperty "java.class.path"))
+       (remove clojure-fn-file?)
+       (map symbol)))
+
+(def available-classes-by-last-segment
+  (group-by #(symbol (peek (string/split (str %) #"\."))) available-classes))

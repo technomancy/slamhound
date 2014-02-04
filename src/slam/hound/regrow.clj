@@ -88,11 +88,8 @@
   "Return a set of class or ns symbols that match the given constraints."
   [type missing body]
   (case type
-    :import (let [m (str missing)
-                  ss (for [class-name search/available-classes
-                           :when (= m (last (string/split class-name #"\.")))]
-                       (symbol class-name))]
-              (into (ns-import-candidates missing) ss))
+    :import (into (ns-import-candidates missing)
+                  (get search/available-classes-by-last-segment missing))
     :alias (set
              (for [ns (all-ns)
                    :let [syms-with-alias (get (ns-qualifed-syms body) missing)]
