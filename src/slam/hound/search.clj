@@ -174,4 +174,5 @@
        (map symbol)))
 
 (def available-classes-by-last-segment
-  (group-by #(symbol (peek (string/split (str %) #"\."))) available-classes))
+  (delay
+    (group-by #(symbol (peek (string/split (str %) #"\."))) available-classes)))

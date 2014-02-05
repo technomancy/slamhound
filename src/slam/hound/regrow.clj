@@ -89,7 +89,7 @@
   [type missing body]
   (case type
     :import (into (ns-import-candidates missing)
-                  (get search/available-classes-by-last-segment missing))
+                  (get @search/available-classes-by-last-segment missing))
     :alias (set
              (for [ns (all-ns)
                    :let [syms-with-alias (get (ns-qualifed-syms body) missing)]
