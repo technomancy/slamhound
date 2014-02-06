@@ -91,16 +91,15 @@
     :import (into (ns-import-candidates missing)
                   (get @search/available-classes-by-last-segment missing))
     :alias (set
-             (for [ns (all-ns)
-                   :let [syms-with-alias (get (ns-qualifed-syms body) missing)]
-                   :when (and (seq syms-with-alias)
-                              (set/subset? syms-with-alias
-                                           (set (keys (ns-publics ns)))))]
-               (ns-name ns)))
+             (let [syms-with-alias (get (ns-qualifed-syms body) missing)]
+               (when (seq syms-with-alias)
+                 (for [ns (all-ns)
+                       :let [ns-syms (set (keys (ns-publics ns)))]
+                       :when (set/subset? syms-with-alias ns-syms)]
+                   (ns-name ns)))))
     :refer (set
              (for [ns (all-ns)
-                   [sym _] (ns-publics ns)
-                   :when (= missing sym)]
+                   :when (contains? (ns-publics ns) missing)]
                (ns-name ns)))))
 
 (defn- filter-excludes
