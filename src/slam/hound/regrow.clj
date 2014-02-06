@@ -318,11 +318,11 @@
 
 (defn regrow [[ns-map body]]
   (force pre-load-namespaces)
-  ;; Since body was likely acquired through the reader, we must de-qualify
-  ;; symbols that may have been erroneously qualified to the current ns within
-  ;; syntax-quoted forms.
   (if (:slamhound-skip (:meta ns-map))
     (merge ns-map (:old ns-map))
+    ;; Since body was likely acquired through the reader, we must de-qualify
+    ;; symbols that may have been erroneously qualified to the current ns
+    ;; within syntax-quoted forms.
     (let [body (strip-ns-qualified-symbols (:name ns-map) body)]
       (loop [ns-map ns-map
              last-missing nil
