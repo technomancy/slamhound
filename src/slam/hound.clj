@@ -2,17 +2,18 @@
   (:require [clojure.java.io :as io]
             [clojure.string :as string]
             [slam.hound.asplode :refer [asplode]]
-            [slam.hound.regrow :refer [regrow]]
+            [slam.hound.regrow :refer [regrow with-regrow-cache]]
             [slam.hound.stitch :refer [stitch-up]])
   (:import (java.io File PushbackReader)))
 
 (defn reconstruct [filename]
   ;; Reconstructing consists of three distinct phases:
   ;; asploding, regrowing, and stitching.
-  (-> (io/reader filename)
-      asplode
-      regrow
-      stitch-up))
+  (with-regrow-cache
+    (-> (io/reader filename)
+        asplode
+        regrow
+        stitch-up)))
 
 (defn read-comment-header
   "Read leading blank and comment lines from rdr."
@@ -65,16 +66,17 @@
 (defn -main
   "Takes a file or dir and rewrites the .clj files with reconstructed ns forms."
   [& file-or-dirs]
-  (doseq [file-or-dir file-or-dirs
-          file (file-seq (io/file file-or-dir))
-          :when (re-find #"/[^\./]+\.clj$" (str file))]
-    (try
-      (swap-in-reconstructed-ns-form file)
-      (catch Exception e
-        (println "Failed to reconstruct:" file)
-        (if (System/getenv "DEBUG")
-          (.printStackTrace e)
-          (println (.getMessage e)))))))
+  (with-regrow-cache
+    (doseq [file-or-dir file-or-dirs
+            file (file-seq (io/file file-or-dir))
+            :when (re-find #"/[^\./]+\.clj$" (str file))]
+      (try
+        (swap-in-reconstructed-ns-form file)
+        (catch Exception e
+          (println "Failed to reconstruct:" file)
+          (if (System/getenv "DEBUG")
+            (.printStackTrace e)
+            (println (.getMessage e))))))))
 
 ;; See https://github.com/technomancy/nrepl-discover
 (defn ^{:nrepl/op {:name "slam"
