@@ -1,3 +1,16 @@
+Changes from 1.5.1 to 1.5.2, 14 March 2014
+==========================================
+
+- Handle case where an alias is used to refer to private vars.
+
+- Use a cache to greatly improve the performance of repeated searches for
+  a missing reference type.
+
+- Improve class import search performance.
+
+- Find namespaces with trailing and mixed dashes/underscores when importing
+  classes created by deftype and defrecord.
+
 Changes from 1.5.0 to 1.5.1, 29 January 2014
 ============================================
 
