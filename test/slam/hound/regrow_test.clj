@@ -16,6 +16,7 @@
 (def τ (* Math/PI 2))
 (def ∩ :intersection)
 (def ★ :star)
+(def ^:private private-var "Can be resolved with #'")
 
 ;; Explicitly require korma for tests below
 (require 'korma.core)
@@ -30,7 +31,11 @@
            '#{slam.hound.regrow_test.RegrowTestRecord})))
   (testing "finds aliased namespaces"
     (is (= (candidates :alias 's '((s/join #{:a} #{:b})))
-           '#{clojure.set clojure.string korma.core})))
+           '#{clojure.set clojure.string korma.core}))
+    (is (= (candidates :alias 'r '((def foo r/trim)
+                                   (def bar #'r/private-var)))
+           (candidates :alias 'r '((def foo #'r/trim)))
+           '#{clojure.string slam.hound.regrow-test})))
   (testing "finds referred vars"
     (is (= (candidates :refer 'join '((join #{:a} #{:b})))
            '#{clojure.set clojure.string korma.core}))))

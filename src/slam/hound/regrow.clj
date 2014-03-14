@@ -96,6 +96,13 @@
 (defn- symbols-in-body [body]
   (filter symbol? (remove coll? (rest (tree-seq coll? seq body)))))
 
+(defn- remove-var-forms
+  "Remove (var symbol) forms from body"
+  [expr]
+  (if (and (coll? expr) (= (first expr) 'var))
+    nil
+    expr))
+
 (def ^:private ns-qualifed-syms
   (memoize
     (fn [body]
@@ -117,19 +124,30 @@
               s))
           #{} (all-ns-imports)))
 
+(defn- alias-candidates [type missing body]
+  (set
+    (let [syms-with-alias (get (ns-qualifed-syms body) missing)]
+      (when (seq syms-with-alias)
+        (let [ns->syms (ns->symbols)]
+          (for [ns (all-ns)
+                :when (set/subset? syms-with-alias (ns->syms ns))]
+            (ns-name ns)))))))
+
 (defn candidates
   "Return a set of class or ns symbols that match the given constraints."
   [type missing body]
   (case type
     :import (into (ns-import-candidates missing)
                   (get @search/available-classes-by-last-segment missing))
-    :alias (set
-             (let [syms-with-alias (get (ns-qualifed-syms body) missing)]
-               (when (seq syms-with-alias)
-                 (let [ns->syms (ns->symbols)]
-                   (for [ns (all-ns)
-                         :when (set/subset? syms-with-alias (ns->syms ns))]
-                     (ns-name ns))))))
+    :alias (let [cs (alias-candidates type missing body)]
+             (if (seq cs)
+               cs
+               ;; Try the alias search again without dynamically resolved vars
+               ;; in case #' was used to resolve private vars in an aliased ns
+               (let [body' (prewalk remove-var-forms body)]
+                 (if (= body' body)
+                   cs
+                   (alias-candidates type missing body')))))
     :refer (get (symbols->ns-syms) missing)))
 
 (defn- filter-excludes
