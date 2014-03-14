@@ -17,6 +17,39 @@
     (swap! debug-log conj msg)
     (apply prn msg)))
 
+(def ^{:dynamic true} *cache* nil)
+
+(defmacro with-regrow-cache [& body]
+  `(binding [*cache* (or *cache* (atom {}))]
+     ~@body))
+
+(defmacro ^:private caching [key & body]
+  `(if *cache*
+     (if-let [v# (get @*cache* ~key)]
+       v#
+       (let [v# (do ~@body)]
+         (swap! *cache* assoc ~key v#)
+         v#))
+     (do ~@body)))
+
+(defn- all-ns-imports []
+  (caching :all-ns-imports
+    (mapv ns-imports (all-ns))))
+
+(defn- ns->symbols []
+  (caching :ns->symbols
+    (let [xs (all-ns)]
+      (zipmap xs (mapv (comp set keys ns-publics) xs)))))
+
+(defn- symbols->ns-syms []
+  (caching :symbols->ns
+    (reduce
+      (fn [m ns] (let [ns-sym (ns-name ns)]
+                   (reduce
+                     (fn [m k] (assoc m k (conj (or (m k) #{}) ns-sym)))
+                     m (keys (ns-publics ns)))))
+      {} (all-ns))))
+
 (defn- capitalized? [x]
   (Character/isUpperCase ^Character (first (name x))))
 
@@ -78,11 +111,11 @@
   package names, but will successfully find dynamically created classes such
   as those created by deftype and defrecord."
   [missing-sym]
-  (reduce (fn [s nspace]
-            (if-let [cls ^Class ((ns-imports nspace) missing-sym)]
+  (reduce (fn [s imports]
+            (if-let [^Class cls (get imports missing-sym)]
               (conj s (symbol (.getCanonicalName cls)))
               s))
-          #{} (all-ns)))
+          #{} (all-ns-imports)))
 
 (defn candidates
   "Return a set of class or ns symbols that match the given constraints."
@@ -93,14 +126,11 @@
     :alias (set
              (let [syms-with-alias (get (ns-qualifed-syms body) missing)]
                (when (seq syms-with-alias)
-                 (for [ns (all-ns)
-                       :let [ns-syms (set (keys (ns-publics ns)))]
-                       :when (set/subset? syms-with-alias ns-syms)]
-                   (ns-name ns)))))
-    :refer (set
-             (for [ns (all-ns)
-                   :when (contains? (ns-publics ns) missing)]
-               (ns-name ns)))))
+                 (let [ns->syms (ns->symbols)]
+                   (for [ns (all-ns)
+                         :when (set/subset? syms-with-alias (ns->syms ns))]
+                     (ns-name ns))))))
+    :refer (get (symbols->ns-syms) missing)))
 
 (defn- filter-excludes
   "Disjoin namespace symbols from candidates that match the :exclude, :xrefer,
