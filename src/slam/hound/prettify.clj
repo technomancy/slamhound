@@ -1,5 +1,8 @@
 (ns slam.hound.prettify
-  "Format a namespace declaration using pretty print with custom dispatch."
+  "Format a namespace declaration using pretty print with custom dispatch.
+
+  Documentation on Common Lisp format strings:
+  https://www.cs.cmu.edu/afs/cs.cmu.edu/project/ai-repository/ai/html/cltl/clm/node200.html"
   (:require [clojure.pprint :refer [cl-format code-dispatch formatter-out
                                     pprint pprint-logical-block pprint-newline
                                     with-pprint-dispatch write-out]]
@@ -11,6 +14,22 @@
   (if (vector? form)
     ["[" "]"]
     ["(" ")"]))
+
+(defn- pprint-liblist
+  "Pretty print dispatch chunk for ns libspecs and prefix lists."
+  [form]
+  (let [[start end] (brackets form)]
+    (pprint-logical-block :prefix start :suffix end
+      (if (and (= (count form) 3) (keyword? (second form)))
+        (let [[ns kw lis] form]
+          ((formatter-out "~w ~w ") ns kw)
+          (if (sequential? lis)
+            ((formatter-out (if (vector? lis)
+                              "~<[~;~@{~w~^ ~:_~}~;]~:>"
+                              "~<(~;~@{~w~^ ~:_~}~;)~:>"))
+             lis)
+            (write-out lis)))
+        (apply (formatter-out "~w~^ ~:i~@{~w~^ ~:_~}") form)))))
 
 (defn- pprint-ns-reference
   "Pretty print a single reference (import, use, etc.) from a namespace decl"
@@ -25,20 +44,9 @@
             ((formatter-out " "))
             (let [arg (first args)]
               (if (sequential? arg)
-                (let [[start end] (brackets arg)]
-                  (pprint-logical-block :prefix start :suffix end
-                    (if (and (= (count arg) 3) (keyword? (second arg)))
-                      (let [[ns kw lis] arg]
-                        ((formatter-out "~w ~w ") ns kw)
-                        (if (sequential? lis)
-                          ((formatter-out (if (vector? lis)
-                                            "~<[~;~@{~w~^ ~:_~}~;]~:>"
-                                            "~<(~;~@{~w~^ ~:_~}~;)~:>"))
-                           lis)
-                          (write-out lis)))
-                      (apply (formatter-out "~w~^ ~:i~@{~w~^ ~:_~}") arg)))
-                  (when (next args)
-                    ((formatter-out "~:@_"))))
+                (do (pprint-liblist arg)
+                    (when (next args)
+                      ((formatter-out "~:@_"))))
                 (do
                   (write-out arg)
                   (when (next args)
