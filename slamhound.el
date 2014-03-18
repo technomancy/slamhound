@@ -4,7 +4,7 @@
 ;;
 ;; Author: Phil Hagelberg <technomancy@gmail.com>
 ;; URL: https://github.com/technomancy/slamhound
-;; Version: 2.0.0
+;; Version: 2.1.0
 ;; Keywords: tools, lisp
 
 ;; This file is not part of GNU Emacs.
