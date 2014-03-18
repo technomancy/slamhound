@@ -7,6 +7,15 @@
     (is (= "(ns foo
   (:require [clojure.java.io :as io]
             [clojure.pprint :refer [pprint]]))\n"
-           (prettify '(ns foo
-                        (:require [clojure.java.io :as io]
-                                  [clojure.pprint :refer [pprint]])))))))
+           (prettify
+             '(ns foo
+                (:require [clojure.java.io :as io]
+                          [clojure.pprint :refer [pprint]]))))))
+  (testing "does not print :refer vectors in :miser mode"
+    (is (= "(ns foo
+  (:require [my.very.sequipedalian.namespace :refer [alpha beta gamma
+                                                     delta epsilon]]))\n"
+           (prettify
+             '(ns foo
+                (:require [my.very.sequipedalian.namespace
+                           :refer [alpha beta gamma delta epsilon]])))))))

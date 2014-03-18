@@ -3,9 +3,10 @@
 
   Documentation on Common Lisp format strings:
   https://www.cs.cmu.edu/afs/cs.cmu.edu/project/ai-repository/ai/html/cltl/clm/node200.html"
-  (:require [clojure.pprint :refer [cl-format code-dispatch formatter-out
-                                    pprint pprint-logical-block pprint-newline
-                                    with-pprint-dispatch write-out]]
+  (:require [clojure.pprint :refer [*print-miser-width* cl-format code-dispatch
+                                    formatter-out pprint pprint-logical-block
+                                    pprint-newline with-pprint-dispatch
+                                    write-out]]
             [clojure.string :refer [escape]]))
 
 (defn- brackets
@@ -94,5 +95,7 @@
   "Pretty print the ns-form to a string"
   [ns-form]
   (with-out-str
-    (with-pprint-dispatch augmented-dispatch
-      (pprint ns-form))))
+    ;; :miser mode often results in ugly libspecs, so disable it
+    (binding [*print-miser-width* nil]
+      (with-pprint-dispatch augmented-dispatch
+        (pprint ns-form)))))
