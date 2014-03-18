@@ -16,21 +16,35 @@
     ["[" "]"]
     ["(" ")"]))
 
+(defn- pprint-indented-coll
+  "Pretty print a collection, setting an indent point before the head element
+  and reflowing to multiple lines as necessary."
+  [coll]
+  ((formatter-out "~:i~{~w~^ ~:_~}") coll))
+
 (defn- pprint-liblist
   "Pretty print dispatch chunk for ns libspecs and prefix lists."
   [form]
-  (let [[start end] (brackets form)]
+  (let [[start end] (brackets form)
+        [head & tail] form]
     (pprint-logical-block :prefix start :suffix end
-      (if (and (= (count form) 3) (keyword? (second form)))
-        (let [[ns kw lis] form]
-          ((formatter-out "~w ~w ") ns kw)
-          (if (sequential? lis)
-            ((formatter-out (if (vector? lis)
-                              "~<[~;~@{~w~^ ~:_~}~;]~:>"
-                              "~<(~;~@{~w~^ ~:_~}~;)~:>"))
-             lis)
-            (write-out lis)))
-        (apply (formatter-out "~w~^ ~:i~@{~w~^ ~:_~}") form)))))
+      (write-out head)
+      (when (seq tail)
+        ((formatter-out " "))
+        (let [opts (partition-all 2 tail)]
+          ;; Is this a libspec? i.e. [head :key1 val1 :key2 val2]
+          (if (every? keyword? (map first opts))
+            (loop [[[key val] & next-opts] opts]
+              ((formatter-out "~w ") key)
+              (if (sequential? val)
+                (let [[start end] (brackets val)]
+                  (pprint-logical-block :prefix start :suffix end
+                    (pprint-indented-coll val)))
+                (write-out val))
+              (when next-opts
+                ((formatter-out " "))
+                (recur next-opts)))
+            (pprint-indented-coll tail)))))))
 
 (defn- pprint-ns-reference
   "Pretty print a single reference (import, use, etc.) from a namespace decl"
@@ -47,6 +61,7 @@
               (if (sequential? arg)
                 (do (pprint-liblist arg)
                     (when (next args)
+                      ;; liblists should always be on their own line
                       ((formatter-out "~:@_"))))
                 (do
                   (write-out arg)

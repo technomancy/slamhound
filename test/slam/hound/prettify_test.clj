@@ -18,4 +18,21 @@
            (prettify
              '(ns foo
                 (:require [my.very.sequipedalian.namespace
-                           :refer [alpha beta gamma delta epsilon]])))))))
+                           :refer [alpha beta gamma delta epsilon]]))))))
+  (testing "keeps multiple libspec option keys and values together"
+    (is (= "(ns foo
+  (:require [clojure.pprint :as pp :refer [*print-miser-width*
+                                           cl-format code-dispatch
+                                           formatter-out pprint
+                                           pprint-logical-block
+                                           pprint-newline
+                                           with-pprint-dispatch
+                                           write-out]]))\n"
+           (prettify
+             '(ns foo
+                (:require [clojure.pprint
+                           :as pp
+                           :refer [*print-miser-width* cl-format code-dispatch
+                                   formatter-out pprint pprint-logical-block
+                                   pprint-newline with-pprint-dispatch
+                                   write-out]])))))))
