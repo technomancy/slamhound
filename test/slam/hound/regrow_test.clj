@@ -53,8 +53,8 @@
     (is (= (d "fbb" "foo-bar-baz") 6))))
 
 (deftest ^:unit test-disambiguate
-  (testing "removes namespace matching :name in old-ns-map"
-    (is (= (disambiguate '#{foo bar} :alias 'foo '{:old-ns-map {:name foo}})
+  (testing "removes candidate's own namespace"
+    (is (= (disambiguate '#{foo bar} :alias 'foo '{:new-ns-map {:name foo}})
            '[:alias bar])))
   (testing "removes cljs.core from candidates"
     (is (nil? (disambiguate '#{cljs.core} :refer 'defn {}))))

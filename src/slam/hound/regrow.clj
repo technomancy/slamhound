@@ -277,7 +277,7 @@
         cs (cond->* candidates
              ;; Current ns is never a valid reference source, and cljs.core is
              ;; an implementation detail
-             true (disj (:name old-ns-map) 'cljs.core)
+             true (disj (:name new-ns-map) 'cljs.core)
              ;; Prevent multiple aliases to a single namespace (ugh)
              (= type :alias) (set/difference (set (keys (:alias new-ns-map)))))
         cs (->> cs
