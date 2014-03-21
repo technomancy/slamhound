@@ -17,7 +17,7 @@
     (swap! debug-log conj msg)
     (apply prn msg)))
 
-(def ^{:dynamic true} *cache* nil)
+(def ^:dynamic *cache* nil)
 
 (defmacro with-regrow-cache [& body]
   `(binding [*cache* (or *cache* (atom {}))]
@@ -66,19 +66,22 @@
 
 (defn- failure-details [msg old-ns-map]
   (when-let [sym-name (missing-sym-name msg)]
-    (let [sym (symbol sym-name)]
-      {:missing sym ; now returns a symbol
-       :possible-types (cond (capitalized? sym-name)
-                             (if (first (filter (partial some #{sym})
-                                                (vals (:refer old-ns-map))))
-                               [:refer :import]
-                               [:import :refer])
-                             (re-find #"Unable to resolve var: \w+/" msg)
-                             [:alias :refer]
-                             (re-find #"No such (var|namespace)" msg)
-                             [:alias]
-                             :else
-                             [:refer :import])})))
+    (let [sym (symbol sym-name)
+          ts (cond (capitalized? sym-name)
+                   (if (some #(contains? % sym) (vals (:refer old-ns-map)))
+                     [:refer :import]
+                     [:import :refer])
+
+                   (re-find #"Unable to resolve var: \w+/" msg)
+                   [:alias :refer]
+
+                   (re-find #"No such (var|namespace)" msg)
+                   [:alias]
+
+                   :else
+                   [:refer :import])]
+      {:missing sym
+       :possible-types ts})))
 
 (defn- check-for-failure [ns-map body]
   (let [sandbox-ns `slamhound.sandbox#
@@ -96,7 +99,7 @@
 (defn- symbols-in-body [body]
   (filter symbol? (remove coll? (rest (tree-seq coll? seq body)))))
 
-(defn- remove-var-forms
+(defn- remove-var-form
   "Remove (var symbol) forms from body"
   [expr]
   (if (and (coll? expr) (= (first expr) 'var))
@@ -144,7 +147,7 @@
                cs
                ;; Try the alias search again without dynamically resolved vars
                ;; in case #' was used to resolve private vars in an aliased ns
-               (let [body' (prewalk remove-var-forms body)]
+               (let [body' (prewalk remove-var-form body)]
                  (if (= body' body)
                    cs
                    (alias-candidates type missing body')))))
