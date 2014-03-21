@@ -56,8 +56,9 @@
   (testing "removes candidate's own namespace"
     (is (= (disambiguate '#{foo bar} :alias 'foo '{:new-ns-map {:name foo}})
            '[:alias bar])))
-  (testing "removes cljs.core from candidates"
-    (is (nil? (disambiguate '#{cljs.core} :refer 'defn {}))))
+  (testing "removes namespaces beginning with cljs from candidates"
+    (is (nil? (disambiguate '#{cljs.core} :refer 'defn {})))
+    (is (nil? (disambiguate '#{cljs.repl} :refer 'load-file {}))))
   (testing "removes candidates matching disambiguator-blacklist"
     (is (nil? (disambiguate '#{swank lancet} :alias 'swank {}))))
   (testing "removes namespaces with excluded vars"

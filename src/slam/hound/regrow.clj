@@ -180,7 +180,7 @@
 (def ^:private disambiguator-blacklist
   (if-let [v (resolve 'user/slamhound-disambiguator-blacklist)]
     @v
-    #"swank|lancet"))
+    #"\Acljs\.|swank|lancet"))
 
 (defn- in-originals-fn
   "To what extent is the candidate present in the original ns-map?"
@@ -278,9 +278,8 @@
   (debug :disambiguating missing :in candidates)
   (let [{:keys [old-ns-map new-ns-map]} ns-maps
         cs (cond->* candidates
-             ;; Current ns is never a valid reference source, and cljs.core is
-             ;; an implementation detail
-             true (disj (:name new-ns-map) 'cljs.core)
+             ;; Current ns is never a valid reference source
+             true (disj (:name new-ns-map))
              ;; Prevent multiple aliases to a single namespace (ugh)
              (= type :alias) (set/difference (set (keys (:alias new-ns-map)))))
         cs (->> cs
