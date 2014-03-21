@@ -55,11 +55,11 @@
 
 (def ^:private missing-sym-patterns
   (let [sym-pat #"(/|\D[^\p{javaWhitespace},/]*)"
-        prefixes [#"Unable to resolve \w+: "
-                  "Can't resolve: "
-                  "No such namespace: "
-                  #"No such var: \S+/"]]
-    (mapv #(Pattern/compile (str % sym-pat)) prefixes)))
+        patterns (->> [#"Unable to resolve \w+: "
+                       "Can't resolve: "
+                       "No such namespace: "]
+                      (mapv #(Pattern/compile (str % sym-pat))))]
+    (into [#"No such var: (\S+)/.*"] patterns)))
 
 (defn- missing-sym-name [msg]
   (second (some #(re-find % msg) missing-sym-patterns)))

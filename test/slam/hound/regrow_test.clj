@@ -175,4 +175,14 @@
     (is (= (regrow '[{:name slam.hound.regrow-test}
                      ((eval `(instance? Named :foo)))])
            '{:name slam.hound.regrow-test
-             :import #{clojure.lang.Named}}))))
+             :import #{clojure.lang.Named}})))
+  (testing "finds aliases that conflict with namespaces"
+    (is (= (regrow '[{:name slam.hound.regrow-test}
+                     ((def foo user/union))])
+           '{:name slam.hound.regrow-test
+             :alias {clojure.set user}}))
+    ;; Please never do this
+    (is (= (regrow '[{:name slam.hound.regrow-test}
+                     ((def foo clojure.string/union))])
+           '{:name slam.hound.regrow-test
+             :alias {clojure.set clojure.string}}))))
