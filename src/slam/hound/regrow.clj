@@ -57,7 +57,9 @@
   (let [sym-pat #"(/|\D[^\p{javaWhitespace},/]*)"
         patterns (->> [#"Unable to resolve \w+: "
                        "Can't resolve: "
-                       "No such namespace: "]
+                       "No such namespace: "
+                       "Cannot resolve type: " ; core.typed
+                       ]
                       (mapv #(Pattern/compile (str % sym-pat))))]
     (into [#"No such var: (\S+)/.*"] patterns)))
 
