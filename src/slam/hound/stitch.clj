@@ -46,7 +46,8 @@
     (let [{:keys [alias]} ns-map]
       (cond->* [ns-sym]
         (get alias ns-sym) (conj :as (alias ns-sym))))
-    (let [{:keys [alias refer refer-all exclude rename]} ns-map]
+    (let [{:keys [alias refer refer-all exclude rename]} ns-map
+          refer (if (get refer-all ns-sym) #{} refer)]
       (cond->* [ns-sym]
         (get alias ns-sym) (conj :as (alias ns-sym))
         (get refer ns-sym) (conj :refer (vec (sort (refer ns-sym))))

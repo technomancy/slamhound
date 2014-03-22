@@ -1,11 +1,9 @@
 (ns slam.hound.stitch-test
   (:require [clojure.test :refer [deftest is testing]]
-            [slam.hound.stitch :refer [imports-from-map
-                                       keyword-list-from-map
-                                       metadata-from-map
-                                       ns-from-map
-                                       refer-clojure-from-map
-                                       requires-from-map stitch-up]]))
+            [slam.hound.stitch :refer [imports-from-map keyword-list-from-map
+                                       metadata-from-map ns-from-map
+                                       refer-clojure-from-map requires-from-map
+                                       stitch-up]]))
 
 (deftest ^:unit test-keyword-list-from-map
   (is (= (keyword-list-from-map
@@ -67,7 +65,12 @@
              (:require [c] :reload)
              (:require [d] :reload-all)
              (:require [a] :reload :verbose)
-             (:require [b] :reload-all :verbose)]))))
+             (:require [b] :reload-all :verbose)])))
+  (testing "does not insert vector of :refer when ns is mass referred"
+    (is (= (requires-from-map '{:alias {my.ns mn}
+                                :refer {my.ns #{foo bar baz}}
+                                :refer-all #{my.ns}})
+           '[(:require [my.ns :as mn :refer :all])]))))
 
 (deftest test-refer-clojure-from-map
   (is (nil? (refer-clojure-from-map '{:refer-all #{clojure.core}})))
