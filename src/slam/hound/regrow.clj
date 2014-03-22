@@ -81,9 +81,13 @@
                    [:alias]
 
                    :else
-                   [:refer :import])]
+                   [:refer :import])
+          rename? (some #{sym} (mapcat (comp vals val) (:rename old-ns-map)))]
+      ;; Always attempt a rename first if there is a valid candidate
       {:missing sym
-       :possible-types ts})))
+       :possible-types (if (and rename? (some #{:refer} ts))
+                         (into [:rename] ts)
+                         ts)})))
 
 (defn- check-for-failure [ns-map body]
   (let [sandbox-ns `slamhound.sandbox#
@@ -138,9 +142,9 @@
                 :when (set/subset? syms-with-alias (ns->syms ns))]
             (ns-name ns)))))))
 
-(defn candidates
+(defn- candidates
   "Return a set of class or ns symbols that match the given constraints."
-  [type missing body]
+  [type missing body old-ns-map]
   (case type
     :import (into (ns-import-candidates missing)
                   (get @search/available-classes-by-last-segment missing))
@@ -153,7 +157,12 @@
                  (if (= body' body)
                    cs
                    (alias-candidates type missing body')))))
-    :refer (get (symbols->ns-syms) missing)))
+    :refer (get (symbols->ns-syms) missing)
+    :rename (reduce-kv
+              (fn [s ns orig->rename]
+                (cond->* s
+                  (some #{missing} (vals orig->rename)) (conj ns)))
+              #{} (:rename old-ns-map))))
 
 (defn- filter-excludes
   "Disjoin namespace symbols from candidates that match the :exclude and
@@ -204,7 +213,9 @@
                (cond (and all? ref?) 0
                      ref? 1
                      all? 2
-                     :else 3)))))
+                     :else 3))
+      ;; Renames are only considered when they exist in the original ns
+      :rename 0)))
 
 (defn- last-segment-matches-fn
   "Does the last segment of the candidate match the missing alias?"
@@ -220,7 +231,7 @@
   "Is the namespace defined in a file on the classpath, as opposed to a jar?"
   [type]
   (fn [candidate]
-    (if (and (contains? #{:alias :refer} type)
+    (if (and (contains? #{:alias :refer :rename} type)
              (contains? (search/namespaces-from-files) candidate))
       0
       1)))
@@ -338,15 +349,20 @@
 (defn grow-ns-map
   "Return a new ns-map augmented with candidate ns reference(s)."
   [ns-map type missing body]
-  (let [cs (candidates type missing body)
-        old-ns-map (:old ns-map)]
+  (let [old-ns-map (:old ns-map)
+        cs (candidates type missing body old-ns-map)]
     (if-let [[type c] (disambiguate cs type missing {:old-ns-map old-ns-map
                                                      :new-ns-map ns-map})]
       (case type
         :import (update-imports-in ns-map c)
         :alias (update-in ns-map [:alias] assoc c missing)
         :refer (update-in ns-map [:refer c] #(conj (or % #{}) missing))
-        :refer-all (update-in ns-map [:refer-all] #(conj (or % #{}) c)))
+        :refer-all (update-in ns-map [:refer-all] #(conj (or % #{}) c))
+        :rename (let [renames (get-in old-ns-map [:rename c])
+                      orig (first (first (filter #(= missing (val %)) renames)))]
+                  (-> ns-map
+                      (update-in [:refer c] #(conj (or % #{}) orig))
+                      (update-in [:rename c] assoc orig missing))))
       ns-map)))
 
 (defonce pre-load-namespaces
