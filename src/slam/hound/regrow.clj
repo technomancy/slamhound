@@ -156,8 +156,8 @@
     :refer (get (symbols->ns-syms) missing)))
 
 (defn- filter-excludes
-  "Disjoin namespace symbols from candidates that match the :exclude, :xrefer,
-  and :refer values in old-ns-map."
+  "Disjoin namespace symbols from candidates that match the :exclude and
+  :xrefer values in old-ns-map."
   [type missing old-ns-map candidates]
   (if (= type :refer)
     (let [{:keys [exclude xrefer refer]} old-ns-map
