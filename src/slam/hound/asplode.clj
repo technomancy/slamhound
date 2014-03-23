@@ -212,8 +212,9 @@
   (let [rdr (PushbackReader. rdr)
         ns-map (ns-to-map (read rdr))
         old-ns (parse-ns-map ns-map)
-        stripped-ns (assoc (apply dissoc ns-map ns-clauses) :old old-ns)
-        stripped-ns (merge stripped-ns (preserve-ns-references old-ns))
+        stripped-ns (-> (apply dissoc ns-map ns-clauses)
+                        (assoc :old old-ns)
+                        (merge (preserve-ns-references old-ns)))
         body (take-while #(not= ::done %)
                          (repeatedly #(read rdr false ::done)))]
     [stripped-ns body]))

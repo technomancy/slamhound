@@ -1,14 +1,8 @@
 (ns slam.hound.asplode-test
   (:require [clojure.test :refer [deftest is testing]]
-            [slam.hound.asplode :refer [asplode
-                                        expand-imports
-                                        expand-libspecs
-                                        ns-to-map
-                                        parse-libs
-                                        parse-ns-map
-                                        parse-refers
-                                        parse-requires
-                                        parse-uses
+            [slam.hound.asplode :refer [asplode expand-imports expand-libspecs
+                                        ns-to-map parse-libs parse-ns-map
+                                        parse-refers parse-requires parse-uses
                                         preserve-ns-references]])
   (:import (java.io StringReader)))
 
