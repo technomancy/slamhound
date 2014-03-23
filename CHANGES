@@ -1,3 +1,19 @@
+Changes from 1.5.2 to 1.5.3, 23 March 2014
+==========================================
+
+- Add support for the :rename option in :require and :use forms.
+
+- Add support for core.typed.
+
+- Blacklist all namespaces beginning with "cljs". When Slamhound supports
+  ClojureScript, this will be revisited.
+
+- Correctly identify aliases that shadow existing namespaces.
+
+- Fix "Disjoin current ns from candidate namespaces" from 1.5.0.
+
+- Update ns pretty-printing for long :require libspecs.
+
 Changes from 1.5.1 to 1.5.2, 14 March 2014
 ==========================================
 
