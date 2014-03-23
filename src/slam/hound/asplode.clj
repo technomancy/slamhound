@@ -170,7 +170,8 @@
     (reduce
       (fn [m [clause & body]]
         ;; (:gen-class) with no arguments is valid
-        (let [body (if (and (nil? body) (= clause :gen-class))
+        (let [clause (keyword clause)
+              body (if (and (nil? body) (= clause :gen-class))
                      []
                      body)
               ;; Separate require clauses may have different flags

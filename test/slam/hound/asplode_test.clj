@@ -105,7 +105,15 @@
                          (:require [foo :as f])
                          (:require [bar :as b] :reload)))
            '{:name my.ns :meta nil
-             :require [([foo :as f]) ([bar :as b] :reload)]}))))
+             :require [([foo :as f]) ([bar :as b] :reload)]})))
+  (testing "keywordizes clause keys"
+    (is (= (ns-to-map '(ns my.ns
+                         (require [foo :as f])
+                         (import foo.Baz)))
+           '{:name my.ns
+             :meta nil
+             :require [([foo :as f])]
+             :import [foo.Baz]}))))
 
 (deftest ^:unit test-parse-ns-map
   (is (= (parse-ns-map '{:require [([foo :as f :refer [r]] :reload)
