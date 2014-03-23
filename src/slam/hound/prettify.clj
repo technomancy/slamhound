@@ -34,16 +34,19 @@
         (let [opts (partition-all 2 tail)]
           ;; Is this a libspec? i.e. [head :key1 val1 :key2 val2]
           (if (every? keyword? (map first opts))
-            (loop [[[key val] & next-opts] opts]
-              ((formatter-out "~w ") key)
-              (if (sequential? val)
-                (let [[start end] (brackets val)]
-                  (pprint-logical-block :prefix start :suffix end
-                    (pprint-indented-coll val)))
-                (write-out val))
-              (when next-opts
-                ((formatter-out " "))
-                (recur next-opts)))
+            (let [ncoll (count (filter coll? (map second opts)))]
+              (loop [[[key val] & next-opts] opts]
+                (when (> ncoll 1)
+                  ((formatter-out "~:_")))
+                ((formatter-out "~w ") key)
+                (if (sequential? val)
+                  (let [[start end] (brackets val)]
+                    (pprint-logical-block :prefix start :suffix end
+                      (pprint-indented-coll val)))
+                  (write-out val))
+                (when next-opts
+                  ((formatter-out " "))
+                  (recur next-opts))))
             (pprint-indented-coll tail)))))))
 
 (defn- pprint-ns-reference

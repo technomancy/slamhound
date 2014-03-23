@@ -35,4 +35,15 @@
                            :refer [*print-miser-width* cl-format code-dispatch
                                    formatter-out pprint pprint-logical-block
                                    pprint-newline with-pprint-dispatch
-                                   write-out]])))))))
+                                   write-out]])))))
+    (is (= "(ns foo
+  (:require [clojure.pprint :as pp
+             :refer [formatter-out pprint-logical-block]
+             :rename {formatter-out fout, pprint-logical-block block}]))\n"
+           (prettify
+             '(ns foo
+                (:require [clojure.pprint
+                           :as pp
+                           :refer [formatter-out pprint-logical-block]
+                           :rename {formatter-out fout
+                                    pprint-logical-block block}])))))))
