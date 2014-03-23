@@ -57,7 +57,10 @@
          '{:alias {my.ns.foo foo}
            :refer {my.ns.bar #{bar}}
            :verbose #{my.ns.foo my.ns.bar}
-           :reload-all #{my.ns.foo my.ns.bar}})))
+           :reload-all #{my.ns.foo my.ns.bar}}))
+  (is (= (parse-requires '[[clojure.set :refer [union] :rename {union ∪}]])
+         '{:refer {clojure.set #{union}}
+           :rename {clojure.set {union ∪}}})))
 
 (deftest ^:unit test-parse-uses
   (is (= (parse-uses '[my.ns.base
@@ -161,7 +164,9 @@
                                   [clojure.test :only [is]]
                                   [clojure.test :only [deftest]])
                             (:require [clojure.java.io :as io]
-                                      [clojure.set :as set])
+                                      [clojure.set
+                                       :refer :all
+                                       :rename {union ∪ intersection ∩}])
                             (:import java.io.File java.io.ByteArrayInputStream
                                      clojure.lang.Compiler$BodyExpr
                                      java.util.UUID)
@@ -173,14 +178,13 @@
                             java.util.UUID
                             clojure.lang.Compiler$BodyExpr}
                   :require #{}
-                  :alias {clojure.java.io io
-                          clojure.set set}
+                  :alias {clojure.java.io io}
                   :refer {clojure.test #{deftest is}
                           slam.hound.stitch #{ns-from-map}}
                   :xrefer #{}
-                  :refer-all #{}
+                  :refer-all #{clojure.set}
                   :exclude {clojure.core #{test compile}}
-                  :rename {}
+                  :rename {clojure.set {union ∪ intersection ∩}}
                   :reload #{}
                   :reload-all #{}
                   :verbose #{}

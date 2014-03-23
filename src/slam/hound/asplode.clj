@@ -102,7 +102,7 @@
         only (as->* m
                (cond->* (assoc m :refer {ns-sym (set only)})
                  exclusive (assoc :xrefer #{ns-sym})))
-        rename (assoc :rename {ns-sym (into {} rename)})))
+        rename (assoc :rename {ns-sym rename})))
     {:refer-all #{ns-sym}}))
 
 (defn parse-requires
@@ -114,13 +114,15 @@
   (reduce
     (fn [m [ns-sym & opts]]
       (if (seq opts)
-        (let [{:keys [as refer reload reload-all verbose]}
+        (let [{:keys [as refer rename reload reload-all verbose]}
               (apply hash-map opts)]
           (vmerge m (cond->* {}
                       as (assoc :alias {ns-sym as})
                       refer (as->* m (if (= refer :all)
                                        (assoc m :refer-all #{ns-sym})
                                        (assoc m :refer {ns-sym (set refer)})))
+                      rename (as->* m (vmerge m (parse-refers
+                                                  ns-sym [:rename rename])))
                       reload (assoc :reload (conj (get m :reload #{}) ns-sym))
                       reload-all (assoc :reload-all
                                         (conj (get m :reload-all #{}) ns-sym))

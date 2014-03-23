@@ -1,7 +1,6 @@
 (ns slam.hound.regrow-test
   (:require [clojure.test :refer [deftest is testing]]
-            [slam.hound.regrow :refer [candidates disambiguate grow-ns-map
-                                       regrow]])
+            [slam.hound.regrow :refer [disambiguate grow-ns-map regrow]])
   (:refer-clojure :exclude [/]))
 
 ;; Classes and vars for testing
@@ -21,24 +20,31 @@
 ;; Explicitly require korma for tests below
 (require 'korma.core)
 
+(def candidates #'slam.hound.regrow/candidates)
+
 (deftest ^:unit test-candidates
   (testing "finds static and dynamically created Java packages"
-    (is (= (candidates :import 'UUID '((UUID/randomUUID)))
+    (is (= (candidates :import 'UUID '((UUID/randomUUID)) {})
            '#{java.util.UUID slam.hound.regrow_test.UUID}))
-    (is (= (candidates :import 'Compiler$BodyExpr '(Compiler$BodyExpr))
+    (is (= (candidates :import 'Compiler$BodyExpr '(Compiler$BodyExpr) {})
            '#{clojure.lang.Compiler$BodyExpr}))
-    (is (= (candidates :import 'RegrowTestRecord '((RegrowTestRecord.)))
+    (is (= (candidates :import 'RegrowTestRecord '((RegrowTestRecord.)) {})
            '#{slam.hound.regrow_test.RegrowTestRecord})))
   (testing "finds aliased namespaces"
-    (is (= (candidates :alias 's '((s/join #{:a} #{:b})))
+    (is (= (candidates :alias 's '((s/join #{:a} #{:b})) {})
            '#{clojure.set clojure.string korma.core}))
     (is (= (candidates :alias 'r '((def foo r/trim)
-                                   (def bar #'r/private-var)))
-           (candidates :alias 'r '((def foo #'r/trim)))
+                                   (def bar #'r/private-var)) {})
+           (candidates :alias 'r '((def foo #'r/trim)) {})
            '#{clojure.string slam.hound.regrow-test})))
   (testing "finds referred vars"
-    (is (= (candidates :refer 'join '((join #{:a} #{:b})))
-           '#{clojure.set clojure.string korma.core}))))
+    (is (= (candidates :refer 'join '((join #{:a} #{:b})) {})
+           '#{clojure.set clojure.string korma.core})))
+  (testing "finds renamed vars from old ns"
+    (is (= (candidates :rename '∩ '((∩ #{:a} #{:b}))
+                       '{:rename {clojure.set {intersection ∩}
+                                  clojure.string {join j}}})
+           '#{clojure.set}))))
 
 (deftest test-alias-distance
   (let [d #'slam.hound.regrow/alias-distance
@@ -147,7 +153,15 @@
              :refer-all #{clojure.pprint}})))
   (testing "finds capitalized vars"
     (is (= (grow-ns-map '{} :refer 'CapitalVar '((type CapitalVar)))
-           '{:refer {slam.hound.regrow-test #{CapitalVar}}}))))
+           '{:refer {slam.hound.regrow-test #{CapitalVar}}})))
+  (testing "find renamed vars"
+    (is (= (grow-ns-map '{:old {:rename {clojure.string {trim t}
+                                         slam.hound.regrow-test {trim t}}}}
+                        :rename 't '((def trim-fn t)))
+           '{:refer {slam.hound.regrow-test #{trim}}
+             :rename {slam.hound.regrow-test {trim t}}
+             :old {:rename {clojure.string {trim t}
+                            slam.hound.regrow-test {trim t}}}}))))
 
 (deftest ^:unit test-regrow
   (testing "prefers capitalized vars referred in old ns to classes"
