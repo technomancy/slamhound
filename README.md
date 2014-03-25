@@ -96,6 +96,11 @@ or SLIME sessions via `M-x slamhound`. Install manually or via
 Install [`vim-slamhound`](https://github.com/guns/vim-slamhound) for use
 of the `:Slamhound` command within Clojure buffers.
 
+## Light Table Usage
+
+Install [`slamhound-lt`](https://github.com/chadhq/slamhound-lt) from the
+central plugin repository.
+
 ## Shortcomings
 
 ### Syntax-quoted references
