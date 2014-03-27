@@ -69,7 +69,11 @@
   (with-regrow-cache
     (doseq [file-or-dir file-or-dirs
             file (file-seq (io/file file-or-dir))
-            :when (re-find #"/[^\./]+\.clj$" (str file))]
+            :let [file-str (string/replace
+                             (str file)
+                             (System/getProperty "file.separator")
+                             "/")]
+            :when (re-find #"/[^\./]+\.clj$" file-str)]
       (try
         (swap-in-reconstructed-ns-form file)
         (catch Exception e
