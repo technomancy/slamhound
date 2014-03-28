@@ -15,7 +15,7 @@
         regrow
         stitch-up)))
 
-(defn read-comment-header
+(defn- read-comment-header
   "Read leading blank and comment lines from rdr."
   [^PushbackReader rdr]
   ;; An implementation using bufferedReader#readLine would be simpler, but
@@ -36,9 +36,8 @@
 
 (defn- tidy-comment-header [s]
   (-> s
-      (string/replace-first #"(?s)\A\s*\n" "")
-      (string/trimr)
-      (str "\n\n")))
+      (string/replace-first #"\A\s*\n" "")
+      (string/replace-first #"\n\s*\z" "\n\n")))
 
 (defn swap-in-reconstructed-ns-form
   "Reconstruct file's ns form and rewrite the file on disk with the new form."

@@ -1,35 +1,43 @@
 (ns slam.hound-test
   (:require [clojure.java.io :as io]
             [clojure.test :refer [deftest is testing]]
-            [slam.hound :refer [-main read-comment-header reconstruct
+            [slam.hound :refer [-main reconstruct
                                 swap-in-reconstructed-ns-form]])
-  (:import (java.io File PushbackReader StringReader)))
+  (:import (java.io File StringReader)))
 
-(deftest ^:unit test-read-comment-header
-  (testing "preserves comments at top of file"
-    (is (= ";;\n;; Copyright © Phil Hagelberg\n;;\n\n"
-           (read-comment-header
-             (PushbackReader.
-               (StringReader.
-                 ";;\n;; Copyright © Phil Hagelberg\n;;\n\n(ns test)"))))))
-  (testing "returns headers faithfully"
-    (is (= "\n\r\n\t;; COPYRIGHT  \n\r\n\t;; LICENSE  \n\r\n"
-           (read-comment-header
-             (PushbackReader.
-               (StringReader.
-                 (str "\n\r\n\t;; COPYRIGHT  \n\r\n"
-                      "\t;; LICENSE  \n\r\n(ns test)"))))))))
+(defmacro with-tempfile
+  {:require [File]}
+  [tmp-sym & body]
+  `(let [~tmp-sym (File/createTempFile "slamhound_test" ".clj")]
+     (try
+       ~@body
+       (finally
+         (.delete ~tmp-sym)))))
 
 (deftest ^:unit test-swap-in-reconstructed-ns-form
   (testing "original file is preserved on exceptions"
-    (let [tmp (File/createTempFile "slamhound_test" ".clj")
-          buf "(ns foo)\n(FOO/bar)"]
-      (try
+    (with-tempfile tmp
+      (let [buf "(ns foo)\n(FOO/bar)"]
         (spit tmp buf)
         (is (thrown? Throwable (swap-in-reconstructed-ns-form tmp)))
-        (is (= buf (slurp tmp)))
-        (finally
-          (.delete tmp))))))
+        (is (= buf (slurp tmp))))))
+  (testing "preserves comment headers and re-inserts them tidily"
+    (with-tempfile tmp
+      (let [pre "
+
+  ;;\tCopyright © Phil Hagelberg\t
+  ;;\tEclipse License\t
+
+
+
+  (ns slamhound-test)"
+            post "  ;;\tCopyright © Phil Hagelberg\t
+  ;;\tEclipse License\t
+
+(ns slamhound-test)"]
+        (spit tmp pre)
+        (swap-in-reconstructed-ns-form tmp)
+        (is (= post (slurp tmp)))))))
 
 (defrecord ExampleRecord [])
 
@@ -139,11 +147,8 @@
                                  (join "," ["a" "b" "c"])))))))))
 
 (deftest ^:integration test-main
-  (let [tmp (File/createTempFile "test_namespace_copy" ".clj")]
-    (try
-      (io/copy (io/reader (io/resource "test_namespace.clj")) tmp)
-      (-main tmp)
-      (is (= (slurp (io/resource "reconstructed_namespace.clj"))
-             (slurp tmp)))
-      (finally
-        (.delete tmp)))))
+  (with-tempfile tmp
+    (io/copy (io/reader (io/resource "test_namespace.clj")) tmp)
+    (-main tmp)
+    (is (= (slurp (io/resource "reconstructed_namespace.clj"))
+           (slurp tmp)))))
