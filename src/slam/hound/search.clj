@@ -43,7 +43,8 @@
 
 (defn find-ns-form [^File f]
   (when (and (.isFile f) (clj? (.getName f)))
-    (read-ns-form (PushbackReader. (reader f)) f)))
+    (with-open [rdr (reader f)]
+      (read-ns-form (PushbackReader. rdr) f))))
 
 (defn namespaces-in-dir [dir]
   (sort (for [f (file-seq (file dir))

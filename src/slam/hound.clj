@@ -10,10 +10,11 @@
   ;; Reconstructing consists of three distinct phases:
   ;; asploding, regrowing, and stitching.
   (with-regrow-cache
-    (-> (io/reader filename)
-        asplode
-        regrow
-        stitch-up)))
+    (with-open [rdr (io/reader filename)]
+      (-> rdr
+          asplode
+          regrow
+          stitch-up))))
 
 (defn- read-comment-header
   "Read leading blank and comment lines from rdr."
