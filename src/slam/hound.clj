@@ -40,9 +40,11 @@
       (string/replace-first #"\n\s*\z" "\n\n")))
 
 (defn swap-in-reconstructed-ns-form
-  "Reconstruct file's ns form and rewrite the file on disk with the new form."
+  "Reconstruct file's ns form and rewrite the file on disk with the new form.
+  The file parameter can be anything supported by clojure.java.io/file."
   [file]
-  (let [tmp-file (File/createTempFile "slamhound_tmp" ".clj")]
+  (let [file (io/file file)
+        tmp-file (File/createTempFile "slamhound_tmp" ".clj")]
     (try
       (io/copy file tmp-file)
       (let [new-ns (string/trim (reconstruct tmp-file))]

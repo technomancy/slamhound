@@ -37,7 +37,13 @@
 (ns slamhound-test)"]
         (spit tmp pre)
         (swap-in-reconstructed-ns-form tmp)
-        (is (= post (slurp tmp)))))))
+        (is (= post (slurp tmp))))))
+  (testing "accepts a String argument"
+    (with-tempfile tmp
+      (let [buf "(ns slamhound-test)"]
+        (spit tmp buf)
+        (swap-in-reconstructed-ns-form (.getPath tmp))
+        (is (= buf (slurp tmp)))))))
 
 (defrecord ExampleRecord [])
 
