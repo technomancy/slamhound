@@ -1,6 +1,11 @@
 (ns slam.hound.prettify-test
-  (:require [clojure.test :refer [deftest is testing]]
-            [slam.hound.prettify :refer [prettify]]))
+  (:require [clojure.pprint :refer [*print-right-margin*]]
+            [clojure.test :refer [deftest is testing]]
+            [slam.hound.prettify :as p]))
+
+(defn prettify [form]
+  (binding [*print-right-margin* 72]
+    (p/prettify form)))
 
 (deftest ^:unit test-prettify
   (testing "always inserts newlines inside short requires"
