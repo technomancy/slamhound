@@ -155,6 +155,7 @@
 (deftest ^:integration test-main
   (with-tempfile tmp
     (io/copy (io/reader (io/resource "test_namespace.clj")) tmp)
-    (-main tmp)
+    (binding [slam.hound/*testing?* true]
+      (-main tmp))
     (is (= (slurp (io/resource "reconstructed_namespace.clj"))
            (slurp tmp)))))

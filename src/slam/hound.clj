@@ -64,8 +64,11 @@
       (finally
         (.delete tmp-file)))))
 
+(def ^:private ^:dynamic *testing?* false)
+
 (defn -main
-  "Takes a file or dir and rewrites the .clj files with reconstructed ns forms."
+  "Takes a file or dir and rewrites the .clj files with reconstructed ns forms.
+  This function is strictly intended for use from a command line."
   [& file-or-dirs]
   (with-regrow-cache
     (doseq [file-or-dir file-or-dirs
@@ -81,7 +84,9 @@
           (println "Failed to reconstruct:" file)
           (if (System/getenv "DEBUG")
             (.printStackTrace e)
-            (println (.getMessage e))))))))
+            (println (.getMessage e)))))))
+  (when-not *testing?*
+    (shutdown-agents)))
 
 ;; See https://github.com/technomancy/nrepl-discover
 (defn ^{:nrepl/op {:name "slam"

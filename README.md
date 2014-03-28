@@ -81,7 +81,7 @@ You can reconstruct namespaces from a repl to avoid the slow startup time:
 
 Or to reconstruct files in place:
 
-    user=> (slam.hound/-main "src/my/namespace.clj")
+    user=> (slam.hound/swap-in-reconstructed-ns-form "src/my/namespace.clj")
     nil
     ;; Reload the file in your editor to pick up changes
 
