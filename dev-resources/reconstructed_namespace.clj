@@ -1,4 +1,4 @@
-(ns foo.bar
+(ns test-namespace
   (:require [clojure.string :as str]))
 
 (defn replace-commas [replacement]
