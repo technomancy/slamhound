@@ -1,18 +1,9 @@
 (ns slam.hound-test
-  (:require [clojure.java.io :as io]
-            [clojure.test :refer [deftest is testing]]
+  (:require [clojure.test :refer [deftest is testing]]
             [slam.hound :refer [-main reconstruct
-                                swap-in-reconstructed-ns-form]])
-  (:import (java.io File StringReader)))
-
-(defmacro with-tempfile
-  {:requires [File]}
-  [tmp-sym & body]
-  `(let [~tmp-sym (File/createTempFile "slamhound_test" ".clj")]
-     (try
-       ~@body
-       (finally
-         (.delete ~tmp-sym)))))
+                                swap-in-reconstructed-ns-form]]
+            [slam.hound.test.util :refer [with-tempfile with-transform-test]])
+  (:import (java.io StringReader)))
 
 (deftest ^:unit test-swap-in-reconstructed-ns-form
   (testing "original file is preserved on exceptions"
