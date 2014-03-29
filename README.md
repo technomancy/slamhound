@@ -117,13 +117,18 @@ You can work around this problem by attaching dummy metadata to the
 vars being present:
 
 ```clj
-(defmacro let-qp
-  {:requires [a/b c/d]}
-  [q p & body]
-  `(let [~'q a/b
-         ~'p c/d]
-     ~@body))
+(defmacro defexample
+  "Metadata can be attached to a macro by specifying an `attr-map`
+  between the docstring and the params vector."
+  {:requires [AClass an/aliased-var #'a-macro]}
+  [name & body]
+  `(do (def ~(str name \') (AClass. ~name))
+       (def ~(str name \+) (an/aliased-var ~@body))
+       (def ~(str name \*) (a-macro ~@body))))
 ```
+
+Notice that macros must be referenced with `#'` to avoid a `Can't take
+the value of a macro` error.
 
 If the syntax quoted references refer to functions or constant data,
 unquoting them will work as well:

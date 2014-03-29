@@ -6,7 +6,7 @@
   (:import (java.io File StringReader)))
 
 (defmacro with-tempfile
-  {:require [File]}
+  {:requires [File]}
   [tmp-sym & body]
   `(let [~tmp-sym (File/createTempFile "slamhound_test" ".clj")]
      (try
@@ -68,19 +68,27 @@
                    '(io/copy (ByteArrayInputStream. (.getBytes "remotely"))
                              (doto (File. "/tmp/remotely-human") .deleteOnExit))
                    '(deftest ^:unit test-ns-to-map
-                      (is (= (ns-from-map {:ns 'slam.hound}))))))
+                      (is (= (ns-from-map {:ns 'slam.hound}))))
+                   '(defmacro example-macro
+                      {:requires [BitSet sh #'with-sh-env]}
+                      []
+                      `(do (BitSet.)
+                           (with-sh-env {} (sh "true"))
+                           (~string/join \, [1 2 3])))))
 
 (deftest ^:integration test-slamhound!!!
   (is (= "(ns slamhound.sample
   \"Testing some things going on here.\"
   (:require [clojure.java.io :as io]
+            [clojure.java.shell :refer [sh with-sh-env]]
             [clojure.set :as set]
+            [clojure.string :as string]
             [clojure.test :refer [deftest is]]
             [slam.hound-test]
             [slam.hound.stitch :refer [ns-from-map]])
   (:import (clojure.lang Compiler$BodyExpr)
            (java.io ByteArrayInputStream File)
-           (java.util UUID)
+           (java.util BitSet UUID)
            (slam.hound_test ExampleRecord))
   (:refer-clojure :exclude [compile test])
   (:gen-class))
