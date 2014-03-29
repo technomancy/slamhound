@@ -162,7 +162,8 @@
 
 (deftest ^:integration test-main
   (with-tempfile tmp
-    (io/copy (io/reader (io/resource "test_namespace.clj")) tmp)
+    (with-open [rdr (io/reader (io/resource "test_namespace.clj"))]
+      (io/copy rdr tmp))
     (binding [slam.hound/*testing?* true]
       (-main tmp))
     (is (= (slurp (io/resource "reconstructed_namespace.clj"))
