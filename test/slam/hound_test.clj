@@ -77,3 +77,11 @@
     [tmp]
     (binding [slam.hound/*testing?* true]
       (-main tmp))))
+
+(deftest ^:integration test-detect-references-in-metadata
+  (with-transform-test "detection of references in metadata"
+    {:in "test-metadata.in"
+     :out "test-metadata.out"}
+    [tmp]
+    (let [buf (reconstruct tmp)]
+      (spit tmp buf))))

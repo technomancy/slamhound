@@ -1,11 +1,11 @@
 (ns slam.hound.regrow
   (:require [clojure.set :as set]
             [clojure.string :as string]
-            [clojure.walk :refer [prewalk]]
-            [slam.hound.future :refer [cond->*]]
+            [slam.hound.future :refer [as->* cond->*]]
             [slam.hound.search :as search]
             [slam.hound.stitch :as stitch])
-  (:import (java.util.regex Pattern)))
+  (:import (clojure.lang IMapEntry IRecord IType)
+           (java.util.regex Pattern)))
 
 (def ^:dynamic *debug* false)
 
@@ -49,6 +49,25 @@
                      (fn [m k] (assoc m k (conj (or (m k) #{}) ns-sym)))
                      m (keys (ns-publics ns)))))
       {} (all-ns))))
+
+(defn- walk
+  "Adapted from clojure.walk/walk and clojure.walk/prewalk; this version
+  preserves metadata on compound forms."
+  [f form]
+  (-> (cond
+        (list? form) (apply list (map f form))
+        (instance? IMapEntry form) (vec (map f form))
+        (seq? form) (doall (map f form))
+        (instance? IRecord form) (reduce (fn [r x] (conj r (f x))) form form)
+        (coll? form) (into (empty form) (map f form))
+        :else form)
+      (as->* form'
+        (if-let [m (meta form)]
+          (with-meta form' m)
+          form'))))
+
+(defn- prewalk [f form]
+  (walk (partial prewalk f) (f form)))
 
 (defn- capitalized? [x]
   (Character/isUpperCase ^Character (first (name x))))
@@ -312,8 +331,8 @@
         [type c]))))
 
 (defn- deftype? [cls]
-  (or (.isAssignableFrom clojure.lang.IType cls)
-      (.isAssignableFrom clojure.lang.IRecord cls)))
+  (or (.isAssignableFrom IType cls)
+      (.isAssignableFrom IRecord cls)))
 
 (defn- make-munged-ns-pattern [package-name]
   (->> (string/split package-name #"_")

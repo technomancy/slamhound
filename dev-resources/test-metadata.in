@@ -1,0 +1,36 @@
+(ns test-metadata)
+
+;; Metadata on def'd symbols
+(do
+  (def ^Pattern pattern #".")
+  (def ^{:tag UUID} uuid #uuid "4103a2f9-225c-495b-a2cd-3cc93610d819")
+  (def ^{Keyword []} import-as-metadata-key :keyword)
+  (defmacro ^{:requires [AtomicLong]} ->atomic-long [n]
+    `(AtomicLong. ~n)))
+
+;; Metadata via attr-map
+(defmacro ->linked-list
+  {:requires [LinkedList]}
+  []
+  `(LinkedList.))
+
+;; Create macro with an embedded reference, then consume it
+(do
+  (defmacro ->atomic-bool [n]
+    `(AtomicBoolean. (not= 0 ~n)))
+
+  (def atomic-bool (->atomic-bool 0)))
+
+;; Metadata on symbols and lists
+(do
+  (defn ->iterator [& xs]
+    (let [ll (->linked-list)]
+      (doseq [x xs]
+        (.add ll x))
+      (.listIterator ll)))
+
+  (defn dotest []
+    (let [^Iterator iter (->iterator (io/file "project.clj")
+                                     (io/resource "test-metadata.in"))]
+      (.toPath ^File (.next iter))
+      (.getFile ^{:tag URL} (.next iter)))))
