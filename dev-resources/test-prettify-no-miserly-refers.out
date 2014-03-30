@@ -1,0 +1,3 @@
+(ns foo
+  (:require [my.very.sequipedalian.namespace :refer [alpha beta gamma
+                                                     delta epsilon]]))

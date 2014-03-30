@@ -1,5 +1,6 @@
 (ns slam.hound.stitch-test
-  (:require [clojure.test :refer [deftest is testing]]
+  (:require [clojure.java.io :as io]
+            [clojure.test :refer [deftest is testing]]
             [slam.hound.stitch :refer [imports-from-map keyword-list-from-map
                                        metadata-from-map ns-from-map
                                        refer-clojure-from-map requires-from-map
@@ -129,20 +130,9 @@
               (:require [bar] :reload-all))))))
 
 (deftest ^:unit test-stitch-up
-  (is (= "(ns slamhound.sample
-  \"Testing some \\\"things\\\"\ngoing on here.\"
-  {:slamhound-skip true, :zzz \"zzz\"}
-  (:require [clojure.java.io :as io]
-            [clojure.set :as set :refer [union]]
-            [clojure.test :refer [deftest is]]
-            [slam.hound.stitch :refer [ns-from-map]])
-  (:import (clojure.lang Compiler$BodyExpr)
-           (java.io ByteArrayInputStream File)
-           (java.util UUID))
-  (:refer-clojure :exclude [compile test])
-  (:gen-class))\n"
+  (is (= (slurp (io/resource "test-stitch-up.out"))
          (stitch-up '{:name slamhound.sample
-                      :meta {:doc "Testing some \"things\"\ngoing on here."
+                      :meta {:doc "Testing some \"things\"\n  going on here."
                              :zzz "zzz"
                              :slamhound-skip true}
                       :import #{java.io.File

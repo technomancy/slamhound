@@ -1,0 +1,4 @@
+(ns foo
+  (:require [clojure.pprint :as pp
+             :refer [formatter-out pprint-logical-block]
+             :rename {formatter-out fout, pprint-logical-block block}]))

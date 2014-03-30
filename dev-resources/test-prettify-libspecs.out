@@ -1,0 +1,8 @@
+(ns foo
+  (:require [clojure.pprint :as pp :refer [*print-miser-width*
+                                           cl-format code-dispatch
+                                           formatter-out pprint
+                                           pprint-logical-block
+                                           pprint-newline
+                                           with-pprint-dispatch
+                                           write-out]]))

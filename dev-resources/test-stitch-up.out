@@ -1,0 +1,13 @@
+(ns slamhound.sample
+  "Testing some \"things\"
+  going on here."
+  {:slamhound-skip true, :zzz "zzz"}
+  (:require [clojure.java.io :as io]
+            [clojure.set :as set :refer [union]]
+            [clojure.test :refer [deftest is]]
+            [slam.hound.stitch :refer [ns-from-map]])
+  (:import (clojure.lang Compiler$BodyExpr)
+           (java.io ByteArrayInputStream File)
+           (java.util UUID))
+  (:refer-clojure :exclude [compile test])
+  (:gen-class))
