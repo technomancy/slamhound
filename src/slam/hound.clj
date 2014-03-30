@@ -6,15 +6,17 @@
             [slam.hound.stitch :refer [stitch-up]])
   (:import (java.io File PushbackReader)))
 
-(defn reconstruct [filename]
+(defn reconstruct
+  "Return a newly reconstructed version of file's ns form. The file parameter
+  can be anything supported by clojure.java.io/reader."
+  [file]
   ;; Reconstructing consists of three distinct phases:
   ;; asploding, regrowing, and stitching.
   (with-regrow-cache
-    (with-open [rdr (io/reader filename)]
-      (-> rdr
-          asplode
-          regrow
-          stitch-up))))
+    (-> file
+        asplode
+        regrow
+        stitch-up)))
 
 (defn- read-comment-header
   "Read leading blank and comment lines from rdr."

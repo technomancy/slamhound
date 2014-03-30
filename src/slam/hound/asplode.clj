@@ -1,5 +1,6 @@
 (ns slam.hound.asplode
-  (:require [slam.hound.future :refer [as->* cond->*]])
+  (:require [clojure.java.io :as io]
+            [slam.hound.future :refer [as->* cond->*]])
   (:import (java.io PushbackReader)))
 
 (def empty-ns-references
@@ -208,13 +209,13 @@
         (assoc-clojure :exclude exclude)
         (assoc-clojure :rename rename))))
 
-(defn asplode [rdr]
-  (let [rdr (PushbackReader. rdr)
-        ns-map (ns-to-map (read rdr))
-        old-ns (parse-ns-map ns-map)
-        stripped-ns (-> (apply dissoc ns-map ns-clauses)
-                        (assoc :old old-ns)
-                        (merge (preserve-ns-references old-ns)))
-        body (take-while #(not= ::done %)
-                         (repeatedly #(read rdr false ::done)))]
-    [stripped-ns body]))
+(defn asplode [file]
+  (with-open [rdr (PushbackReader. (io/reader file))]
+    (let [ns-map (ns-to-map (read rdr))
+          old-ns (parse-ns-map ns-map)
+          stripped-ns (-> (apply dissoc ns-map ns-clauses)
+                          (assoc :old old-ns)
+                          (merge (preserve-ns-references old-ns)))
+          body (take-while #(not= ::done %)
+                           (repeatedly #(read rdr false ::done)))]
+      [stripped-ns (doall body)])))
