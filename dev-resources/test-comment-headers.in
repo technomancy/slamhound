@@ -1,0 +1,9 @@
+
+
+  ;;	Copyright © Phil Hagelberg		
+  ;;	Eclipse License				
+  ;;	Trailing tabs here are intentional!	
+
+
+
+  (ns slamhound-test)

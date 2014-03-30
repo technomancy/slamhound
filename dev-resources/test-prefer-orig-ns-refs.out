@@ -1,0 +1,7 @@
+(ns prefer-string-over-set-or-korma
+  (:require [clojure.string :refer [join]]
+            [slam.hound-test :refer [intersection]]))
+
+(defn do-it! []
+  (join "," ["a" "b" "c"])
+  (intersection #{:a} #{:b}))

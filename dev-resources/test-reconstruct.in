@@ -1,0 +1,34 @@
+(ns slamhound.sample
+  "Testing some things going on here."
+  (:use [slam.hound.stitch :only [ns-from-map]]
+        [clojure.test :only [is]]
+        ;; 'testing' isn't used, so gets dropped
+        [clojure.test :only [deftest testing]])
+  (:require [clojure.java.io :as io]
+            [clojure.set :as set])
+  (:import java.io.File java.io.ByteArrayInputStream
+           clojure.lang.Compiler$BodyExpr
+           java.util.UUID)
+  (:refer-clojure :exclude [compile test])
+  (:gen-class))
+
+(set/union #{:a} #{:b})
+
+(UUID/randomUUID)
+
+(instance? Compiler$BodyExpr nil)
+
+(instance? ExampleRecord nil)
+
+(io/copy (ByteArrayInputStream. (.getBytes "remotely"))
+         (doto (File. "/tmp/remotely-human") .deleteOnExit))
+
+(deftest ^:unit test-ns-to-map
+  (is (= (ns-from-map {:ns 'slam.hound}))))
+
+(defmacro example-macro
+  {:requires [BitSet sh #'with-sh-env]}
+  []
+  `(do (BitSet.)
+       (with-sh-env {} (sh "true"))
+       (~string/join \, [1 2 3])))

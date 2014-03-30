@@ -5,6 +5,10 @@
             [slam.hound.test.util :refer [with-tempfile with-transform-test]])
   (:import (java.io StringReader)))
 
+;; For testing
+(defrecord ExampleRecord [])
+(def intersection (constantly "Conflicts with clojure.set/intersection"))
+
 (deftest ^:unit test-swap-in-reconstructed-ns-form
   (testing "original file is preserved on exceptions"
     (with-tempfile tmp
@@ -12,23 +16,6 @@
         (spit tmp buf)
         (is (thrown? Throwable (swap-in-reconstructed-ns-form tmp)))
         (is (= buf (slurp tmp))))))
-  (testing "preserves comment headers and re-inserts them tidily"
-    (with-tempfile tmp
-      (let [pre "
-
-  ;;\tCopyright © Phil Hagelberg\t
-  ;;\tEclipse License\t
-
-
-
-  (ns slamhound-test)"
-            post "  ;;\tCopyright © Phil Hagelberg\t
-  ;;\tEclipse License\t
-
-(ns slamhound-test)"]
-        (spit tmp pre)
-        (swap-in-reconstructed-ns-form tmp)
-        (is (= post (slurp tmp))))))
   (testing "accepts a String argument"
     (with-tempfile tmp
       (let [buf "(ns slamhound-test)"]
@@ -36,60 +23,8 @@
         (swap-in-reconstructed-ns-form (.getPath tmp))
         (is (= buf (slurp tmp)))))))
 
-(defrecord ExampleRecord [])
-
-(def basic-ns (str '(ns slamhound.sample
-                      "Testing some things going on here."
-                      (:use [slam.hound.stitch :only [ns-from-map]]
-                            [clojure.test :only [is]]
-                            ;; 'testing' isn't used, so gets dropped
-                            [clojure.test :only [deftest testing]])
-                      (:require [clojure.java.io :as io]
-                                [clojure.set :as set])
-                      (:import java.io.File java.io.ByteArrayInputStream
-                               clojure.lang.Compiler$BodyExpr
-                               java.util.UUID)
-                      (:refer-clojure :exclude [compile test])
-                      (:gen-class))
-
-                   '(set/union #{:a} #{:b})
-                   '(UUID/randomUUID)
-                   '(instance? Compiler$BodyExpr nil)
-                   '(instance? ExampleRecord nil)
-                   '(io/copy (ByteArrayInputStream. (.getBytes "remotely"))
-                             (doto (File. "/tmp/remotely-human") .deleteOnExit))
-                   '(deftest ^:unit test-ns-to-map
-                      (is (= (ns-from-map {:ns 'slam.hound}))))
-                   '(defmacro example-macro
-                      {:requires [BitSet sh #'with-sh-env]}
-                      []
-                      `(do (BitSet.)
-                           (with-sh-env {} (sh "true"))
-                           (~string/join \, [1 2 3])))))
-
-(deftest ^:integration test-slamhound!!!
-  (is (= "(ns slamhound.sample
-  \"Testing some things going on here.\"
-  (:require [clojure.java.io :as io]
-            [clojure.java.shell :refer [sh with-sh-env]]
-            [clojure.set :as set]
-            [clojure.string :as string]
-            [clojure.test :refer [deftest is]]
-            [slam.hound-test]
-            [slam.hound.stitch :refer [ns-from-map]])
-  (:import (clojure.lang Compiler$BodyExpr)
-           (java.io ByteArrayInputStream File)
-           (java.util BitSet UUID)
-           (slam.hound_test ExampleRecord))
-  (:refer-clojure :exclude [compile test])
-  (:gen-class))
-"
-         (reconstruct (StringReader. basic-ns)))))
-
 (deftest ^:integration test-regression
-  (is (= "(ns foo.bar
-  (:require [clj-schema.validation :as val]))
-"
+  (is (= "(ns foo.bar\n  (:require [clj-schema.validation :as val]))\n"
          (reconstruct (StringReader.
                        (str '(ns foo.bar
                                (:require [clj-schema.validation :as val]))
@@ -97,9 +32,7 @@
                                                     {:name "Bob"})))))))
 
 (deftest ^:integration test-finds-alias-vars-in-nested-maps-and-sets
-  (is (= "(ns foo.bar
-  (:require [clj-schema.validation :as val]))
-"
+  (is (= "(ns foo.bar\n  (:require [clj-schema.validation :as val]))\n"
          (reconstruct (StringReader.
                        (str '(ns foo.bar
                                (:require [clj-schema.validation :as val]))
@@ -107,55 +40,40 @@
                                        [[:name] String]
                                        {:name "Bob"})}}))))))
 
-(deftest ^:integration test-chooses-referred-vars-preferring-those-referred-to-in-old-ns
-  (testing "since both clojure.string and clojure.set are present in the original namespace
-            we must disambiguate further by preferring namespaces that also referred the var
-            in the old version of the ns form"
-    (is (= "(ns foo.bar
-  (:require [clojure.set :refer [union]]
-            [clojure.string :refer :all]))
-"
-           (reconstruct (StringReader.
-                         (str '(ns foo.bar
-                                 (:use [clojure.string]
-                                       clojure.string)
-                                 (:require [clojure.string :as str]
-                                           [clojure.string :only [join lowercase]]
-                                           [clojure.set :refer [union difference]]))
-                              '(do
-                                 (defn f [xs]
-                                   (join "," xs))
-                                 (defn g [a b]
-                                   (union a b))))))))))
+(deftest ^:unit test-reconstruct
+  (with-transform-test "basic ns reconstruction"
+    {:in "test-reconstruct.in"
+     :out "test-reconstruct.out"}
+    [tmp]
+    (let [buf (reconstruct tmp)]
+      (spit tmp buf))))
 
-(deftest ^:integration test-prefers-requires-as-clauses-from-orig-ns
-  ;; korma.core is on the :dev-dependencies, and was getting erroneously picked
-  ;; for these 2 namespaces
-  (testing "original ns has a require/refer"
-    (is (= "(ns foo.bar
-  (:require [clojure.string :refer [join]]))
-"
-           (reconstruct (StringReader.
-                         (str '(ns foo.bar
-                                 (:require [clojure.string :refer [join]]))
-                              '(defn do-it! []
-                                 (join "," ["a" "b" "c"]))))))))
+(deftest ^:integration test-prefers-references-from-orig-ns
+  (with-transform-test "preference for references in original ns"
+    {:in "test-prefer-orig-ns-refs.in"
+     :out "test-prefer-orig-ns-refs.out"}
+    [tmp]
+    (swap-in-reconstructed-ns-form tmp))
+  (with-transform-test "if both clojure.string/join and clojure.set/join
+                        are referred in the original ns, prefer
+                        clojure.string/join if clojure.string is also mass
+                        referred."
+    {:in "test-disambiguation-of-join.in"
+     :out "test-disambiguation-of-join.out"}
+    [tmp]
+    (swap-in-reconstructed-ns-form tmp)))
 
-  (testing "original ns has a use/only"
-    (is (= "(ns foo.bar
-  (:require [clojure.string :refer [join]]))
-"
-           (reconstruct (StringReader.
-                         (str '(ns foo.bar
-                                 (:use [clojure.string :only [join]]))
-                              '(defn do-it! []
-                                 (join "," ["a" "b" "c"])))))))))
+(deftest ^:integration test-comment-header-preservation
+  (with-transform-test "tidy preservation of comment headers"
+    {:in "test-comment-headers.in"
+     :out "test-comment-headers.out"}
+    [tmp]
+    (swap-in-reconstructed-ns-form tmp)))
 
-(deftest ^:integration test-main
-  (with-tempfile tmp
-    (with-open [rdr (io/reader (io/resource "test_namespace.clj"))]
-      (io/copy rdr tmp))
+(deftest ^:integration test-long-file-preservation
+  (with-transform-test "long files are not truncated"
+    {:in "test-long-files.in"
+     :out "test-long-files.out"}
+    [tmp]
     (binding [slam.hound/*testing?* true]
-      (-main tmp))
-    (is (= (slurp (io/resource "reconstructed_namespace.clj"))
-           (slurp tmp)))))
+      (-main tmp))))

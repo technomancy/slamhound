@@ -1,0 +1,5 @@
+(ns disambiguate-join
+  (:require [clojure.string :refer :all]))
+
+(defn f [xs]
+  (join "," xs))

@@ -1,0 +1,15 @@
+(ns slamhound.sample
+  "Testing some things going on here."
+  (:require [clojure.java.io :as io]
+            [clojure.java.shell :refer [sh with-sh-env]]
+            [clojure.set :as set]
+            [clojure.string :as string]
+            [clojure.test :refer [deftest is]]
+            [slam.hound-test]
+            [slam.hound.stitch :refer [ns-from-map]])
+  (:import (clojure.lang Compiler$BodyExpr)
+           (java.io ByteArrayInputStream File)
+           (java.util BitSet UUID)
+           (slam.hound_test ExampleRecord))
+  (:refer-clojure :exclude [compile test])
+  (:gen-class))
