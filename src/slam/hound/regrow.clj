@@ -391,26 +391,61 @@
       (try (with-out-str (require namespace))
            (catch Throwable _)))))
 
-(defn- strip-ns-qualified-symbols
-  "De-qualify symbols in body that are qualified with ns-sym."
-  [ns-sym body]
-  (let [pat (Pattern/compile (str "\\A\\Q" ns-sym "\\E/(.+)"))
-        walk-fn (fn [expr]
-                  (if (symbol? expr)
-                    (if-let [m (re-find pat (str expr))]
-                      (symbol (second m))
-                      expr)
-                    expr))]
-    (prewalk walk-fn body)))
+(defn- strip-ns-qualified-symbol-fn
+  "Return a function that de-qualifies a symbol that is qualified
+  to ns-sym. This is necessary when regrowing from a body that was
+  processed by the reader without all needed references. See commit
+  54cba5c67fe0004378ea4e381ce9df800b510b63 for further elaboration."
+  [ns-sym]
+  (let [pat (Pattern/compile (str "\\A\\Q" ns-sym "\\E/(.+)"))]
+    (fn [expr]
+      (if (symbol? expr)
+        (if-let [m (re-find pat (str expr))]
+          (with-meta (symbol (second m)) (meta expr))
+          expr)
+        expr))))
+
+(defn- conj-annotation-keys!
+  "Conjoin unresolved class symbols in the metadata of all subforms of expr
+  intended to be used as a Java annotations.
+
+  cf. https://groups.google.com/forum/#!topic/clojure/0hKOFQXAwRc
+      https://github.com/technomancy/slamhound/issues/72#issuecomment-39041664"
+  [annotations-ref expr]
+  ;; Rich Hickey:
+  ;;    It supports annotations for definterface/type/record types (put in
+  ;;    metadata on type name), deftype/record fields (in metadata on field
+  ;;    names), and deftype/record methods (in metadata on method name)
+  (when (and (list? expr) ('#{definterface deftype defrecord} (first expr)))
+    (prewalk
+      (fn [form]
+        (when (symbol? form)
+          ;; Capitalized, unqualified, single segment symbols only
+          (let [ks (filter #(and (symbol? %)
+                                 (re-find #"\A\p{Lu}[^./]+\z" (str %)))
+                           (keys (meta form)))]
+            (when (seq ks)
+              (apply swap! annotations-ref conj ks))))
+        form)
+      expr)))
+
+(defn- munge-body
+  "Strip erroneously qualified symbols and possibly concat a sequence of
+  unknown class symbols."
+  [body ns-sym]
+  (let [strip (strip-ns-qualified-symbol-fn ns-sym)
+        annotations-ref (atom #{})
+        body (prewalk #(let [expr (strip %)]
+                         (conj-annotation-keys! annotations-ref expr)
+                         expr)
+                      body)]
+    (concat body @annotations-ref)))
 
 (defn regrow [[ns-map body]]
   (force pre-load-namespaces)
   (if (:slamhound-skip (:meta ns-map))
     (merge ns-map (:old ns-map))
-    ;; Since body was likely acquired through the reader, we must de-qualify
-    ;; symbols that may have been erroneously qualified to the current ns
-    ;; within syntax-quoted forms.
-    (let [body (strip-ns-qualified-symbols (:name ns-map) body)]
+    (let [body (munge-body body (:name ns-map))]
       (loop [ns-map ns-map
              last-missing nil
              type-to-try 0]

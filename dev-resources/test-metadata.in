@@ -34,3 +34,13 @@
                                      (io/resource "test-metadata.in"))]
       (.toPath ^File (.next iter))
       (.getFile ^{:tag URL} (.next iter)))))
+
+;; Annotations
+(do
+  (defprotocol Foo
+    (foo [this]))
+
+  (deftype AFoo [^{WebServiceRefs []} field]
+    ^{SupportedOptions []}
+    Foo
+    (^{Retention RetentionPolicy/RUNTIME} foo [this])))
