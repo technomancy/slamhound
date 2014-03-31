@@ -416,7 +416,10 @@
   ;;    It supports annotations for definterface/type/record types (put in
   ;;    metadata on type name), deftype/record fields (in metadata on field
   ;;    names), and deftype/record methods (in metadata on method name)
-  (when (and (list? expr) ('#{definterface deftype defrecord} (first expr)))
+  (when (and (list? expr)
+             (symbol? (first expr))
+             (re-find #"\A(?:[^/]+/)?def(?:interface|record|type)\z"
+                      (str (first expr))))
     (prewalk
       (fn [form]
         (when (symbol? form)

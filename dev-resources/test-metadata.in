@@ -37,10 +37,14 @@
 
 ;; Annotations
 (do
-  (defprotocol Foo
+  (defprotocol IFoo
     (foo [this]))
 
-  (deftype AFoo [^{WebServiceRefs []} field]
+  (deftype Foo [^{WebServiceRefs []} field]
     ^{SupportedOptions []}
-    Foo
-    (^{Retention RetentionPolicy/RUNTIME} foo [this])))
+    IFoo
+    (^{Retention RetentionPolicy/RUNTIME} foo [this]))
+
+  (cc/deftype Bar []
+    IFoo
+    (^{ElementType 42} foo [this])))
