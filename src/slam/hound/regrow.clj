@@ -140,6 +140,23 @@
                    :when alias]
                {(symbol alias) #{(symbol var-name)}})))))
 
+(defn- make-munged-ns-pattern [package-name]
+  (->> (string/split package-name #"_")
+       (map #(Pattern/quote %))
+       (string/join "[_-]")
+       (#(Pattern/compile (str "\\A" % "_*\\z")))))
+
+(defn- find-matching-ns
+  "Match a Java package name to a Clojure Namespace.
+  Returns an ns symbol or nil."
+  [package-name]
+  ;; Try the simple case before doing a search
+  (let [ns-sym (symbol (string/replace package-name \_ \-))]
+    (if (find-ns ns-sym)
+      ns-sym
+      (let [pat (make-munged-ns-pattern package-name)]
+        (first (filter #(re-find pat (str %)) (map ns-name (all-ns))))))))
+
 (defn- ns-import-candidates
   "Search (all-ns) for imports that match missing-sym, returning a set of
   class symbols. This is slower than scanning through the list of static
@@ -247,13 +264,17 @@
         1))))
 
 (defn- is-project-namespace-fn
-  "Is the namespace defined in a file on the classpath, as opposed to a jar?"
+  "Is the namespace or class defined in a file on the classpath, as opposed
+  to a jar?"
   [type]
   (fn [candidate]
-    (if (and (contains? #{:alias :refer :rename} type)
-             (contains? (search/namespaces-from-files) candidate))
-      0
-      1)))
+    (if (= type :import)
+      (if (find-matching-ns (second (re-find #"(.*)\." (str candidate))))
+        0
+        1)
+      (if (contains? (search/namespaces-from-files) candidate)
+        0
+        1))))
 
 (defn- alias-distance [^String alias ^String cand]
   (if (= (first alias) (first cand))
@@ -333,22 +354,6 @@
 (defn- deftype? [cls]
   (or (.isAssignableFrom IType cls)
       (.isAssignableFrom IRecord cls)))
-
-(defn- make-munged-ns-pattern [package-name]
-  (->> (string/split package-name #"_")
-       (map #(Pattern/quote %))
-       (string/join "[_-]")
-       (#(Pattern/compile (str "\\A" % "_*\\z")))))
-
-(defn- find-matching-ns
-  "Returns a ns symbol or nil"
-  [package-name]
-  ;; Try the simple case before doing a search
-  (let [ns-sym (symbol (string/replace package-name \_ \-))]
-    (if (find-ns ns-sym)
-      ns-sym
-      (let [pat (make-munged-ns-pattern package-name)]
-        (first (filter #(re-find pat (str %)) (map ns-name (all-ns))))))))
 
 (defn- update-imports-in
   "Adds candidate to :import entry in ns-map, and also adds matching namespace

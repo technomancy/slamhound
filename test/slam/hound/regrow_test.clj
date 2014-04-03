@@ -5,7 +5,7 @@
 
 ;; Classes and vars for testing
 (defrecord RegrowTestRecord [])
-(defrecord UUID [])
+(defrecord TreeSet [])
 (def +i-must-be-a-cl-user+ true)
 (def -+_$?!*><='' :horribly-named-var)
 (def / :special-case-token)
@@ -24,8 +24,8 @@
 
 (deftest ^:unit test-candidates
   (testing "finds static and dynamically created Java packages"
-    (is (= (candidates :import 'UUID '((UUID/randomUUID)) {})
-           '#{java.util.UUID slam.hound.regrow_test.UUID}))
+    (is (= (candidates :import 'TreeSet '(TreeSet) {})
+           '#{java.util.TreeSet slam.hound.regrow_test.TreeSet}))
     (is (= (candidates :import 'Compiler$BodyExpr '(Compiler$BodyExpr) {})
            '#{clojure.lang.Compiler$BodyExpr}))
     (is (= (candidates :import 'RegrowTestRecord '((RegrowTestRecord.)) {})
@@ -82,11 +82,11 @@
                             :alias 's
                             '{:new-ns-map {:alias {clojure.string string}}}))))
   (testing "prefers imports from old ns"
-    (is (= (disambiguate '#{java.util.UUID slam.hound.regrow_test.UUID}
-                         :import 'UUID
+    (is (= (disambiguate '#{java.util.TreeSet slam.hound.regrow_test.TreeSet}
+                         :import 'TreeSet
                          '{:old-ns-map
-                           {:import #{slam.hound.regrow_test.UUID}}})
-           '[:import slam.hound.regrow_test.UUID])))
+                           {:import #{java.util.TreeSet}}})
+           '[:import java.util.TreeSet])))
   (testing "prefers aliases from old ns"
     (is (= (disambiguate '#{a zzz} :alias 'x
                          '{:old-ns-map {:alias {zzz x}}})
@@ -106,9 +106,12 @@
     (is (= (disambiguate '#{clojure.set clojure.string} :alias 'string {})
            '[:alias clojure.string])))
   (testing "prefers candidates in project namespaces"
-    (is (= (disambiguate
-             '#{clojure.string slam.hound.regrow-test} :refer 'trim {})
-           '[:refer slam.hound.regrow-test])))
+    (is (= (disambiguate '#{clojure.string slam.hound.regrow-test}
+                         :refer 'trim {})
+           '[:refer slam.hound.regrow-test]))
+    (is (= (disambiguate '#{java.util.TreeSet slam.hound.regrow_test.TreeSet}
+                         :import 'TreeSet {})
+           '[:import slam.hound.regrow_test.TreeSet])))
   (testing "prefers candidates whose initials match the alias"
     (is (= (disambiguate '#{xray.yankee.zulu abc} :alias 'xyz {})
            '[:alias xray.yankee.zulu])))
