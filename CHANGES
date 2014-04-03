@@ -1,3 +1,24 @@
+Changes from 1.5.3 to 1.5.4, 03 April 2014
+==========================================
+
+- Prefer imports whose package name matches a project namespace.
+
+- Detect class names in metadata used for Java annotations.
+
+- Fix detection of metadata attached to literal collections.
+
+- Fix two file handle leaks.
+
+- Call (shutdown-agents) in slam.hound/-main.
+
+- Allow the file arguments of `swap-in-reconstructed-ns-form` and
+  `reconstruct` to be anything implementing clojure.java.io/Coercions.
+
+- Use the system file separator when searching for files to reconstruct.
+
+- Parse ns declarations that incorrectly use symbols instead of keywords for
+  ns reference clauses. e.g. `(require [])` vs `(:require [])`
+
 Changes from 1.5.2 to 1.5.3, 23 March 2014
 ==========================================
 
