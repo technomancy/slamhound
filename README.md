@@ -105,16 +105,16 @@ central plugin repository.
 
 ### Syntax-quoted references
 
-Slamhound will only find references to vars in a namespace that are
-consumed within the namespace itself. For example, if you have a macro
-that refers to a var inside syntax-quote (backtick), but the macro is
-only called from other namespaces, then Slamhound won't detect the
-reference and will instead report the failure in the namespace in
-which the macro is called.
+Slamhound will only find references in a namespace that are consumed
+within the namespace itself. For example, if you have a macro that
+refers to a var inside syntax-quote (backtick), but the macro is only
+called from other namespaces, then Slamhound won't detect the reference
+and will instead report the failure in the namespace in which the macro
+is called.
 
 You can work around this problem by attaching dummy metadata to the
 `defmacro` form to prevent it from compiling without the necessary
-vars being present:
+references being present:
 
 ```clj
 (defmacro defexample
@@ -130,16 +130,20 @@ vars being present:
 Notice that macros must be referenced with `#'` to avoid a `Can't take
 the value of a macro` error.
 
-If the syntax quoted references refer to functions or constant data,
-unquoting them will work as well:
+If the syntax quoted references refer to functions, classes, or constant
+data, unquoting them will work as well:
 
 ```clj
 (defmacro defcustom [name & body]
-  `(def ~name (~string/join \, [~@body])))
+  `(def ~name (new ~StringReader (~string/join \, [~@body]))))
 ```
 
-In this case, `string/join` must be resolved at compile time, so
-Slamhound will successfully find the alias to `clojure.string`.
+In this case `StringReader` and `string/join` must be resolved at
+compile time, so Slamhound will successfully find the implicit
+`java.io.StringReader` import and the alias to `clojure.string`.
+
+Note that the shorter reader macro form (`StringReader.`) of
+`(new StringReader)` cannot be used if you intend to unquote the import.
 
 ### Fully qualified and dynamically resolved Vars
 
@@ -149,16 +153,14 @@ failures to determine when it's done.
 
 ### PermGen memory pressure
 
-Slamhound aggressively loads all namespaces on the classpath on first
-invocation. This is computationally expensive, so first use may be slow,
-though subsequent calls should be relatively quick.
-
-This also taxes the class loading system, so there is a possibility that
-the JVM may run out of PermGen space in large projects. If this happens,
-try running your JVM with the following options:
+Slamhound aggressively creates and destroys namespaces during
+reconstruction. This taxes the class loading system, so there is a
+possibility that the JVM may run out of PermGen space in large projects.
+If this happens, try running your JVM with the following option to
+enable garbage collection of discarded classes:
 
 ```
--Xmx5g -XX:+CMSClassUnloadingEnabled -XX:MaxPermSize=128M
+-XX:+CMSClassUnloadingEnabled
 ```
 
 ### Side effects during namespace evaluation
