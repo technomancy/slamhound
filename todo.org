@@ -30,7 +30,21 @@
   does divide the execution time by ~ 0.8*cpu-threads, but obviously does not
   decrease the actual amount of work.
 
+  Also, GC thrashing due to PermGen appears to still be an issue with
+  `-XX:+CMSClassUnloadingEnabled`. Initial investigation shows that we may
+  need to implement our own classloader.
+
   - [ ] Improve performance of slam.hound.reload/pre-load-namespaces if possible
+  - [ ] Investigate impact of a Slamhound optimized classloader on PermGen
+* Testing
+  Our unit tests rely heavily on references defined in the test namespaces and
+  in external dependencies. It would be better to create and destroy a mock
+  environment to clearly see the inputs for disambiguation.
+
+  This leads quite naturally to property based testing with test.check.
+
+  - [ ] Replace test dependencies with mock namespaces that are easy to control
+  - [ ] Convert tests to test.check where appropriate (e.g. slam.hound.regrow-test)
 * Minor enhancements
   - [X] Sort alias candidates by L̶e̶v̶e̶n̶s̶h̶t̶e̶i̶n̶ "alias" distance, with emphasis on initial letters
   - [X] Satisfy all reflection warnings (there are only a handful)
