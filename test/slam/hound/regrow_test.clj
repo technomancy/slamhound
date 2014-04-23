@@ -5,7 +5,8 @@
 
 ;; Classes and vars for testing
 (defrecord RegrowTestRecord [])
-(defrecord TreeSet [])
+(deftype TreeSet [])
+(definterface HashSet)
 (def +i-must-be-a-cl-user+ true)
 (def -+_$?!*><='' :horribly-named-var)
 (def / :special-case-token)
@@ -134,6 +135,9 @@
   (testing "finds basic imports, aliases, and refers"
     (is (= (grow-ns-map {} :import 'RegrowTestRecord '((RegrowTestRecord.)))
            '{:import #{slam.hound.regrow_test.RegrowTestRecord}
+             :require #{slam.hound.regrow-test}}))
+    (is (= (grow-ns-map {} :import 'HashSet '(HashSet))
+           '{:import #{slam.hound.regrow_test.HashSet}
              :require #{slam.hound.regrow-test}}))
     (is (= (grow-ns-map {} :alias 'string '((string/join)))
            '{:alias {clojure.string string}}))

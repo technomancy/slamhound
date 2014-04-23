@@ -4,7 +4,7 @@
             [slam.hound.future :refer [as->* cond->*]]
             [slam.hound.search :as search]
             [slam.hound.stitch :as stitch])
-  (:import (clojure.lang IMapEntry IRecord IType)
+  (:import (clojure.lang IMapEntry IRecord)
            (java.util.regex Pattern)))
 
 (def ^:dynamic *debug* false)
@@ -161,7 +161,7 @@
   "Search (all-ns) for imports that match missing-sym, returning a set of
   class symbols. This is slower than scanning through the list of static
   package names, but will successfully find dynamically created classes such
-  as those created by deftype and defrecord."
+  as those created by deftype, defrecord, and definterface."
   [missing-sym]
   (reduce (fn [s imports]
             (if-let [^Class cls (get imports missing-sym)]
@@ -351,23 +351,19 @@
         [:refer-all c]
         [type c]))))
 
-(defn- deftype? [cls]
-  (or (.isAssignableFrom IType cls)
-      (.isAssignableFrom IRecord cls)))
-
 (defn- update-imports-in
-  "Adds candidate to :import entry in ns-map, and also adds matching namespace
-  to :require if the candidate class was created by deftype or defrecord."
+  "Adds candidate to :import entry in ns-map. If the candidate class package
+  name corresponds to a Clojure namespace, the matching namespace is added to
+  the :require entry.
+
+  While deftypes and defrecords implement clojure.lang.IType, there is no
+  metadata that can determine if a class foo_bar.Baz has been created by
+  gen-class or geninterface. Therefore we can only rely on convention."
   [ns-map candidate]
-  (let [class-name (str candidate)
-        cls (Class/forName class-name)
+  (let [pkg (stitch/get-package (Class/forName (str candidate)))
         ns-map (update-in ns-map [:import] #(conj (or % #{}) candidate))]
-    (if (deftype? cls)
-      ;; cf. slam.hound.stitch/get-package
-      (let [package-name (second (re-find #"(.*)\." class-name))
-            ns-sym (find-matching-ns package-name)]
-        (cond->* ns-map
-          ns-sym (update-in [:require] #(conj (or % #{}) ns-sym))))
+    (if-let [ns-sym (find-matching-ns pkg)]
+      (update-in ns-map [:require] #(conj (or % #{}) ns-sym))
       ns-map)))
 
 (defn grow-ns-map
