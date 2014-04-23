@@ -3,18 +3,16 @@
             [slam.hound.future :refer [cond->*]]
             [slam.hound.prettify :refer [prettify]]))
 
-(defn- get-package [class-name]
-  (let [^Class cls (resolve class-name)]
-    (if-let [pkg (.getPackage cls)]
-      (.getName pkg)
-      ;; Fall back to string matching for dynamically generated classes
-      (second (re-find #"(.*)\." (.getCanonicalName cls))))))
+(defn get-package [^Class cls]
+  (if-let [pkg (.getPackage cls)]
+    (.getName pkg)
+    ;; Fall back to string matching for dynamically generated classes
+    (second (re-find #"(.*)\." (.getCanonicalName cls)))))
 
 (defn- group-by-package [imports]
-  (for [[package classes] (group-by get-package imports)]
+  (for [[package classes] (group-by get-package (map resolve imports))]
     (cons (symbol package)
-          (sort (for [c classes
-                      :let [^Class c (resolve c)]]
+          (sort (for [^Class c classes]
                   (-> c .getName (.split "\\.") last symbol))))))
 
 (defn metadata-from-map
