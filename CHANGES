@@ -1,3 +1,11 @@
+Changes from 1.5.4 to 1.5.5, 30 April 2014
+==========================================
+
+- Bind *ns* to file's ns during read. This solves an issue where Slamhound may
+  incorrectly alias namespaces as `user` when run from the command line.
+
+- Add support for definterface and gen-class.
+
 Changes from 1.5.3 to 1.5.4, 03 April 2014
 ==========================================
 
