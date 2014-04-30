@@ -196,4 +196,9 @@
             :exclude {clojure.core #{test compile}}
             :meta {:doc "Testing some things going on here."}
             :name slamhound.sample}
-           ((do something))])))
+           ((do something))]))
+  (testing "output is constant regardless of *ns*"
+    (let [buf "(ns slamhound.sample) (eval `foo)"]
+      (is (= (asplode (StringReader. buf))
+             (binding [*ns* (find-ns 'user)]
+               (asplode (StringReader. buf))))))))
