@@ -101,5 +101,5 @@
   (let [nrepl-send (resolve 'clojure.tools.nrepl.transport/send)
         response-for (resolve 'clojure.tools.nrepl.misc/response-for)]
     (nrepl-send transport (response-for msg :message "Reconstructing..."))
-    (swap-in-reconstructed-ns-form (io/file file))
+    (swap-in-reconstructed-ns-form file)
     (nrepl-send transport (response-for msg :reload file))))
