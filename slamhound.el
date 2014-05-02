@@ -61,7 +61,9 @@
     (if (string-match "^:error \\(.*\\)" result)
         (error (match-string 1 result))
       (goto-char (point-min))
-      (kill-sexp)
+      ;; skip any header comments before the ns
+      (forward-sexp)
+      (backward-kill-sexp)
       (insert result))))
 
 (provide 'slamhound)
