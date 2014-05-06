@@ -21,7 +21,7 @@
 (defn- read-comment-header
   "Read leading blank and comment lines from rdr."
   [^PushbackReader rdr]
-  ;; An implementation using bufferedReader#readLine would be simpler, but
+  ;; An implementation using BufferedReader#readLine would be simpler, but
   ;; would have to make an assumption about what kind of line terminators the
   ;; file actually contains.
   (loop [buf (StringBuilder.) state :ws]

@@ -120,11 +120,12 @@ references being present:
 (defmacro defexample
   "Metadata can be attached to a macro by specifying an `attr-map`
   between the docstring and the params vector."
-  {:requires [AClass an/aliased-var #'a-macro]}
-  [name & body]
-  `(do (def ~(str name \') (AClass. ~name))
-       (def ~(str name \+) (an/aliased-var ~@body))
-       (def ~(str name \*) (a-macro ~@body))))
+  {:requires [AClass a-var an/aliased-var #'a-macro]}
+  [name & args]
+  `(do (def ~(str name \*) (AClass. ~@args))
+       (def ~(str name \-) (a-var ~@args))
+       (def ~(str name \+) (an/aliased-var ~@args))
+       (def ~(str name \!) (a-macro ~@args))))
 ```
 
 Notice that macros must be referenced with `#'` to avoid a `Can't take
@@ -134,16 +135,20 @@ If the syntax quoted references refer to functions, classes, or constant
 data, unquoting them will work as well:
 
 ```clj
-(defmacro defcustom [name & body]
-  `(def ~name (new ~StringReader (~string/join \, [~@body]))))
+(defmacro defexample
+  {:requires [#'a-macro]}
+  [name & args]
+  `(do (def ~(str name \*) (new ~AClass ~@args))
+       (def ~(str name \-) (~a-var ~@args))
+       (def ~(str name \+) (~an/aliased-var ~@args))
+       (def ~(str name \!) (a-macro ~@args))))
 ```
 
-In this case `StringReader` and `string/join` must be resolved at
-compile time, so Slamhound will successfully find the implicit
-`java.io.StringReader` import and the alias to `clojure.string`.
+In this case `Aclass`, `a-var`, and `an/aliased-var` must be resolved at
+compile time, so Slamhound will successfully find these references.
 
-Note that the shorter reader macro form (`StringReader.`) of
-`(new StringReader)` cannot be used if you intend to unquote the import.
+Note that the shorter reader macro form `(AClass. ~@args)` must be
+expanded to `(new ~AClass ~@args)` and that macros cannot be unquoted.
 
 ### Fully qualified and dynamically resolved Vars
 
