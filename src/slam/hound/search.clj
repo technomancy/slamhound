@@ -43,8 +43,8 @@
 
 (defn find-ns-form [^File f]
   (when (and (.isFile f) (clj? (.getName f)))
-    (with-open [rdr (reader f)]
-      (read-ns-form (PushbackReader. rdr) f))))
+    (with-open [rdr (PushbackReader. (reader f))]
+      (read-ns-form rdr f))))
 
 (defn namespaces-in-dir [dir]
   (sort (for [f (file-seq (file dir))
@@ -61,12 +61,13 @@
     (read-ns-form rdr jarfile)))
 
 (defn namespaces-in-jar [^File jar]
-  (let [jarfile (JarFile. jar)]
-    (for [^JarEntry entry (enumeration-seq (.entries jarfile))
-          :when (and (not (.isDirectory entry))
-                     (clj? (.getName entry)))]
-      (when-let [ns-form (ns-in-jar-entry jarfile entry)]
-        (second ns-form)))))
+  (with-open [jarfile (JarFile. jar)]
+    (doall
+      (for [^JarEntry entry (enumeration-seq (.entries jarfile))
+            :when (and (not (.isDirectory entry))
+                       (clj? (.getName entry)))]
+        (when-let [ns-form (ns-in-jar-entry jarfile entry)]
+          (second ns-form))))))
 
 (defn- filter-ns [file-pred ns-pred paths]
   (-> (mapcat ns-pred (filter file-pred paths))
@@ -92,7 +93,7 @@
 (defn expand-wildcard
   "Expands a wildcard path entry to its matching .jar files (JDK 1.6+).
   If not expanding, returns the path entry as a single-element vector."
-  [#^String path]
+  [^String path]
   (let [f (File. path)]
     (if (= (.getName f) "*")
       (-> f .getParentFile
@@ -115,9 +116,9 @@
     :name  Java class or Clojure namespace name
     :loc   Classpath entry (directory or jar) on which the class is located
     :file  Path of the class file, relative to :loc"
-  (fn [#^File f _]
-    (cond (.isDirectory f)           :dir
-          (jar? f)        :jar
+  (fn [^File f _]
+    (cond (.isDirectory f) :dir
+          (jar? f) :jar
           (class-file? (.getName f)) :class)))
 
 (defmethod path-class-files :default
@@ -125,18 +126,20 @@
 
 (defmethod path-class-files :jar
   ;; Build class info for all jar entry class files.
-  [#^File f #^File loc]
-  (let [lp (.getPath loc)]
+  [^File f ^File loc]
+  (with-open [jarfile (JarFile. f)]
     (try
-      (map class-or-ns-name
-           (filter class-file?
-                   (map #(.getName #^JarEntry %)
-                        (enumeration-seq (.entries (JarFile. f))))))
-     (catch Exception e []))))          ; fail gracefully if jar is unreadable
+      (doall
+        (for [^JarEntry entry (enumeration-seq (.entries jarfile))
+              :let [path (.getName entry)]
+              :when (class-file? path)]
+          (class-or-ns-name path)))
+      ;; Fail gracefully if jar is unreadable
+      (catch Exception _ []))))
 
 (defmethod path-class-files :dir
   ;; Dispatch directories and files (excluding jars) recursively.
-  [#^File d #^File loc]
+  [^File d ^File loc]
   (let [fs (.listFiles d (proxy [FilenameFilter] []
                            (accept [d n] (not (jar? (file n))))))]
     (reduce concat (for [f fs] (path-class-files f loc)))))
@@ -144,7 +147,7 @@
 (defmethod path-class-files :class
   ;; Build class info using file path relative to parent classpath entry
   ;; location. Make sure it decends; a class can't be on classpath directly.
-  [#^File f #^File loc]
+  [^File f ^File loc]
   (let [fp (str f), lp (str loc)
         loc-pattern (re-pattern (str "^" loc))]
     (if (re-find loc-pattern fp)                 ; must be descendent of loc
