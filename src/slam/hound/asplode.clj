@@ -220,14 +220,6 @@
           ;; reader during syntax-quote expansion, so we must be sure that
           ;; *ns* is set to the file's namespace in order for the regrow step
           ;; to work properly.
-          ;;
-          ;; Unfortunately, this means we are introducing the potentially
-          ;; surprising side effect of creating a namespace on read. This
-          ;; cannot be helped, as there is no way of creating a Namespace
-          ;; object that is not added to the global map of namespaces.
-          ;;
-          ;; In practice, however, this is unlikely to be a problem;
-          ;; slam.hound/regrow loads all namespaces on the classpath anyway.
           body (binding [*ns* (create-ns (:name ns-map))]
                  (doall
                    (take-while #(not= ::done %)
