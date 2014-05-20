@@ -46,7 +46,7 @@
     (reduce
       (fn [m ns] (let [ns-sym (ns-name ns)]
                    (reduce
-                     (fn [m k] (assoc m k (conj (or (m k) #{}) ns-sym)))
+                     (fn [m k] (assoc m k (conj (get m k #{}) ns-sym)))
                      m (keys (ns-publics ns)))))
       {} (all-ns))))
 
