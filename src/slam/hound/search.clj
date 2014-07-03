@@ -5,7 +5,8 @@
   (:import (java.io BufferedReader File FilenameFilter InputStreamReader
                     PushbackReader)
            (java.util StringTokenizer)
-           (java.util.jar JarEntry JarFile)))
+           (java.util.jar JarEntry JarFile)
+           (java.util.regex Pattern)))
 
 ;;; Mostly taken from leiningen.util.ns and swank.util.class-browse.
 
@@ -149,8 +150,8 @@
   ;; location. Make sure it decends; a class can't be on classpath directly.
   [^File f ^File loc]
   (let [fp (str f), lp (str loc)
-        loc-pattern (re-pattern (str "^" loc))]
-    (if (re-find loc-pattern fp)                 ; must be descendent of loc
+        loc-pattern (re-pattern (str "^" (Pattern/quote lp)))]
+    (if (re-find loc-pattern fp) ; must be descendent of loc
       (let [fpr (.substring fp (inc (count lp)))]
         [(class-or-ns-name fpr)])
       [])))
