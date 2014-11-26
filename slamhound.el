@@ -57,14 +57,17 @@
   Requires active nrepl or slime connection."
   (interactive)
   (let* ((code (slamhound-clj-string buffer-file-name))
-         (result (plist-get (nrepl-send-string-sync code) :stdout)))
-    (if (string-match "^:error \\(.*\\)" result)
-        (error (match-string 1 result))
+         (result (nrepl-send-string-sync code))
+         (out (if (plist-member result :stdout)
+                  (plist-get result :stdout)
+                (lax-plist-get (cdr result) "out"))))
+    (if (string-match "^:error \\(.*\\)" out)
+        (error (match-string 1 out))
       (goto-char (point-min))
       ;; skip any header comments before the ns
       (forward-sexp)
       (backward-kill-sexp)
-      (insert result))))
+      (insert out))))
 
 (provide 'slamhound)
 ;;; slamhound.el ends here
