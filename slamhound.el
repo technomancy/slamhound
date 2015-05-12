@@ -57,7 +57,7 @@
   Requires active nrepl or slime connection."
   (interactive)
   (let* ((code (slamhound-clj-string buffer-file-name))
-         (result (plist-get (nrepl-send-string-sync code) :stdout)))
+         (result (nrepl-dict-get (nrepl-send-string-sync code) "out")))
     (if (string-match "^:error \\(.*\\)" result)
         (error (match-string 1 result))
       (goto-char (point-min))
