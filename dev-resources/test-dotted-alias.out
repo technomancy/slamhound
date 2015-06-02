@@ -1,0 +1,5 @@
+(ns slamhound.sample
+  "Testing using dot in alias"
+  (:require [clojure.java.io :as java.io]))
+
+(java.io/resource "some-resource")

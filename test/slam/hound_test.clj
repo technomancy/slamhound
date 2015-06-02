@@ -85,3 +85,10 @@
     [tmp]
     (let [buf (reconstruct tmp)]
       (spit tmp buf))))
+
+(deftest ^:integration test-using-dots-in-alias
+  (with-transform-test "dots in ns alias are fine"
+    {:in "test-dotted-alias.in"
+     :out "test-dotted-alias.out"}
+    [tmp]
+    (swap-in-reconstructed-ns-form tmp)))
