@@ -78,6 +78,7 @@
                        "Can't resolve: "
                        "No such namespace: "
                        "Cannot resolve type: " ; core.typed
+                       "java.lang.ClassNotFoundException:? " ; http://dev.clojure.org/jira/browse/CLJ-1403
                        ]
                       (mapv #(Pattern/compile (str % sym-pat))))]
     (into [#"No such var: (\S+)/.*"] patterns)))
@@ -99,6 +100,9 @@
                    (re-find #"No such (var|namespace)" msg)
                    [:alias]
 
+                   (re-find #"java\.lang\.ClassNotFoundException" msg)
+                   [:alias]
+
                    :else
                    [:refer :import])
           rename? (some #{sym} (mapcat (comp vals val) (:rename old-ns-map)))]
@@ -115,7 +119,7 @@
       (try
         (eval `(do ~ns-form ~@body nil))
         (catch Exception e
-          (or (failure-details (.getMessage e) (:old ns-map))
+          (or (failure-details (str (type e) " " (.getMessage e)) (:old ns-map))
               (do (debug :not-found ns-form)
                   (throw e))))
         (finally
