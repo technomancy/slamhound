@@ -94,7 +94,7 @@
                      [:refer :import]
                      [:import :refer])
 
-                   (re-find #"Unable to resolve var: \w+/" msg)
+                   (re-find #"Unable to resolve var: \S+/" msg)
                    [:alias :refer]
 
                    (re-find #"No such (var|namespace)" msg)
