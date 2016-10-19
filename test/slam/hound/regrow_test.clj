@@ -207,4 +207,9 @@
     (is (= (regrow '[{:name slam.hound.regrow-test}
                      ((def foo clojure.string/union))])
            '{:name slam.hound.regrow-test
-             :alias {clojure.set clojure.string}}))))
+             :alias {clojure.set clojure.string}})))
+  (testing "finds referred vars with dashed ns aliases"
+    (is (= (regrow '[{:name slam.hound.regrow-test}
+                     ((with-redefs [c-s/union (constantly [])] c-s/union))])
+           '{:name slam.hound.regrow-test
+             :alias {clojure.set c-s}}))))
