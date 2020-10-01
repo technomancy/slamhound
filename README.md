@@ -27,6 +27,8 @@ surgeon required.
 
 Add `[slamhound "1.5.5"]` to the `:dependencies` of your `:user` profile.
 
+### This project is no longer under active development.
+
 ## Screencast
 
 <http://vimeo.com/80650659>
