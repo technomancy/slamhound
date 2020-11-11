@@ -4,7 +4,7 @@
   :license {:name "Eclipse Public License"
             :url "http://www.eclipse.org/legal/epl-v10.html"}
   :main ^:skip-aot slam.hound
-  :dependencies [[org.clojure/clojure "1.4.0"]]
+  :dependencies [[org.clojure/clojure "1.7.0"]]
   :profiles {:dev {:dependencies [[org.clojure/tools.trace "0.7.3"]
                                   ;; Last version of CLJS compatible with
                                   ;; Clojure 1.4.0

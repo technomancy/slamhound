@@ -119,7 +119,7 @@
       (try
         (eval `(do ~ns-form ~@body nil))
         (catch Exception e
-          (or (failure-details (str (type e) " " (.getMessage e)) (:old ns-map))
+          (or (failure-details (str (type e) " " (-> e Throwable->map :cause)) (:old ns-map))
               (do (debug :not-found ns-form)
                   (throw e))))
         (finally
